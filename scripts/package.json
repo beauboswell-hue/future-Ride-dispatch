@@ -1,9 +1,9 @@
 {
-    "name": "package-linker",
+    "name": "fleetbase-scripts",
     "version": "0.0.0",
     "private": true,
     "description": "Fleetbase package linker CLI.",
     "bin": {
-        "package-linker": "./package-linker.mjs"
+        "flb-package-linker": "./package-linker.mjs"
     }
 }

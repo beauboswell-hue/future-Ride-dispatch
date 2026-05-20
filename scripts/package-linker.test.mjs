@@ -21,7 +21,7 @@ import {
     resetLinks,
     runCli,
     STATE_FILE,
-} from '../scripts/package-linker.mjs';
+} from './package-linker.mjs';
 
 function writeJson(filePath, data) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });

@@ -20,24 +20,24 @@ function usage() {
     return `Fleetbase package linker
 
 Usage:
-  package-linker list [--root <path>]
-  package-linker status [--root <path>]
-  package-linker doctor [--root <path>]
-  package-linker enable <module...> [--shared <pkg...>] [--install] [--dry-run] [--root <path>]
-  package-linker disable <module...> [--dry-run] [--root <path>]
-  package-linker enable-shared <pkg...> [--install] [--dry-run] [--root <path>]
-  package-linker disable-shared <pkg...> [--dry-run] [--root <path>]
-  package-linker reset [--install] [--dry-run] [--root <path>]
-  package-linker install [module...] [--dry-run] [--root <path>]
+  flb-package-linker list [--root <path>]
+  flb-package-linker status [--root <path>]
+  flb-package-linker doctor [--root <path>]
+  flb-package-linker enable <module...> [--shared <pkg...>] [--install] [--dry-run] [--root <path>]
+  flb-package-linker disable <module...> [--dry-run] [--root <path>]
+  flb-package-linker enable-shared <pkg...> [--install] [--dry-run] [--root <path>]
+  flb-package-linker disable-shared <pkg...> [--dry-run] [--root <path>]
+  flb-package-linker reset [--install] [--dry-run] [--root <path>]
+  flb-package-linker install [module...] [--dry-run] [--root <path>]
 
 Examples:
-  package-linker enable fleetops pallet --shared ember-core ember-ui fleetops-data
-  package-linker enable-shared core-api
-  package-linker reset
-  package-linker enable fleetops --install
-  package-linker install
-  package-linker install fleetops pallet core-api
-  package-linker doctor
+  flb-package-linker enable fleetops pallet --shared ember-core ember-ui fleetops-data
+  flb-package-linker enable-shared core-api
+  flb-package-linker reset
+  flb-package-linker enable fleetops --install
+  flb-package-linker install
+  flb-package-linker install fleetops pallet core-api
+  flb-package-linker doctor
 
 Local fallback:
   node scripts/package-linker.mjs doctor
@@ -946,7 +946,7 @@ function printDoctor(root) {
                 console.log(`  ok ${module.slug} resolves ${packageName} to ${resolvedFromModule}`);
             } else {
                 issues++;
-                console.log(`  warn ${module.slug} cannot resolve local ${packageName}. Run: package-linker install ${module.slug}`);
+                console.log(`  warn ${module.slug} cannot resolve local ${packageName}. Run: flb-package-linker install ${module.slug}`);
             }
         }
     }
@@ -956,7 +956,7 @@ function printDoctor(root) {
             console.log(`  ok ${shared.packageName} uses a Composer path repository`);
         } else {
             issues++;
-            console.log(`  warn ${shared.packageName} is tracked for local development but api/composer.json does not have a path repository. Run: package-linker enable-shared ${shared.module.slug}`);
+            console.log(`  warn ${shared.packageName} is tracked for local development but api/composer.json does not have a path repository. Run: flb-package-linker enable-shared ${shared.module.slug}`);
         }
     }
 
@@ -981,7 +981,7 @@ function printFollowUp(modules = []) {
     }
 
     const moduleNames = normalizedModules.map((module) => module?.slug).filter(Boolean);
-    console.log(`  package-linker install${moduleNames.length > 0 ? ` ${moduleNames.join(' ')}` : ''}`);
+    console.log(`  flb-package-linker install${moduleNames.length > 0 ? ` ${moduleNames.join(' ')}` : ''}`);
 }
 
 function copyIfExists(source, destination) {
@@ -1277,7 +1277,19 @@ export function runCli(argv = process.argv.slice(2)) {
     throw new Error(`Unknown command "${command}".\n\n${usage()}`);
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+function isEntrypoint() {
+    if (!process.argv[1]) {
+        return false;
+    }
+
+    try {
+        return fs.realpathSync(process.argv[1]) === fs.realpathSync(__filename);
+    } catch {
+        return import.meta.url === pathToFileURL(process.argv[1]).href;
+    }
+}
+
+if (isEntrypoint()) {
     try {
         runCli();
     } catch (error) {

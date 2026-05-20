@@ -4,7 +4,7 @@ This directory contains project-level utilities for local development and setup.
 
 ## `package-linker.mjs`
 
-`package-linker` manages local Fleetbase package links for extension development. It updates the Console npm manifest, API Composer repositories, and Console pnpm workspace settings so linked extension packages and shared Ember packages resolve from `packages/*`.
+`flb-package-linker` manages local Fleetbase package links for extension development. It updates the Console npm manifest, API Composer repositories, and Console pnpm workspace settings so linked extension packages and shared Ember packages resolve from `packages/*`.
 
 Use this when working on an extension such as FleetOps and you need local changes from `packages/fleetops`, `packages/ember-ui`, `packages/ember-core`, or `packages/fleetops-data` to show up in the host app.
 
@@ -33,8 +33,8 @@ npm link
 After that, use:
 
 ```sh
-package-linker --help
-package-linker status
+flb-package-linker --help
+flb-package-linker status
 ```
 
 Without global linking, run the script directly:
@@ -48,97 +48,97 @@ node scripts/package-linker.mjs status
 List packages discovered under `packages/*`:
 
 ```sh
-package-linker list
+flb-package-linker list
 ```
 
 Show currently linked packages and shared dependency resolution:
 
 ```sh
-package-linker status
+flb-package-linker status
 ```
 
 Check for missing local symlinks or duplicate Fleetbase package versions in `console/pnpm-lock.yaml`:
 
 ```sh
-package-linker doctor
+flb-package-linker doctor
 ```
 
 Preview FleetOps linking without changing files:
 
 ```sh
-package-linker enable fleetops --shared ember-core ember-ui fleetops-data --dry-run
+flb-package-linker enable fleetops --shared ember-core ember-ui fleetops-data --dry-run
 ```
 
 Enable FleetOps local development links:
 
 ```sh
-package-linker enable fleetops --shared ember-core ember-ui fleetops-data
-package-linker install
+flb-package-linker enable fleetops --shared ember-core ember-ui fleetops-data
+flb-package-linker install
 ```
 
 Enable multiple extensions at once:
 
 ```sh
-package-linker enable fleetops pallet --shared ember-core ember-ui fleetops-data
-package-linker install
+flb-package-linker enable fleetops pallet --shared ember-core ember-ui fleetops-data
+flb-package-linker install
 ```
 
 Run the install/update step for specific extensions:
 
 ```sh
-package-linker install fleetops pallet
+flb-package-linker install fleetops pallet
 ```
 
 Preview the install/update commands without running them:
 
 ```sh
-package-linker install --dry-run
+flb-package-linker install --dry-run
 ```
 
 Reset all local development links managed by the linker:
 
 ```sh
-package-linker reset
-package-linker install
+flb-package-linker reset
+flb-package-linker install
 ```
 
 Preview a full reset without changing files:
 
 ```sh
-package-linker reset --dry-run
+flb-package-linker reset --dry-run
 ```
 
 Enable only a shared frontend package:
 
 ```sh
-package-linker enable-shared ember-ui
-package-linker install
+flb-package-linker enable-shared ember-ui
+flb-package-linker install
 ```
 
 Enable the backend-only Core API package:
 
 ```sh
-package-linker enable-shared core-api
-package-linker install core-api
+flb-package-linker enable-shared core-api
+flb-package-linker install core-api
 ```
 
 Disable local links and restore saved registry ranges:
 
 ```sh
-package-linker disable fleetops pallet
-package-linker disable-shared ember-core ember-ui fleetops-data core-api
-package-linker install fleetops pallet core-api
+flb-package-linker disable fleetops pallet
+flb-package-linker disable-shared ember-core ember-ui fleetops-data core-api
+flb-package-linker install fleetops pallet core-api
 ```
 
 Run installs automatically after enabling:
 
 ```sh
-package-linker enable fleetops --shared ember-core ember-ui fleetops-data --install
+flb-package-linker enable fleetops --shared ember-core ember-ui fleetops-data --install
 ```
 
 ### What It Changes
 
-Depending on the command, `package-linker` may update:
+Depending on the command, `flb-package-linker` may update:
 
 - `console/package.json`
 - `console/pnpm-workspace.yaml`
@@ -174,7 +174,7 @@ Check the package linker script:
 
 ```sh
 node --check scripts/package-linker.mjs
-node --test tests/package-linker.test.mjs
+node --test scripts/package-linker.test.mjs
 ```
 
 Check shell syntax for the Docker installer:
