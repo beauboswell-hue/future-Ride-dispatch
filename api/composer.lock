@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7ab2054fced5f93a473bfe4a12addc9d",
+    "content-hash": "6f7c8923668693426a5e4e0ce05fd456",
     "packages": [
         {
             "name": "appstract/laravel-opcache",
@@ -124,16 +124,16 @@
         },
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.381.2",
+            "version": "3.381.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "ffa8a93faafea878155853ae2caf61871363869d"
+                "reference": "989f4776aed2a3b184a5b64046542e8fe66e99e2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/ffa8a93faafea878155853ae2caf61871363869d",
-                "reference": "ffa8a93faafea878155853ae2caf61871363869d",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/989f4776aed2a3b184a5b64046542e8fe66e99e2",
+                "reference": "989f4776aed2a3b184a5b64046542e8fe66e99e2",
                 "shasum": ""
             },
             "require": {
@@ -215,9 +215,9 @@
             "support": {
                 "forum": "https://github.com/aws/aws-sdk-php/discussions",
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
-                "source": "https://github.com/aws/aws-sdk-php/tree/3.381.2"
+                "source": "https://github.com/aws/aws-sdk-php/tree/3.381.3"
             },
-            "time": "2026-05-15T18:08:57+00:00"
+            "time": "2026-05-18T18:21:09+00:00"
         },
         {
             "name": "aws/aws-sdk-php-laravel",
@@ -2156,16 +2156,16 @@
         },
         {
             "name": "fleetbase/core-api",
-            "version": "1.6.47",
+            "version": "1.6.48",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fleetbase/core-api.git",
-                "reference": "2aa24120d4d31bd71b906e08baa1ea45c49dc98c"
+                "reference": "20a7b67affbd10e63e0dd2c2544b1e959db56b39"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fleetbase/core-api/zipball/2aa24120d4d31bd71b906e08baa1ea45c49dc98c",
-                "reference": "2aa24120d4d31bd71b906e08baa1ea45c49dc98c",
+                "url": "https://api.github.com/repos/fleetbase/core-api/zipball/20a7b67affbd10e63e0dd2c2544b1e959db56b39",
+                "reference": "20a7b67affbd10e63e0dd2c2544b1e959db56b39",
                 "shasum": ""
             },
             "require": {
@@ -2255,9 +2255,9 @@
             ],
             "support": {
                 "issues": "https://github.com/fleetbase/core-api/issues",
-                "source": "https://github.com/fleetbase/core-api/tree/v1.6.47"
+                "source": "https://github.com/fleetbase/core-api/tree/v1.6.48"
             },
-            "time": "2026-05-17T07:13:12+00:00"
+            "time": "2026-05-20T07:37:08+00:00"
         },
         {
             "name": "fleetbase/countries",
@@ -2326,16 +2326,16 @@
         },
         {
             "name": "fleetbase/fleetops-api",
-            "version": "0.6.48",
+            "version": "0.6.49",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fleetbase/fleetops.git",
-                "reference": "9394d4f87172a6b4973c8109ca7cfe3ad8e7f899"
+                "reference": "4d30b769e9959d8938350668228eb93569e0d236"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fleetbase/fleetops/zipball/9394d4f87172a6b4973c8109ca7cfe3ad8e7f899",
-                "reference": "9394d4f87172a6b4973c8109ca7cfe3ad8e7f899",
+                "url": "https://api.github.com/repos/fleetbase/fleetops/zipball/4d30b769e9959d8938350668228eb93569e0d236",
+                "reference": "4d30b769e9959d8938350668228eb93569e0d236",
                 "shasum": ""
             },
             "require": {
@@ -2412,9 +2412,9 @@
             ],
             "support": {
                 "issues": "https://github.com/fleetbase/fleetops/issues",
-                "source": "https://github.com/fleetbase/fleetops/tree/v0.6.48"
+                "source": "https://github.com/fleetbase/fleetops/tree/v0.6.49"
             },
-            "time": "2026-05-17T07:16:04+00:00"
+            "time": "2026-05-20T08:20:41+00:00"
         },
         {
             "name": "fleetbase/laravel-mysql-spatial",
@@ -3603,16 +3603,16 @@
         },
         {
             "name": "google/apiclient-services",
-            "version": "v0.441.0",
+            "version": "v0.441.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleapis/google-api-php-client-services.git",
-                "reference": "9e3c10389ed39915261e5bc98a687c2b1307040d"
+                "reference": "b389588a2f9f375ec448d6cd8d0903d83c571ae0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/9e3c10389ed39915261e5bc98a687c2b1307040d",
-                "reference": "9e3c10389ed39915261e5bc98a687c2b1307040d",
+                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/b389588a2f9f375ec448d6cd8d0903d83c571ae0",
+                "reference": "b389588a2f9f375ec448d6cd8d0903d83c571ae0",
                 "shasum": ""
             },
             "require": {
@@ -3641,9 +3641,9 @@
             ],
             "support": {
                 "issues": "https://github.com/googleapis/google-api-php-client-services/issues",
-                "source": "https://github.com/googleapis/google-api-php-client-services/tree/v0.441.0"
+                "source": "https://github.com/googleapis/google-api-php-client-services/tree/v0.441.1"
             },
-            "time": "2026-05-11T01:42:35+00:00"
+            "time": "2026-05-17T01:38:24+00:00"
         },
         {
             "name": "google/auth",
@@ -4398,16 +4398,16 @@
         },
         {
             "name": "guzzlehttp/psr7",
-            "version": "2.9.0",
+            "version": "2.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "7d0ed42f28e42d61352a7a79de682e5e67fec884"
+                "reference": "d5ddaf5743c42a61cb6100f83dc9d5a2bafe75ca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/7d0ed42f28e42d61352a7a79de682e5e67fec884",
-                "reference": "7d0ed42f28e42d61352a7a79de682e5e67fec884",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/d5ddaf5743c42a61cb6100f83dc9d5a2bafe75ca",
+                "reference": "d5ddaf5743c42a61cb6100f83dc9d5a2bafe75ca",
                 "shasum": ""
             },
             "require": {
@@ -4422,9 +4422,9 @@
             },
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
-                "http-interop/http-factory-tests": "0.9.0",
+                "http-interop/http-factory-tests": "1.1.0",
                 "jshttp/mime-db": "1.54.0.1",
-                "phpunit/phpunit": "^8.5.44 || ^9.6.25"
+                "phpunit/phpunit": "^8.5.52 || ^9.6.34"
             },
             "suggest": {
                 "laminas/laminas-httphandlerrunner": "Emit PSR-7 responses"
@@ -4495,7 +4495,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.9.0"
+                "source": "https://github.com/guzzle/psr7/tree/2.10.0"
             },
             "funding": [
                 {
@@ -4511,7 +4511,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-03-10T16:41:02+00:00"
+            "time": "2026-05-19T17:32:11+00:00"
         },
         {
             "name": "guzzlehttp/uri-template",
