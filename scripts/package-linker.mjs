@@ -820,6 +820,18 @@ function resolvePackageFrom(baseDir, packageName) {
     }
 }
 
+function isResolvedFromWorkspace(root, resolvedPackageJsonPath, workspacePath) {
+    if (!resolvedPackageJsonPath || !workspacePath) {
+        return false;
+    }
+
+    const expectedPackageDir = path.resolve(root, 'console', workspacePath);
+    const resolvedPackageDir = path.dirname(resolvedPackageJsonPath);
+    const relativePath = path.relative(expectedPackageDir, resolvedPackageDir);
+
+    return relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
+}
+
 export function getStatus(root = DEFAULT_ROOT) {
     const modules = discoverModules(root);
     const packages = discoverPackages(root);
@@ -924,7 +936,7 @@ function printDoctor(root) {
 
     for (const shared of configuredSharedPackages) {
         const resolvedFromConsole = resolvePackageFrom(path.join(root, 'console'), shared.packageName);
-        const ok = Boolean(resolvedFromConsole?.includes(shared.workspacePath.replace('../', '')));
+        const ok = isResolvedFromWorkspace(root, resolvedFromConsole, shared.workspacePath);
         if (ok) {
             console.log(`  ok ${shared.packageName} resolves to ${resolvedFromConsole}`);
         } else {
@@ -940,7 +952,7 @@ function printDoctor(root) {
         for (const packageName of moduleSharedDeps) {
             const resolvedFromModule = resolvePackageFrom(module.dir, packageName);
             const shared = configuredSharedPackages.find((entry) => entry.packageName === packageName);
-            const ok = Boolean(resolvedFromModule?.includes(shared.workspacePath.replace('../', '')));
+            const ok = isResolvedFromWorkspace(root, resolvedFromModule, shared.workspacePath);
 
             if (ok) {
                 console.log(`  ok ${module.slug} resolves ${packageName} to ${resolvedFromModule}`);
