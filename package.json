@@ -1,0 +1,9 @@
+{
+    "name": "fleetbase",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Fleetbase local development utilities.",
+    "bin": {
+        "package-linker": "./scripts/package-linker.mjs"
+    }
+}
