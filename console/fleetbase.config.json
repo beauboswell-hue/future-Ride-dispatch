@@ -1,3 +1,6 @@
 {
-    "API_HOST": "http://localhost:8000"
+  "API_HOST": "https://api.futurelimo.website",
+  "SOCKETCLUSTER_HOST": "socket.futurelimo.website",
+  "SOCKETCLUSTER_PORT": "443",
+  "SOCKETCLUSTER_SECURE": true
 }

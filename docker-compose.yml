@@ -11,8 +11,8 @@ services:
   database:
     image: mysql:8.0-oracle
     restart: unless-stopped
-    ports:
-      - "3306:3306"
+    # ports:
+    #   - "3306:3306"
     volumes:
       - "./docker/database/:/docker-entrypoint-initdb.d/"
       - "./docker/database/mysql:/var/lib/mysql"
@@ -30,7 +30,7 @@ services:
     platform: linux/amd64
     restart: unless-stopped
     ports:
-      - "38000:8000"
+      - "127.0.0.1:38000:8000"
     environment:
       SOCKETCLUSTER_WORKERS: 10
       SOCKETCLUSTER_BROKERS: 10
@@ -81,7 +81,7 @@ services:
       args:
         ENVIRONMENT: development
     ports:
-      - "4200:4200"
+      - "127.0.0.1:4200:4200"
     volumes:
       - ./console/fleetbase.config.json:/usr/share/nginx/html/fleetbase.config.json
 
@@ -91,6 +91,7 @@ services:
     volumes:
       - ./api/.env:/fleetbase/api/.env
       - ./api/storage/app:/fleetbase/api/storage/app
+      - ./api/app/Providers/RouteServiceProvider.php:/fleetbase/api/app/Providers/RouteServiceProvider.php
     environment:
       ENVIRONMENT: development
       DATABASE_URL: "mysql://root@database/fleetbase"
@@ -99,7 +100,9 @@ services:
       CACHE_PATH: /fleetbase/api/storage/framework/cache
       CACHE_URL: tcp://cache
       REDIS_URL: tcp://cache
-      SESSION_DOMAIN: localhost
+      SESSION_DOMAIN: futurelimo.website
+      CONSOLE_HOST: https://console.futurelimo.website
+      API_HOST: https://api.futurelimo.website
       BROADCAST_DRIVER: socketcluster
       MAIL_FROM_NAME: Fleetbase
       APP_NAME: Fleetbase
@@ -118,6 +121,6 @@ services:
       context: .
       dockerfile: docker/httpd/Dockerfile
     ports:
-      - "8000:80"
+      - "127.0.0.1:8000:80"
     depends_on:
       - application
