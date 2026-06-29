@@ -28,6 +28,36 @@ class RouteServiceProvider extends ServiceProvider
                         );
                     }
                 );
+
+                Route::get(
+                    'int/v1/installer/initialize',
+                    function () {
+                        return response()->json([
+                            'shouldInstall' => false,
+                            'shouldOnboard' => false,
+                            'defaultTheme' => null
+                        ]);
+                    }
+                );
+
+                Route::get(
+                    'int/v1/onboard/should-onboard',
+                    function () {
+                        return response()->json([
+                            'should_onboard' => false
+                        ]);
+                    }
+                );
+
+                Route::post(
+                    'int/v1/onboard/create-account',
+                    function () {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Registration is disabled on this instance.'
+                        ], 403);
+                    }
+                );
             }
         );
     }
