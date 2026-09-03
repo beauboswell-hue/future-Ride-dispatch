@@ -42,6 +42,8 @@ services:
     image: fleetbase/fleetbase-api:latest
     command: ["go-crond", "--verbose", "root:./crontab"]
     restart: unless-stopped
+    volumes:
+      - ./api/app:/fleetbase/api/app
     environment:
       DATABASE_URL: "mysql://root@database/fleetbase"
       QUEUE_CONNECTION: redis
@@ -57,6 +59,8 @@ services:
     image: fleetbase/fleetbase-api:latest
     command: ["php", "artisan", "queue:work"]
     restart: unless-stopped
+    volumes:
+      - ./api/app:/fleetbase/api/app
     healthcheck:
       test: ["CMD", "php", "artisan", "queue:status"]
       interval: 30s
@@ -75,6 +79,9 @@ services:
 
   console:
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     build:
       context: ./console
       dockerfile: Dockerfile
@@ -91,7 +98,7 @@ services:
     volumes:
       - ./api/.env:/fleetbase/api/.env
       - ./api/storage/app:/fleetbase/api/storage/app
-      - ./api/app/Providers/RouteServiceProvider.php:/fleetbase/api/app/Providers/RouteServiceProvider.php
+      - ./api/app:/fleetbase/api/app
     environment:
       ENVIRONMENT: development
       DATABASE_URL: "mysql://root@database/fleetbase"

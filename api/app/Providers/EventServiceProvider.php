@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Listeners\FormatWebBookingNotesListener;
+use App\Observers\OrderObserver;
+use Fleetbase\FleetOps\Models\Order;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -18,6 +20,9 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        'eloquent.created: Fleetbase\FleetOps\Models\Order' => [
+            FormatWebBookingNotesListener::class,
+        ],
     ];
 
     /**
@@ -27,6 +32,6 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Order::observe(OrderObserver::class);
     }
 }

@@ -57,3 +57,5 @@ builds/osx/frankenphp
 *.dll
 *.so
 *.dylib
+*.sql
+create_admin.php

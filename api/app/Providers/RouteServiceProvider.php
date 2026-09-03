@@ -58,6 +58,16 @@ class RouteServiceProvider extends ServiceProvider
                         ], 403);
                     }
                 );
+
+                Route::post(
+                    'api/v1/webhooks/twilio/sms',
+                    [\App\Http\Controllers\WebhookController::class, 'handleTwilioSms']
+                );
+
+                Route::post(
+                    'api/v1/webhooks/booking',
+                    [\App\Http\Controllers\WebhookController::class, 'handleWebBooking']
+                );
             }
         );
     }
