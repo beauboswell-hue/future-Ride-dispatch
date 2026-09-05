@@ -9,7 +9,7 @@
                         <Image src={{this.user.avatar_url}} @fallbackSrc={{config "defaultValues.userImage"}} alt={{this.user.name}} class="w-32 h-32 rounded-md mt-1" />
                         <FileUpload
                             @name={{t "console.account.index.photos"}}
-                            @accept="image/*"
+                            @accept="image/*,image/svg+xml,.svg"
                             @onFileAdded={{this.uploadNewPhoto}}
                             @labelClass="flex flex-row items-center justify-center"
                             as |queue|

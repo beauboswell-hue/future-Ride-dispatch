@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\FormatWebBookingNotesListener;
+use App\Listeners\SyncOrderToGoogleCalendarListener;
 use App\Observers\OrderObserver;
 use Fleetbase\FleetOps\Models\Order;
 use Illuminate\Auth\Events\Registered;
@@ -22,6 +23,10 @@ class EventServiceProvider extends ServiceProvider
         ],
         'eloquent.created: Fleetbase\FleetOps\Models\Order' => [
             FormatWebBookingNotesListener::class,
+            SyncOrderToGoogleCalendarListener::class,
+        ],
+        'eloquent.updated: Fleetbase\FleetOps\Models\Order' => [
+            SyncOrderToGoogleCalendarListener::class,
         ],
     ];
 
