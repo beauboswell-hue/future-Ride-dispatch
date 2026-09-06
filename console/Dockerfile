@@ -30,7 +30,7 @@ RUN apk update && apk add git openssh-client
 RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 # Install app dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Copy the console directory contents into the container at /console
 COPY . .

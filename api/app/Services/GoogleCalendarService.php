@@ -52,23 +52,17 @@ class GoogleCalendarService
 
     /**
      * Build tokenized event title (Summary).
-     * Format: "Ride [{order.type}]: {order.public_id}"
-     * Fallback: "Ride: {order.public_id}" if order.type is null.
-     * Strictly removes customer names and passenger identities.
+     * Format: "#{internal_id} ({fleetbase_order_id})"
      *
      * @param Order $order
      * @return string
      */
     public function buildSummary(Order $order): string
     {
-        $publicId = !empty($order->public_id) ? trim((string) $order->public_id) : ($order->uuid ?? 'N/A');
-        $type = !empty($order->type) ? trim((string) $order->type) : null;
+        $internalId = $order->id ?? 'N/A';
+        $fleetbaseOrderId = $order->public_id ?? $order->uuid ?? 'N/A';
 
-        if ($type !== null && $type !== '') {
-            return "Ride [{$type}]: {$publicId}";
-        }
-
-        return "Ride: {$publicId}";
+        return "#{$internalId} ({$fleetbaseOrderId})";
     }
 
     /**
@@ -85,29 +79,42 @@ class GoogleCalendarService
 
     /**
      * Build anonymous event description.
-     * Anonymous metadata block containing only Status, Order ID, and Console Link.
-     * Strictly removes customer phone numbers, emails, gate codes, private notes, and pricing.
+     * Strictly tokenized with zero names, phone numbers, emails, addresses, or coordinates.
      *
      * @param Order $order
      * @return string
      */
     public function buildDescription(Order $order): string
     {
-        $consoleBaseUrl = rtrim(config('fleetops.console_url', env('CONSOLE_URL', 'http://localhost:4200')), '/');
-        $status = !empty($order->status) ? trim((string) $order->status) : 'created';
-        $publicId = !empty($order->public_id) ? trim((string) $order->public_id) : ($order->uuid ?? 'N/A');
-        $consoleLink = "{$consoleBaseUrl}/fleet-ops?layout=kanban&order={$publicId}";
+        $internalId = $order->id ?? 'N/A';
+        $fleetbaseOrderId = $order->public_id ?? $order->uuid ?? 'N/A';
+
+        // Pickup / start time resolution
+        $startRaw = $order->scheduled_at
+            ?? $order->time_window_start
+            ?? $order->started_at
+            ?? $order->created_at
+            ?? now();
+
+        try {
+            $start = Carbon::parse($startRaw)->setTimezone(self::TIMEZONE);
+            $pickupTime = $start->format('Y-m-d H:i:s T');
+        } catch (\Throwable $e) {
+            $pickupTime = 'N/A';
+        }
 
         return implode("\n", [
-            "Status: {$status}",
-            "Order ID: {$publicId}",
-            "Console Link: {$consoleLink}",
+            "Order: #{$internalId}",
+            "Time: {$pickupTime}",
+            "Fleetbase ID: {$fleetbaseOrderId}",
+            "",
+            "https://console.futurelimo.website/fleet-ops/orders?id={$fleetbaseOrderId}",
         ]);
     }
 
     /**
-     * Build event timing preserving scheduled pickup and drop-off start/end timestamps
-     * formatted with America/New_York timezone.
+     * Build event timing preserving only the scheduled pickup start/end timestamps
+     * formatted with America/New_York timezone. Both start and end are set to the pickup time.
      *
      * @param Order $order
      * @return array
@@ -129,36 +136,13 @@ class GoogleCalendarService
             $start = Carbon::now($tz);
         }
 
-        // Dropoff / end time resolution
-        $endRaw = $order->time_window_end
-            ?? $order->dispatched_at;
-
-        $end = null;
-        if (!empty($endRaw)) {
-            try {
-                $end = Carbon::parse($endRaw)->setTimezone($tz);
-            } catch (\Throwable $e) {
-                $end = null;
-            }
-        }
-
-        // If end time is not provided or is not after start time, calculate based on duration or default 1 hour
-        if (empty($end) || !$end->greaterThan($start)) {
-            if (!empty($order->time) && is_numeric($order->time) && $order->time > 0) {
-                // Fleetbase order->time is in seconds
-                $end = $start->copy()->addSeconds((int) $order->time);
-            } else {
-                $end = $start->copy()->addHour();
-            }
-        }
-
         return [
             'start' => [
                 'dateTime' => $start->toRfc3339String(),
                 'timeZone' => $tz,
             ],
             'end' => [
-                'dateTime' => $end->toRfc3339String(),
+                'dateTime' => $start->toRfc3339String(),
                 'timeZone' => $tz,
             ],
         ];

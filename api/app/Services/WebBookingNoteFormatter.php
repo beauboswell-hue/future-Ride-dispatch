@@ -26,13 +26,17 @@ class WebBookingNoteFormatter
     public static function formatAndSave(Order $order, bool $force = false): bool
     {
         // Guard against infinite recursive update loops & repeated formatting
-        if (str_contains($order->notes ?? '', '### 👤 Contact Information')) {
+        if (str_contains($order->notes ?? '', 'Future Limo Dispatch')) {
             return false;
         }
 
         // Only format if this order is from a web booking source (unless forced)
         if (!$force && !static::isWebBooking($order)) {
             return false;
+        }
+
+        if ($order->exists) {
+            $order->refresh();
         }
 
         $formattedNotes = static::generateMarkdownNote($order);
@@ -117,45 +121,107 @@ class WebBookingNoteFormatter
      * @param Order $order
      * @return string
      */
+    /**
+     * Generate the markdown note string for the order.
+     *
+     * @param Order $order
+     * @return string
+     */
     public static function generateMarkdownNote(Order $order): string
     {
         $customerInfo = static::extractCustomerInfo($order);
         $timingInfo = static::extractTimingInfo($order, $customerInfo['timezone_raw']);
         $locationInfo = static::extractLocationInfo($order);
         $assignmentInfo = static::extractAssignmentInfo($order);
-        $bookingSource = static::extractBookingSource($order);
 
-        $publicId = $order->public_id ?? $order->uuid ?? 'N/A';
+        $scheduledLocalFormatted = $timingInfo['local'];
+        $scheduledUtcFormatted = str_replace(' UTC', '', $timingInfo['utc']);
 
-        $lines = [
-            '### 👤 Contact Information',
-            "• Name: {$customerInfo['name']}",
-            "• Phone: {$customerInfo['phone']}",
-            "• Email: {$customerInfo['email']}",
-            "• Account Username: {$customerInfo['username']}",
-            "• Account Timezone: {$customerInfo['timezone']}",
-            '',
-            "### 📅 Ride Information (Order {$publicId})",
-            '• Scheduled Time:',
-            "  - UTC: {$timingInfo['utc']}",
-            "  - Local Pickup Time: {$timingInfo['local']}",
-            "  - Eastern Time: {$timingInfo['eastern']}",
-            '• Locations:',
-            "  - Pickup: {$locationInfo['pickup']}",
-            "  - Dropoff: {$locationInfo['dropoff']}",
-        ];
+        $passengerName = $customerInfo['name'];
+        $passengerPhone = static::formatPhone($customerInfo['phone']);
+        $passengerEmail = $customerInfo['email'];
 
-        if ($locationInfo['is_match']) {
-            $lines[] = '  ⚠️ WARNING: Pickup and dropoff locations are identical!';
-        }
+        $cleanPickupAddress = static::sanitizeAddress($locationInfo['pickup']);
+        $cleanDropoffAddress = static::sanitizeAddress($locationInfo['dropoff']);
 
         $status = !empty($order->status) ? $order->status : 'created';
-        $lines[] = "• Status: {$status}";
-        $lines[] = "• Assigned Driver: {$assignmentInfo['driver']}";
-        $lines[] = "• Assigned Vehicle: {$assignmentInfo['vehicle']}";
-        $lines[] = "• Booking Notes / Source: {$bookingSource}";
+        $driverName = $assignmentInfo['driver'];
+        $vehicleName = $assignmentInfo['vehicle'];
+
+        $orderPublicId = $order->public_id ?? $order->uuid ?? 'N/A';
+        $orderInternalId = $order->id ?? 'N/A';
+        $trackingNumber = $order->tracking_number ?? 'N/A';
+
+        $lines = [
+            "🕒 Scheduled: {$scheduledLocalFormatted} ({$scheduledUtcFormatted} UTC)",
+            "Future Limo Dispatch",
+            "────────────────────────────────────────",
+            "👤 Passenger: {$passengerName}",
+            "📞 Phone: {$passengerPhone}",
+            "✉️ Email: {$passengerEmail}",
+            "",
+            "📍 Pickup: {$cleanPickupAddress}",
+            "🏁 Dropoff: {$cleanDropoffAddress}",
+            "",
+            "🚗 Status: {$status} | Driver: {$driverName} | Vehicle: {$vehicleName}",
+            "────────────────────────────────────────",
+            "🆔 Order ID: {$orderPublicId}",
+            "🔢 Internal ID: {$orderInternalId}",
+            "📦 Tracking #: {$trackingNumber}",
+            "────────────────────────────────────────",
+        ];
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Format phone numbers nicely as standard US numbers.
+     *
+     * @param string|null $phone
+     * @return string
+     */
+    public static function formatPhone(?string $phone): string
+    {
+        if (empty($phone) || $phone === 'N/A') {
+            return 'N/A';
+        }
+
+        $cleaned = preg_replace('/[^0-9]/', '', $phone);
+        $length = strlen($cleaned);
+
+        if ($length === 10) {
+            return '(' . substr($cleaned, 0, 3) . ') ' . substr($cleaned, 3, 3) . '-' . substr($cleaned, 6);
+        } elseif ($length === 11 && $cleaned[0] === '1') {
+            return '+1 (' . substr($cleaned, 1, 3) . ') ' . substr($cleaned, 4, 3) . '-' . substr($cleaned, 7);
+        } elseif ($length > 10) {
+            return '+' . $cleaned;
+        }
+
+        return $phone;
+    }
+
+    /**
+     * Sanitize pickup and dropoff addresses.
+     *
+     * Strips "PICKUP LOCATION - ", "DROPOFF LOCATION - " and trailing ", UNITED STATES".
+     *
+     * @param string|null $address
+     * @return string
+     */
+    public static function sanitizeAddress(?string $address): string
+    {
+        if (empty($address) || $address === 'N/A') {
+            return 'N/A';
+        }
+
+        // Strip prefix
+        $address = preg_replace('/^(pickup|dropoff)\s*location\s*-\s*/i', '', $address);
+        
+        // Strip trailing ", UNITED STATES" (preserving coordinates and warning indicators)
+        $address = preg_replace('/,\s*united states\s*(\s*\(coordinates:.*?\))?(\s*⚠️.*)?$/i', '$1$2', $address);
+        $address = preg_replace('/,\s*united states\s*$/i', '', $address);
+
+        return trim($address);
     }
 
     /**

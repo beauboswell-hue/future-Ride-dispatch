@@ -73,10 +73,10 @@ export default class LayoutFleetOpsSidebarComponent extends Component {
             },
             {
                 priority: 3,
-                intl: 'menu.calendar',
                 title: 'Calendar',
                 icon: 'calendar',
-                route: 'operations.calendar',
+                route: 'console.calendar',
+                isAbsolute: true,
                 permission: 'fleet-ops list order',
                 visible: this.abilities.can('fleet-ops see order'),
             },

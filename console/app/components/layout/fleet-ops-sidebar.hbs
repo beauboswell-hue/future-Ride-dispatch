@@ -74,7 +74,7 @@
                     menuItem=menuItem
                     title=(if menuItem.intl (t menuItem.intl) menuItem.title)
                     onClick=menuItem.onClick
-                    route=(concat this.routePrefix menuItem.route)
+                    route=(if menuItem.isAbsolute menuItem.route (concat this.routePrefix menuItem.route))
                     icon=menuItem.icon
                     iconComponent=menuItem.iconComponent
                     iconComponentOptions=menuItem.iconComponentOptions
@@ -106,7 +106,7 @@
                 <Layout::Sidebar::Item
                     @onClick={{if menuItem._virtual (fn this.universe.transitionMenuItem (concat this.routePrefix "virtual") menuItem) menuItem.onClick}}
                     @menuItem={{menuItem}}
-                    @route={{if menuItem._virtual null (concat this.routePrefix menuItem.route)}}
+                    @route={{if menuItem._virtual null (if menuItem.isAbsolute menuItem.route (concat this.routePrefix menuItem.route))}}
                     @icon={{menuItem.icon}}
                     @iconComponent={{menuItem.iconComponent}}
                     @iconComponentOptions={{menuItem.iconComponentOptions}}

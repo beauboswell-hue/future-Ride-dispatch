@@ -192,22 +192,17 @@ class TestWebBookingNotes extends Command
 
         // 9. Verify Required Elements in Notes
         $checks = [
-            'Header: Contact Information' => str_contains($order->notes, '### 👤 Contact Information'),
-            'Customer Name'               => str_contains($order->notes, '• Name:'),
-            'Customer Phone'              => str_contains($order->notes, '• Phone:'),
-            'Customer Email'              => str_contains($order->notes, '• Email:'),
-            'Account Username'            => str_contains($order->notes, '• Account Username:'),
-            'Account Timezone'            => str_contains($order->notes, '• Account Timezone:'),
-            'Header: Ride Information'    => str_contains($order->notes, "### 📅 Ride Information (Order {$order->public_id})"),
-            'Scheduled Time: UTC'         => str_contains($order->notes, '- UTC:'),
-            'Scheduled Time: Local'       => str_contains($order->notes, '- Local Pickup Time:'),
-            'Scheduled Time: Eastern'     => str_contains($order->notes, '- Eastern Time:'),
-            'Locations: Pickup'           => str_contains($order->notes, '- Pickup:'),
-            'Locations: Dropoff'          => str_contains($order->notes, '- Dropoff:'),
-            'Status'                      => str_contains($order->notes, "• Status: {$order->status}"),
-            'Assigned Driver'             => str_contains($order->notes, '• Assigned Driver:'),
-            'Assigned Vehicle'            => str_contains($order->notes, '• Assigned Vehicle:'),
-            'Booking Notes / Source'      => str_contains($order->notes, '• Booking Notes / Source:'),
+            'Header: Future Limo Dispatch' => str_contains($order->notes, 'Future Limo Dispatch'),
+            'Scheduled Time'              => str_contains($order->notes, '🕒 Scheduled:'),
+            'Passenger Name'              => str_contains($order->notes, '👤 Passenger:'),
+            'Passenger Phone'             => str_contains($order->notes, '📞 Phone:'),
+            'Passenger Email'             => str_contains($order->notes, '✉️ Email:'),
+            'Locations: Pickup'           => str_contains($order->notes, '📍 Pickup:'),
+            'Locations: Dropoff'          => str_contains($order->notes, '🏁 Dropoff:'),
+            'Status & Assignment'         => str_contains($order->notes, '🚗 Status:'),
+            'Order ID'                    => str_contains($order->notes, '🆔 Order ID:'),
+            'Internal ID'                 => str_contains($order->notes, '🔢 Internal ID:'),
+            'Tracking Number'             => str_contains($order->notes, '📦 Tracking #:'),
         ];
 
         if ($isMatching) {
