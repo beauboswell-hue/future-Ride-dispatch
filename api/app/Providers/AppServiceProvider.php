@@ -13,7 +13,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind(
+            \Fleetbase\FleetOps\Http\Controllers\Api\v1\OrderController::class,
+            \App\Http\Controllers\OverriddenOrderController::class
+        );
     }
 
     /**
