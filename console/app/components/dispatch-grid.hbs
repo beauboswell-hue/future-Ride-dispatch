@@ -1,0 +1,296 @@
+<div class="dispatch-grid-wrapper flex flex-col h-full w-full bg-gray-950 text-gray-100 p-4 space-y-4">
+    {{!-- Top Toolbar --}}
+    <div class="dispatch-grid-toolbar flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-gray-900/90 border border-gray-800 rounded-xl p-3 shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                <FaIcon @icon="table-cells" class="text-base" />
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-base font-bold text-white tracking-wide">Dispatch Grid</h2>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        {{this.gridRows.length}} Orders
+                    </span>
+                </div>
+                <p class="text-xs text-gray-400">Live operational manifest &amp; dispatch status matrix</p>
+            </div>
+        </div>
+
+        {{!-- Search & Filters --}}
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <div class="relative flex-1 md:w-64">
+                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
+                    <FaIcon @icon="search" class="text-xs" />
+                </div>
+                <Input
+                    @type="text"
+                    @value={{this.searchQuery}}
+                    placeholder="Search passenger, driver, vehicle, ID..."
+                    class="form-input form-input-sm w-full pl-8 bg-gray-950/80 border-gray-700 text-gray-100 placeholder-gray-500 text-xs rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+                {{#if this.searchQuery}}
+                    <button
+                        type="button"
+                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-white text-xs"
+                        {{on "click" this.clearSearch}}
+                    >
+                        <FaIcon @icon="times-circle" />
+                    </button>
+                {{/if}}
+            </div>
+
+            {{!-- Quick Status Filter Tabs --}}
+            <div class="flex items-center bg-gray-950 p-0.5 rounded-lg border border-gray-800 text-xs">
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "all")}}
+                >
+                    All
+                </button>
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'draft') 'bg-gray-700 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "draft")}}
+                >
+                    Draft
+                </button>
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "dispatched")}}
+                >
+                    Dispatched
+                </button>
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'enroute') 'bg-amber-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "enroute")}}
+                >
+                    En Route
+                </button>
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'arrived') 'bg-purple-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "arrived")}}
+                >
+                    On Location
+                </button>
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'in_progress') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "in_progress")}}
+                >
+                    POB
+                </button>
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'conflict') 'bg-red-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "conflict")}}
+                >
+                    Conflicts
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{!-- Table Container --}}
+    <div class="dispatch-grid-table-container flex-1 overflow-x-auto overflow-y-auto rounded-xl border border-gray-800 bg-gray-900/60 shadow-xl custom-scrollbar">
+        <table class="w-full text-left border-collapse min-w-[1100px]">
+            <thead class="dispatch-grid-thead sticky top-0 z-10 bg-[#111827] border-b border-gray-700 shadow-md">
+                <tr class="bg-[#111827] border-b border-gray-700">
+                    <th class="dispatch-grid-th py-3.5 px-3.5 w-36 min-w-[140px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Order ID</th>
+                    <th class="dispatch-grid-th py-3.5 px-3.5 w-52 min-w-[180px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Passenger</th>
+                    <th class="dispatch-grid-th py-3.5 px-3.5 w-44 min-w-[160px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Vehicle</th>
+                    <th class="dispatch-grid-th py-3.5 px-3.5 w-52 min-w-[190px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Chauffeur</th>
+                    <th class="dispatch-grid-th py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Pickup</th>
+                    <th class="dispatch-grid-th py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Dropoff</th>
+                    <th class="dispatch-grid-th py-3.5 px-3.5 w-48 min-w-[170px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Flags &amp; Conflicts</th>
+                    <th class="dispatch-grid-th py-3.5 px-2 w-12 text-center bg-[#111827]"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800/60 text-sm">
+                {{#if this.gridRows.length}}
+                    {{#each this.gridRows as |item|}}
+                        <tr
+                            class="dispatch-grid-row {{item.rowClass}} transition-colors duration-150 cursor-pointer select-none"
+                            {{on "click" (fn this.onClickRow item.order)}}
+                        >
+                            {{!-- Column 1: Order ID --}}
+                            <td class="py-3 px-3.5 align-middle">
+                                <div class="flex flex-col">
+                                    <div class="font-mono font-bold text-white text-xs tracking-tight flex items-center space-x-1.5">
+                                        <span>{{item.orderInfo.id}}</span>
+                                    </div>
+                                    {{#if item.orderInfo.scheduledAt}}
+                                        <div class="text-[11px] text-gray-300 mt-0.5 flex items-center space-x-1">
+                                            <FaIcon @icon="clock" class="text-[10px] text-gray-400" />
+                                            <span>{{item.orderInfo.scheduledAt}}</span>
+                                        </div>
+                                    {{/if}}
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase {{item.statusBadgeClass}}">
+                                            {{item.orderInfo.statusTitle}}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            {{!-- Column 2: Passenger --}}
+                            <td class="py-3 px-3.5 align-middle">
+                                <div class="flex flex-col">
+                                    <div class="font-semibold text-white text-sm">
+                                        {{item.passenger.name}}
+                                    </div>
+                                    {{#if item.passenger.phone}}
+                                        <div class="text-xs text-gray-300 mt-0.5 flex items-center space-x-1">
+                                            <FaIcon @icon="phone" class="text-[10px] text-gray-400" />
+                                            <span>{{item.passenger.phone}}</span>
+                                        </div>
+                                    {{/if}}
+                                    {{#if item.passenger.note}}
+                                        <div class="text-[11px] text-gray-400 italic truncate max-w-xs mt-0.5" title={{item.passenger.note}}>
+                                            {{item.passenger.note}}
+                                        </div>
+                                    {{/if}}
+                                </div>
+                            </td>
+
+                            {{!-- Column 3: Vehicle --}}
+                            <td class="py-3 px-3.5 align-middle">
+                                <div class="flex flex-col">
+                                    {{#if item.vehicle.assigned}}
+                                        <div class="font-medium text-white text-xs">
+                                            {{item.vehicle.type}}
+                                        </div>
+                                        {{#if item.vehicle.plate}}
+                                            <div class="mt-1 inline-flex items-center px-1.5 py-0.5 rounded bg-gray-800/90 text-gray-200 border border-gray-700 font-mono text-[10px] font-semibold tracking-wider w-fit">
+                                                <FaIcon @icon="car" class="mr-1 text-[9px] text-gray-400" />
+                                                {{item.vehicle.plate}}
+                                            </div>
+                                        {{/if}}
+                                    {{else}}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-800/80 text-gray-400 border border-gray-700/60 w-fit">
+                                            <FaIcon @icon="car" class="mr-1 text-gray-500 text-[10px]" />
+                                            Unassigned
+                                        </span>
+                                    {{/if}}
+                                </div>
+                            </td>
+
+                            {{!-- Column 4: Chauffeur --}}
+                            <td class="py-3 px-3.5 align-middle">
+                                <div class="flex items-center space-x-2.5">
+                                    <img
+                                        src={{item.driver.avatar_url}}
+                                        alt={{item.driver.name}}
+                                        width="32"
+                                        height="32"
+                                        loading="lazy"
+                                        class="w-8 h-8 rounded-full flex-shrink-0 object-cover border border-gray-700 bg-gray-800 shadow-sm"
+                                        onerror="this.onerror=null;this.src='/images/no-avatar.png';"
+                                    />
+                                    <div class="flex flex-col min-w-0 truncate">
+                                        <div class="font-semibold text-white text-xs truncate">
+                                            {{item.driver.name}}
+                                        </div>
+                                        <div class="inline-flex items-center space-x-1.5 mt-0.5">
+                                            <span class="w-1.5 h-1.5 rounded-full {{item.driver.dotClass}} flex-shrink-0"></span>
+                                            <span class="text-[11px] font-medium {{item.driver.statusClass}} truncate">{{item.driver.status}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            {{!-- Column 5: Pickup --}}
+                            <td class="py-3 px-3.5 align-middle">
+                                <div class="flex items-start space-x-2">
+                                    <div class="mt-0.5 shrink-0 text-emerald-400">
+                                        <FaIcon @icon="map-marker-alt" class="text-xs" />
+                                    </div>
+                                    <div class="flex flex-col min-w-0">
+                                        {{#if item.pickup.name}}
+                                            <div class="font-semibold text-white text-xs truncate" title={{item.pickup.name}}>
+                                                {{item.pickup.name}}
+                                            </div>
+                                        {{/if}}
+                                        <div class="text-xs text-gray-300 line-clamp-2 leading-relaxed" title={{item.pickup.address}}>
+                                            {{item.pickup.address}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            {{!-- Column 6: Dropoff --}}
+                            <td class="py-3 px-3.5 align-middle">
+                                <div class="flex items-start space-x-2">
+                                    <div class="mt-0.5 shrink-0 text-red-400">
+                                        <FaIcon @icon="flag-checkered" class="text-xs" />
+                                    </div>
+                                    <div class="flex flex-col min-w-0">
+                                        {{#if item.dropoff.name}}
+                                            <div class="font-semibold text-white text-xs truncate" title={{item.dropoff.name}}>
+                                                {{item.dropoff.name}}
+                                            </div>
+                                        {{/if}}
+                                        <div class="text-xs text-gray-300 line-clamp-2 leading-relaxed" title={{item.dropoff.address}}>
+                                            {{item.dropoff.address}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            {{!-- Column 7: Flags & Conflicts --}}
+                            <td class="py-3 px-3.5 align-middle">
+                                <div class="flex flex-wrap gap-1 items-center">
+                                    {{#if item.flags.length}}
+                                        {{#each item.flags as |flag|}}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border {{flag.badgeClass}}">
+                                                <FaIcon @icon={{flag.icon}} class="mr-1 text-[9px]" />
+                                                {{flag.label}}
+                                            </span>
+                                        {{/each}}
+                                    {{else}}
+                                        <span class="text-xs text-gray-500 font-normal italic">
+                                            None
+                                        </span>
+                                    {{/if}}
+                                </div>
+                            </td>
+
+                            {{!-- Column 8: Actions --}}
+                            <td class="py-3 px-2 align-middle text-center" {{on "click" this.stopEventPropagation}}>
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition-colors border border-gray-700 shadow-sm"
+                                    title="View Order Details"
+                                    {{on "click" (fn this.onClickRow item.order)}}
+                                >
+                                    <FaIcon @icon="eye" class="text-xs" />
+                                </button>
+                            </td>
+                        </tr>
+                    {{/each}}
+                {{else}}
+                    <tr>
+                        <td colspan="8" class="py-16 text-center text-gray-400">
+                            <div class="flex flex-col items-center justify-center space-y-3">
+                                <div class="w-12 h-12 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-500">
+                                    <FaIcon @icon="table-cells" class="text-xl" />
+                                </div>
+                                <div class="text-sm font-semibold text-white">No active orders found in Dispatch Grid</div>
+                                <div class="text-xs text-gray-400 max-w-sm">
+                                    {{#if this.searchQuery}}
+                                        No orders matching "{{this.searchQuery}}". Try clearing the search filter.
+                                    {{else}}
+                                        All orders are completed or no orders match the selected status filter.
+                                    {{/if}}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                {{/if}}
+            </tbody>
+        </table>
+    </div>
+</div>

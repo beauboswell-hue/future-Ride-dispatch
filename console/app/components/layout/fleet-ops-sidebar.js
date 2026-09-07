@@ -55,6 +55,14 @@ export default class LayoutFleetOpsSidebarComponent extends Component {
             },
             {
                 priority: 1,
+                title: 'Dispatch Grid',
+                icon: 'table-cells',
+                route: 'operations.dispatch-grid',
+                permission: 'fleet-ops list order',
+                visible: this.abilities.can('fleet-ops see order'),
+            },
+            {
+                priority: 1,
                 intl: 'menu.orchestrator',
                 title: this.intl.t('menu.orchestrator'),
                 icon: 'circle-nodes',

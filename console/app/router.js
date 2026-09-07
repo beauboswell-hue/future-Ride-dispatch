@@ -46,6 +46,7 @@ Router.map(function () {
         this.route('home', { path: '/' });
         this.route('notifications');
         this.route('calendar');
+        this.route('dispatch-grid');
         this.route('account', function () {
             this.route('virtual', { path: '/:slug' });
             this.route('auth');
