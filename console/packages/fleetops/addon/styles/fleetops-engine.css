@@ -1858,6 +1858,38 @@ main.console-fleet-ops-operations-orders-index-index section.next-view-section >
     display: flex;
 }
 
+/* Kanban column header top accent colors to prevent Tailwind purging issues */
+.kanban-board .kanban-column[data-column-id="created"],
+.kanban-board .kanban-column[data-column-id="pending"],
+.kanban-board .kanban-column[data-column-id="unassigned"] {
+    border-top: 4px solid #94a3b8 !important; /* gray */
+}
+
+.kanban-board .kanban-column[data-column-id="dispatched"] {
+    border-top: 4px solid #8b5cf6 !important; /* purple */
+}
+
+.kanban-board .kanban-column[data-column-id="started"],
+.kanban-board .kanban-column[data-column-id="in_progress"],
+.kanban-board .kanban-column[data-column-id="in-progress"] {
+    border-top: 4px solid #3b82f6 !important; /* blue */
+}
+
+.kanban-board .kanban-column[data-column-id="enroute"],
+.kanban-board .kanban-column[data-column-id="driver_enroute"] {
+    border-top: 4px solid #f59e0b !important; /* amber */
+}
+
+.kanban-board .kanban-column[data-column-id="completed"] {
+    border-top: 4px solid #10b981 !important; /* green */
+}
+
+.kanban-board .kanban-column[data-column-id="canceled"],
+.kanban-board .kanban-column[data-column-id="cancelled"] {
+    border-top: 4px solid #ef4444 !important; /* red */
+}
+
+
 .next-view-section-subheader .next-view-section-subheader-actions .order-board-type-filter.ember-power-select-trigger.ember-basic-dropdown-trigger {
     height: 2rem;
     align-items: center;
@@ -4823,4 +4855,116 @@ body[data-theme='dark'] .next-google-container-map .fleetops-google-draw-actions
 
 .overflow-y-scroll-i {
     overflow-y: scroll !important;
+}
+
+/* Dispatch Grid Row & Status Badge Color Coding */
+.dispatch-grid-row[data-status="dispatched"] {
+    border-left: 4px solid #8b5cf6 !important; /* purple */
+    background-color: rgba(139, 92, 246, 0.08) !important;
+}
+.dispatch-grid-row[data-status="dispatched"]:hover {
+    background-color: rgba(139, 92, 246, 0.15) !important;
+}
+
+.dispatch-grid-row[data-status="enroute"],
+.dispatch-grid-row[data-status="enroute_pickup"],
+.dispatch-grid-row[data-status="driver_enroute"] {
+    border-left: 4px solid #f59e0b !important; /* amber */
+    background-color: rgba(245, 158, 11, 0.08) !important;
+}
+.dispatch-grid-row[data-status="enroute"]:hover,
+.dispatch-grid-row[data-status="enroute_pickup"]:hover,
+.dispatch-grid-row[data-status="driver_enroute"]:hover {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+.dispatch-grid-row[data-status="in_progress"],
+.dispatch-grid-row[data-status="started"],
+.dispatch-grid-row[data-status="pob"] {
+    border-left: 4px solid #3b82f6 !important; /* blue */
+    background-color: rgba(59, 130, 246, 0.08) !important;
+}
+.dispatch-grid-row[data-status="in_progress"]:hover,
+.dispatch-grid-row[data-status="started"]:hover,
+.dispatch-grid-row[data-status="pob"]:hover {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.dispatch-grid-row[data-status="on_location"],
+.dispatch-grid-row[data-status="arrived"] {
+    border-left: 4px solid #a855f7 !important; /* light purple */
+    background-color: rgba(168, 85, 247, 0.08) !important;
+}
+.dispatch-grid-row[data-status="on_location"]:hover,
+.dispatch-grid-row[data-status="arrived"]:hover {
+    background-color: rgba(168, 85, 247, 0.15) !important;
+}
+
+.dispatch-grid-row[data-status="completed"] {
+    border-left: 4px solid #10b981 !important; /* green */
+    background-color: rgba(16, 185, 129, 0.08) !important;
+}
+.dispatch-grid-row[data-status="completed"]:hover {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+.dispatch-grid-row[data-status="canceled"],
+.dispatch-grid-row[data-status="cancelled"] {
+    border-left: 4px solid #ef4444 !important; /* red */
+    background-color: rgba(239, 68, 68, 0.08) !important;
+}
+.dispatch-grid-row[data-status="canceled"]:hover,
+.dispatch-grid-row[data-status="cancelled"]:hover {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+.dispatch-grid-row[data-status="created"] {
+    border-left: 4px solid #94a3b8 !important; /* slate/gray */
+    background-color: rgba(148, 163, 184, 0.08) !important;
+}
+.dispatch-grid-row[data-status="created"]:hover {
+    background-color: rgba(148, 163, 184, 0.15) !important;
+}
+
+/* Dispatch Grid Status Badge Color Coding */
+.dispatch-grid-row span[data-status="dispatched"] {
+    background-color: rgba(139, 92, 246, 0.2) !important;
+    color: #c084fc !important;
+    border-color: rgba(139, 92, 246, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="enroute"],
+.dispatch-grid-row span[data-status="enroute_pickup"],
+.dispatch-grid-row span[data-status="driver_enroute"] {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    color: #fbd38d !important;
+    border-color: rgba(245, 158, 11, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="in_progress"],
+.dispatch-grid-row span[data-status="started"],
+.dispatch-grid-row span[data-status="pob"] {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    color: #93c5fd !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="on_location"],
+.dispatch-grid-row span[data-status="arrived"] {
+    background-color: rgba(168, 85, 247, 0.2) !important;
+    color: #d8b4fe !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="completed"] {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+    color: #6ee7b7 !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="canceled"],
+.dispatch-grid-row span[data-status="cancelled"] {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="created"] {
+    background-color: rgba(148, 163, 184, 0.2) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(148, 163, 184, 0.5) !important;
 }

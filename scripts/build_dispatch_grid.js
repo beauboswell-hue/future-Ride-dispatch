@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const compilerPath = require.resolve('ember-source/dist/ember-template-compiler.js', {
-    paths: ['/home/wert/fleetbase/console']
+    paths: ['/root/future-limo-dispatch/console']
 });
 const compiler = require(compilerPath);
 
@@ -125,6 +125,7 @@ const dispatchGridHbs = `<div class="dispatch-grid-wrapper flex flex-col h-full 
                     {{#each this.gridRows as |item|}}
                         <tr
                             class="dispatch-grid-row {{item.rowClass}} transition-colors duration-150 cursor-pointer select-none"
+                            data-status="{{item.order.status}}"
                             {{on "click" (fn this.onClickRow item.order)}}
                         >
                             {{!-- Column 1: Order ID --}}
@@ -140,7 +141,7 @@ const dispatchGridHbs = `<div class="dispatch-grid-wrapper flex flex-col h-full 
                                         </div>
                                     {{/if}}
                                     <div class="mt-1">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase {{item.statusBadgeClass}}">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase {{item.statusBadgeClass}}" data-status="{{item.order.status}}">
                                             {{item.orderInfo.statusTitle}}
                                         </span>
                                     </div>
@@ -482,14 +483,14 @@ console.log('✓ order/panel-header.hbs compiled');
 
 
 // Write source files in console/app & node_modules
-fs.mkdirSync('/home/wert/fleetbase/console/app/components', { recursive: true });
-fs.writeFileSync('/home/wert/fleetbase/console/app/components/dispatch-grid.hbs', dispatchGridHbs, 'utf-8');
+fs.mkdirSync('/root/future-limo-dispatch/console/app/components', { recursive: true });
+fs.writeFileSync('/root/future-limo-dispatch/console/app/components/dispatch-grid.hbs', dispatchGridHbs, 'utf-8');
 
-fs.mkdirSync('/home/wert/fleetbase/console/app/templates/console', { recursive: true });
-fs.writeFileSync('/home/wert/fleetbase/console/app/templates/console/dispatch-grid.hbs', `{{outlet}}`, 'utf-8');
+fs.mkdirSync('/root/future-limo-dispatch/console/app/templates/console', { recursive: true });
+fs.writeFileSync('/root/future-limo-dispatch/console/app/templates/console/dispatch-grid.hbs', `{{outlet}}`, 'utf-8');
 
-fs.mkdirSync('/home/wert/fleetbase/console/app/routes/console', { recursive: true });
-fs.writeFileSync('/home/wert/fleetbase/console/app/routes/console/dispatch-grid.js', `import Route from '@ember/routing/route';
+fs.mkdirSync('/root/future-limo-dispatch/console/app/routes/console', { recursive: true });
+fs.writeFileSync('/root/future-limo-dispatch/console/app/routes/console/dispatch-grid.js', `import Route from '@ember/routing/route';
 import { inject as service } from '@ember/service';
 
 export default class ConsoleDispatchGridRoute extends Route {
@@ -501,7 +502,7 @@ export default class ConsoleDispatchGridRoute extends Route {
 }
 `, 'utf-8');
 
-const nodeEngineDir = '/home/wert/fleetbase/console/node_modules/.pnpm/@fleetbase+fleetops-engine@0.6.49_b421113b8e787158f8d42852c5267750/node_modules/@fleetbase/fleetops-engine';
+const nodeEngineDir = '/root/future-limo-dispatch/console/packages/fleetops';
 fs.mkdirSync(path.join(nodeEngineDir, 'addon/components'), { recursive: true });
 fs.writeFileSync(path.join(nodeEngineDir, 'addon/components/dispatch-grid.hbs'), dispatchGridHbs, 'utf-8');
 fs.mkdirSync(path.join(nodeEngineDir, 'addon/templates/operations'), { recursive: true });
@@ -581,7 +582,7 @@ export default class OperationsDispatchGridController extends Controller {
 
 // Also update ember-ui smart-humanize
 try {
-    const nodeUiDir = fs.realpathSync('/home/wert/fleetbase/console/node_modules/@fleetbase/ember-ui');
+    const nodeUiDir = fs.realpathSync('/root/future-limo-dispatch/console/node_modules/@fleetbase/ember-ui');
     const smartHumanizePath = path.join(nodeUiDir, 'addon/utils/smart-humanize.js');
     let smartHumanizeSrc = fs.readFileSync(smartHumanizePath, 'utf-8');
     if (!smartHumanizeSrc.includes("typeof string === 'function'")) {
@@ -601,7 +602,7 @@ try {
 const engineRoutesPath = path.join(nodeEngineDir, 'addon/routes.js');
 let engineRoutesSrc = fs.readFileSync(engineRoutesPath, 'utf-8');
 if (!engineRoutesSrc.includes("'dispatch-grid'")) {
-    engineRoutesSrc = engineRoutesSrc.replace("this.route('calendar');", "this.route('calendar');\n        this.route('dispatch-grid', function () {});");
+    engineRoutesSrc = engineRoutesSrc.replace("this.route('calendar', function () {});", "this.route('calendar', function () {});\n        this.route('dispatch-grid', function () {});");
     fs.writeFileSync(engineRoutesPath, engineRoutesSrc, 'utf-8');
     console.log('✓ Updated fleetops-engine addon/routes.js');
 }
@@ -1073,7 +1074,7 @@ const operationsDispatchGridTemplateJs = `define("@fleetbase/fleetops-engine/tem
 `;
 
 // 5. Inject into console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js
-const engineJsPath = '/home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js';
+const engineJsPath = '/root/future-limo-dispatch/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js';
 let engineJs = fs.readFileSync(engineJsPath, 'utf-8');
 
 // Append definitions or replace if already present
@@ -1206,11 +1207,38 @@ if (phIdx !== -1 && phNextIdx !== -1) {
     console.log('✓ Updated order/panel-header in engine.js with guarded getters and clean template');
 }
 
+// 6c. Precompile and Update order/details/notes template in engine.js safely
+const notesHbsPath = '/root/future-limo-dispatch/console/packages/fleetops/addon/components/order/details/notes.hbs';
+if (fs.existsSync(notesHbsPath)) {
+    const notesHbs = fs.readFileSync(notesHbsPath, 'utf-8');
+    const notesCompiled = compiler.precompile(notesHbs, {
+        moduleName: '@fleetbase/fleetops-engine/components/order/details/notes.hbs'
+    });
+    const notesStartMarker = 'define("@fleetbase/fleetops-engine/components/order/details/notes",';
+    const notesIdx = engineJs.indexOf(notesStartMarker);
+    if (notesIdx !== -1) {
+        const templateFactoryMarker = 'const __COLOCATED_TEMPLATE__ = (0, _templateFactory.createTemplateFactory)(';
+        const tfIdx = engineJs.indexOf(templateFactoryMarker, notesIdx);
+        if (tfIdx !== -1) {
+            const moduleNameMarker = '"moduleName": "@fleetbase/fleetops-engine/components/order/details/notes.hbs"';
+            const modIdx = engineJs.indexOf(moduleNameMarker, tfIdx);
+            if (modIdx !== -1) {
+                const endOfTfIdx = engineJs.indexOf('});', modIdx);
+                if (endOfTfIdx !== -1) {
+                    const startToReplace = tfIdx + templateFactoryMarker.length;
+                    engineJs = engineJs.substring(0, startToReplace) + notesCompiled + engineJs.substring(endOfTfIdx + 1);
+                    console.log('✓ Compiled and updated order/details/notes template in engine.js safely!');
+                }
+            }
+        }
+    }
+}
+
 fs.writeFileSync(engineJsPath, engineJs, 'utf-8');
 console.log('✓ engine.js saved successfully');
 
 // 7. Update console/dist/assets/vendor.js route definition & guard smartHumanize
-const vendorJsPath = '/home/wert/fleetbase/console/dist/assets/vendor.js';
+const vendorJsPath = '/root/future-limo-dispatch/console/dist/assets/vendor.js';
 let vendorJs = fs.readFileSync(vendorJsPath, 'utf-8');
 
 const oldSmartHumanize = "function smartHumanize(string) {\n    if ((0, _utils.typeOf)(string) !== 'string') {\n      return string;\n    }";
@@ -1222,15 +1250,15 @@ if (vendorJs.includes(oldSmartHumanize)) {
 }
 
 if (!vendorJs.includes("this.route('dispatch-grid'")) {
-    const oldRoutes = "this.route('calendar');";
-    const newRoutes = "this.route('calendar');\n      this.route('dispatch-grid', function () {});";
+    const oldRoutes = "this.route('calendar', function () {});";
+    const newRoutes = "this.route('calendar', function () {});\n      this.route('dispatch-grid', function () {});";
     vendorJs = vendorJs.replace(oldRoutes, newRoutes);
     console.log('✓ Updated vendor.js route definition for dispatch-grid');
 }
 fs.writeFileSync(vendorJsPath, vendorJs, 'utf-8');
 
 // 8. Update console/dist/assets/@fleetbase/console.js
-const consoleJsPath = '/home/wert/fleetbase/console/dist/assets/@fleetbase/console.js';
+const consoleJsPath = '/root/future-limo-dispatch/console/dist/assets/@fleetbase/console.js';
 let consoleJs = fs.readFileSync(consoleJsPath, 'utf-8');
 
 // Add operationsItems menu in console.js
@@ -1331,7 +1359,7 @@ fs.writeFileSync(consoleJsPath, consoleJs, 'utf-8');
 console.log('✓ console.js saved successfully');
 
 // 9. Update fleet-ops-sidebar.js in console/app
-const sidebarJsPath = '/home/wert/fleetbase/console/app/components/layout/fleet-ops-sidebar.js';
+const sidebarJsPath = '/root/future-limo-dispatch/console/app/components/layout/fleet-ops-sidebar.js';
 let sidebarJs = fs.readFileSync(sidebarJsPath, 'utf-8');
 const oldSidebarOp = `{
                 priority: 0,
@@ -1366,7 +1394,7 @@ if (sidebarJs.includes(oldSidebarOp) && !sidebarJs.includes("title: 'Dispatch Gr
 }
 
 // 10. Update console/app/router.js
-const appRouterPath = '/home/wert/fleetbase/console/app/router.js';
+const appRouterPath = '/root/future-limo-dispatch/console/app/router.js';
 let appRouter = fs.readFileSync(appRouterPath, 'utf-8');
 if (!appRouter.includes("this.route('dispatch-grid');")) {
     appRouter = appRouter.replace("this.route('calendar');", "this.route('calendar');\n        this.route('dispatch-grid');");
@@ -1413,63 +1441,139 @@ const dispatchGridCss = `
 }
 
 /* 1. Unassigned / Draft: Slate / Dark Gray (#374151) */
-.dispatch-grid-row-draft {
+.dispatch-grid-row-draft,
+.dispatch-grid-row[data-status="created"] {
     border-left: 4px solid #374151 !important;
     background-color: rgba(55, 65, 81, 0.45) !important;
     color: #F9FAFB !important;
 }
-.dispatch-grid-row-draft:hover {
+.dispatch-grid-row-draft:hover,
+.dispatch-grid-row[data-status="created"]:hover {
     background-color: rgba(55, 65, 81, 0.70) !important;
 }
 
-/* 2. Assigned / Dispatched: Blue (#1D4ED8) */
-.dispatch-grid-row-dispatched {
-    border-left: 4px solid #1D4ED8 !important;
-    background-color: rgba(29, 78, 216, 0.35) !important;
+/* 2. Assigned / Dispatched: Blue (#1D4ED8) / Purple (#8b5cf6) */
+.dispatch-grid-row-dispatched,
+.dispatch-grid-row[data-status="dispatched"] {
+    border-left: 4px solid #8b5cf6 !important; /* purple */
+    background-color: rgba(139, 92, 246, 0.08) !important;
     color: #F9FAFB !important;
 }
-.dispatch-grid-row-dispatched:hover {
-    background-color: rgba(29, 78, 216, 0.55) !important;
+.dispatch-grid-row-dispatched:hover,
+.dispatch-grid-row[data-status="dispatched"]:hover {
+    background-color: rgba(139, 92, 246, 0.15) !important;
 }
 
-/* 3. En Route: Amber / Gold (#B45309) */
-.dispatch-grid-row-enroute {
-    border-left: 4px solid #B45309 !important;
-    background-color: rgba(180, 83, 9, 0.35) !important;
+/* 3. En Route: Amber / Gold (#f59e0b) */
+.dispatch-grid-row-enroute,
+.dispatch-grid-row[data-status="enroute"],
+.dispatch-grid-row[data-status="enroute_pickup"],
+.dispatch-grid-row[data-status="driver_enroute"] {
+    border-left: 4px solid #f59e0b !important; /* amber */
+    background-color: rgba(245, 158, 11, 0.08) !important;
     color: #F9FAFB !important;
 }
-.dispatch-grid-row-enroute:hover {
-    background-color: rgba(180, 83, 9, 0.55) !important;
+.dispatch-grid-row-enroute:hover,
+.dispatch-grid-row[data-status="enroute"]:hover,
+.dispatch-grid-row[data-status="enroute_pickup"]:hover,
+.dispatch-grid-row[data-status="driver_enroute"]:hover {
+    background-color: rgba(245, 158, 11, 0.15) !important;
 }
 
-/* 4. Staged / Arrived: Purple (#6D28D9) */
-.dispatch-grid-row-arrived {
-    border-left: 4px solid #6D28D9 !important;
-    background-color: rgba(109, 40, 217, 0.35) !important;
+/* 4. Staged / Arrived: Purple (#a855f7) */
+.dispatch-grid-row-arrived,
+.dispatch-grid-row[data-status="on_location"],
+.dispatch-grid-row[data-status="arrived"] {
+    border-left: 4px solid #a855f7 !important; /* light purple */
+    background-color: rgba(168, 85, 247, 0.08) !important;
     color: #F9FAFB !important;
 }
-.dispatch-grid-row-arrived:hover {
-    background-color: rgba(109, 40, 217, 0.55) !important;
+.dispatch-grid-row-arrived:hover,
+.dispatch-grid-row[data-status="on_location"]:hover,
+.dispatch-grid-row[data-status="arrived"]:hover {
+    background-color: rgba(168, 85, 247, 0.15) !important;
 }
 
-/* 5. Trip Active / In Progress: Emerald / Green (#047857) */
-.dispatch-grid-row-in-progress {
-    border-left: 4px solid #047857 !important;
-    background-color: rgba(4, 120, 87, 0.35) !important;
+/* 5. Trip Active / In Progress: Blue (#3b82f6) / Green (#10b981) */
+.dispatch-grid-row-in-progress,
+.dispatch-grid-row[data-status="in_progress"],
+.dispatch-grid-row[data-status="started"],
+.dispatch-grid-row[data-status="pob"] {
+    border-left: 4px solid #3b82f6 !important; /* blue */
+    background-color: rgba(59, 130, 246, 0.08) !important;
     color: #F9FAFB !important;
 }
-.dispatch-grid-row-in-progress:hover {
-    background-color: rgba(4, 120, 87, 0.55) !important;
+.dispatch-grid-row-in-progress:hover,
+.dispatch-grid-row[data-status="in_progress"]:hover,
+.dispatch-grid-row[data-status="started"]:hover,
+.dispatch-grid-row[data-status="pob"]:hover {
+    background-color: rgba(59, 130, 246, 0.15) !important;
 }
 
-/* 6. Flagged / Conflict: Crimson / Red (#B91C1C) */
-.dispatch-grid-row-conflict {
-    border-left: 4px solid #B91C1C !important;
-    background-color: rgba(185, 28, 28, 0.40) !important;
+.dispatch-grid-row[data-status="completed"] {
+    border-left: 4px solid #10b981 !important; /* green */
+    background-color: rgba(16, 185, 129, 0.08) !important;
     color: #F9FAFB !important;
 }
-.dispatch-grid-row-conflict:hover {
-    background-color: rgba(185, 28, 28, 0.60) !important;
+.dispatch-grid-row[data-status="completed"]:hover {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+/* 6. Flagged / Conflict: Crimson / Red (#ef4444) */
+.dispatch-grid-row-conflict,
+.dispatch-grid-row[data-status="canceled"],
+.dispatch-grid-row[data-status="cancelled"] {
+    border-left: 4px solid #ef4444 !important; /* red */
+    background-color: rgba(239, 68, 68, 0.08) !important;
+    color: #F9FAFB !important;
+}
+.dispatch-grid-row-conflict:hover,
+.dispatch-grid-row[data-status="canceled"]:hover,
+.dispatch-grid-row[data-status="cancelled"]:hover {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Dispatch Grid Status Badge Color Coding */
+.dispatch-grid-row span[data-status="dispatched"] {
+    background-color: rgba(139, 92, 246, 0.2) !important;
+    color: #c084fc !important;
+    border-color: rgba(139, 92, 246, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="enroute"],
+.dispatch-grid-row span[data-status="enroute_pickup"],
+.dispatch-grid-row span[data-status="driver_enroute"] {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    color: #fbd38d !important;
+    border-color: rgba(245, 158, 11, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="in_progress"],
+.dispatch-grid-row span[data-status="started"],
+.dispatch-grid-row span[data-status="pob"] {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    color: #93c5fd !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="on_location"],
+.dispatch-grid-row span[data-status="arrived"] {
+    background-color: rgba(168, 85, 247, 0.2) !important;
+    color: #d8b4fe !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="completed"] {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+    color: #6ee7b7 !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="canceled"],
+.dispatch-grid-row span[data-status="cancelled"] {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+}
+.dispatch-grid-row span[data-status="created"] {
+    background-color: rgba(148, 163, 184, 0.2) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(148, 163, 184, 0.5) !important;
 }
 
 /* Topbar Dispatch Grid Button */
@@ -1490,11 +1594,44 @@ const dispatchGridCss = `
     color: #FFFFFF;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
+
+/* ==========================================================================
+   Kanban Column Status Accent border-t-4 Colors
+   ========================================================================== */
+.kanban-board .kanban-column[data-column-id="created"],
+.kanban-board .kanban-column[data-column-id="pending"],
+.kanban-board .kanban-column[data-column-id="unassigned"] {
+    border-top: 4px solid #94a3b8 !important; /* gray */
+}
+
+.kanban-board .kanban-column[data-column-id="dispatched"] {
+    border-top: 4px solid #8b5cf6 !important; /* purple */
+}
+
+.kanban-board .kanban-column[data-column-id="started"],
+.kanban-board .kanban-column[data-column-id="in_progress"],
+.kanban-board .kanban-column[data-column-id="in-progress"] {
+    border-top: 4px solid #3b82f6 !important; /* blue */
+}
+
+.kanban-board .kanban-column[data-column-id="enroute"],
+.kanban-board .kanban-column[data-column-id="driver_enroute"] {
+    border-top: 4px solid #f59e0b !important; /* amber */
+}
+
+.kanban-board .kanban-column[data-column-id="completed"] {
+    border-top: 4px solid #10b981 !important; /* green */
+}
+
+.kanban-board .kanban-column[data-column-id="canceled"],
+.kanban-board .kanban-column[data-column-id="cancelled"] {
+    border-top: 4px solid #ef4444 !important; /* red */
+}
 `;
 
 const cssMarker = '/* ==========================================================================\\n   Dispatch Grid Table & Row Color Coding Styles';
 
-const engineCssPath = '/home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css';
+const engineCssPath = '/root/future-limo-dispatch/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css';
 let engineCss = fs.readFileSync(engineCssPath, 'utf-8');
 const engineCssIdx = engineCss.indexOf('/* ==========================================================================\\n   Dispatch Grid Table & Row Color Coding Styles');
 if (engineCssIdx !== -1) {
@@ -1505,7 +1642,7 @@ if (engineCssIdx !== -1) {
 fs.writeFileSync(engineCssPath, engineCss, 'utf-8');
 console.log('✓ Updated Dispatch Grid CSS in engine.css');
 
-const consoleCssPath = '/home/wert/fleetbase/console/dist/assets/@fleetbase/console.css';
+const consoleCssPath = '/root/future-limo-dispatch/console/dist/assets/@fleetbase/console.css';
 let consoleCss = fs.readFileSync(consoleCssPath, 'utf-8');
 const consoleCssIdx = consoleCss.indexOf('/* ==========================================================================\\n   Dispatch Grid Table & Row Color Coding Styles');
 if (consoleCssIdx !== -1) {
@@ -1517,16 +1654,16 @@ fs.writeFileSync(consoleCssPath, consoleCss, 'utf-8');
 console.log('✓ Updated Dispatch Grid CSS in console.css');
 
 
-// 12. Sync updated bundles to fleetbase-console-1 container
+// 12. Sync updated bundles to future-limo-dispatch-console-1 container
 try {
     const { execSync } = require('child_process');
-    console.log('--- Syncing updated bundles to fleetbase-console-1 ---');
-    execSync('docker cp /home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js fleetbase-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.js', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css fleetbase-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.css', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/dist/assets/vendor.js fleetbase-console-1:/usr/share/nginx/html/assets/vendor.js', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.js fleetbase-console-1:/usr/share/nginx/html/assets/@fleetbase/console.js', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.css fleetbase-console-1:/usr/share/nginx/html/assets/@fleetbase/console.css', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/public/images/no-avatar.png fleetbase-console-1:/usr/share/nginx/html/images/no-avatar.png', { stdio: 'inherit' });
+    console.log('--- Syncing updated bundles to future-limo-dispatch-console-1 ---');
+    execSync('docker cp /root/future-limo-dispatch/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js future-limo-dispatch-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.js', { stdio: 'inherit' });
+    execSync('docker cp /root/future-limo-dispatch/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css future-limo-dispatch-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.css', { stdio: 'inherit' });
+    execSync('docker cp /root/future-limo-dispatch/console/dist/assets/vendor.js future-limo-dispatch-console-1:/usr/share/nginx/html/assets/vendor.js', { stdio: 'inherit' });
+    execSync('docker cp /root/future-limo-dispatch/console/dist/assets/@fleetbase/console.js future-limo-dispatch-console-1:/usr/share/nginx/html/assets/@fleetbase/console.js', { stdio: 'inherit' });
+    execSync('docker cp /root/future-limo-dispatch/console/dist/assets/@fleetbase/console.css future-limo-dispatch-console-1:/usr/share/nginx/html/assets/@fleetbase/console.css', { stdio: 'inherit' });
+    execSync('docker cp /root/future-limo-dispatch/console/public/images/no-avatar.png future-limo-dispatch-console-1:/usr/share/nginx/html/images/no-avatar.png', { stdio: 'inherit' });
     console.log('✓ All assets synced to docker container successfully!');
 } catch (e) {
     console.error('Failed to sync to container:', e.message);
