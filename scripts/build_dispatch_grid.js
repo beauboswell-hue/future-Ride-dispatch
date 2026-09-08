@@ -50,56 +50,87 @@ const dispatchGridHbs = `<div class="dispatch-grid-wrapper flex flex-col h-full 
                 {{/if}}
             </div>
 
-            {{!-- Quick Status Filter Tabs --}}
-            <div class="flex items-center bg-gray-950 p-0.5 rounded-lg border border-gray-800 text-xs">
+            {{!-- Quick Status Filter Tabs (7-Step Limo Anywhere Pipeline) --}}
+            <div class="flex items-center bg-gray-950 p-0.5 rounded-lg border border-gray-800 text-xs overflow-x-auto">
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
                     {{on "click" (fn this.setStatusFilter "all")}}
                 >
-                    All
+                    <span>All</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'all') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.all}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'draft') 'bg-gray-700 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "draft")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'created') 'bg-gray-700 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "created")}}
                 >
-                    Draft
+                    <span>Created</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'created') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.created}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
                     {{on "click" (fn this.setStatusFilter "dispatched")}}
                 >
-                    Dispatched
+                    <span>Dispatched</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'dispatched') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.dispatched}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'enroute') 'bg-amber-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "enroute")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'enroute_pickup') 'bg-amber-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "enroute_pickup")}}
                 >
-                    En Route
+                    <span>En Route</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'enroute_pickup') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.enroute_pickup}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'arrived') 'bg-purple-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "arrived")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'on_location') 'bg-purple-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "on_location")}}
                 >
-                    On Location
+                    <span>On Location</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'on_location') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.on_location}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'in_progress') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "in_progress")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'pob') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "pob")}}
                 >
-                    POB
+                    <span>POB</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'pob') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.pob}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'conflict') 'bg-red-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "conflict")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'completed') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "completed")}}
                 >
-                    Conflicts
+                    <span>Completed</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'completed') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.completed}}
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'canceled') 'bg-red-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "canceled")}}
+                >
+                    <span>Canceled</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'canceled') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.canceled}}
+                    </span>
                 </button>
             </div>
         </div>
@@ -483,8 +514,10 @@ console.log('✓ order/panel-header.hbs compiled');
 
 
 // Write source files in console/app & node_modules
+const dispatchGridJsSrc = fs.readFileSync('/home/wert/fleetbase/console/packages/fleetops/addon/components/dispatch-grid.js', 'utf-8');
 fs.mkdirSync('/home/wert/fleetbase/console/app/components', { recursive: true });
 fs.writeFileSync('/home/wert/fleetbase/console/app/components/dispatch-grid.hbs', dispatchGridHbs, 'utf-8');
+fs.writeFileSync('/home/wert/fleetbase/console/app/components/dispatch-grid.js', "export { default } from '@fleetbase/fleetops-engine/components/dispatch-grid';\n", 'utf-8');
 
 fs.mkdirSync('/home/wert/fleetbase/console/app/templates/console', { recursive: true });
 fs.writeFileSync('/home/wert/fleetbase/console/app/templates/console/dispatch-grid.hbs', `{{outlet}}`, 'utf-8');
@@ -505,6 +538,7 @@ export default class ConsoleDispatchGridRoute extends Route {
 const nodeEngineDir = '/home/wert/fleetbase/console/packages/fleetops';
 fs.mkdirSync(path.join(nodeEngineDir, 'addon/components'), { recursive: true });
 fs.writeFileSync(path.join(nodeEngineDir, 'addon/components/dispatch-grid.hbs'), dispatchGridHbs, 'utf-8');
+fs.writeFileSync(path.join(nodeEngineDir, 'addon/components/dispatch-grid.js'), dispatchGridJsSrc, 'utf-8');
 fs.mkdirSync(path.join(nodeEngineDir, 'addon/templates/operations'), { recursive: true });
 fs.writeFileSync(path.join(nodeEngineDir, 'addon/templates/operations/dispatch-grid.hbs'), operationsDispatchGridHbs, 'utf-8');
 
@@ -661,6 +695,42 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
       return orders.toArray ? orders.toArray() : [];
     }
 
+    get statusCounts() {
+      const orders = this.orders;
+      const counts = {
+        all: orders.length,
+        created: 0,
+        dispatched: 0,
+        enroute_pickup: 0,
+        on_location: 0,
+        pob: 0,
+        completed: 0,
+        canceled: 0
+      };
+
+      for (let i = 0; i < orders.length; i++) {
+        const order = orders[i];
+        const st = (order.status || '').toLowerCase();
+        if (st === 'created' || st === 'draft' || st === 'pending' || st === 'unassigned') {
+          counts.created++;
+        } else if (st === 'dispatched') {
+          counts.dispatched++;
+        } else if (st === 'enroute_pickup' || st === 'enroute' || st === 'driver_enroute') {
+          counts.enroute_pickup++;
+        } else if (st === 'on_location' || st === 'arrived') {
+          counts.on_location++;
+        } else if (st === 'pob' || st === 'in_progress' || st === 'started') {
+          counts.pob++;
+        } else if (st === 'completed') {
+          counts.completed++;
+        } else if (st === 'canceled' || st === 'cancelled') {
+          counts.canceled++;
+        }
+      }
+
+      return counts;
+    }
+
     get filteredOrders() {
       let list = this.orders;
       if (this.searchQuery && this.searchQuery.trim()) {
@@ -680,14 +750,29 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
 
       if (this.statusFilter && this.statusFilter !== 'all') {
         list = list.filter(order => {
-          const st = order.status;
-          if (this.statusFilter === 'draft') return st === 'created' || !order.has_driver_assigned;
-          if (this.statusFilter === 'dispatched') return st === 'dispatched';
-          if (this.statusFilter === 'enroute') return st === 'enroute_pickup';
-          if (this.statusFilter === 'arrived') return st === 'on_location';
-          if (this.statusFilter === 'in_progress') return st === 'pob';
-          if (this.statusFilter === 'conflict') return this.hasConflict(order) || st === 'canceled';
-          return true;
+          const st = (order.status || '').toLowerCase();
+          if (this.statusFilter === 'created') {
+            return st === 'created' || st === 'draft' || st === 'pending' || st === 'unassigned';
+          }
+          if (this.statusFilter === 'dispatched') {
+            return st === 'dispatched';
+          }
+          if (this.statusFilter === 'enroute_pickup' || this.statusFilter === 'enroute') {
+            return st === 'enroute_pickup' || st === 'enroute' || st === 'driver_enroute';
+          }
+          if (this.statusFilter === 'on_location' || this.statusFilter === 'arrived') {
+            return st === 'on_location' || st === 'arrived';
+          }
+          if (this.statusFilter === 'pob' || this.statusFilter === 'in_progress') {
+            return st === 'pob' || st === 'in_progress' || st === 'started';
+          }
+          if (this.statusFilter === 'completed') {
+            return st === 'completed';
+          }
+          if (this.statusFilter === 'canceled' || this.statusFilter === 'cancelled') {
+            return st === 'canceled' || st === 'cancelled';
+          }
+          return st === this.statusFilter;
         });
       }
 
@@ -703,15 +788,22 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
     }
 
     getRowClass(order) {
-      if (this.hasConflict(order) || order.status === 'canceled') {
+      if (this.hasConflict(order) || order.status === 'canceled' || order.status === 'cancelled') {
         return 'dispatch-grid-row-conflict';
       }
       switch (order.status) {
+        case 'completed':
+          return 'dispatch-grid-row-completed';
         case 'pob':
+        case 'in_progress':
+        case 'started':
           return 'dispatch-grid-row-in-progress';
         case 'on_location':
+        case 'arrived':
           return 'dispatch-grid-row-arrived';
         case 'enroute_pickup':
+        case 'enroute':
+        case 'driver_enroute':
           return 'dispatch-grid-row-enroute';
         case 'dispatched':
           return 'dispatch-grid-row-dispatched';
@@ -725,15 +817,21 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
       switch (status) {
         case 'dispatched':
           return 'bg-blue-900/80 text-blue-200 border border-blue-500/60 shadow-sm';
+        case 'enroute':
         case 'enroute_pickup':
+        case 'driver_enroute':
           return 'bg-amber-900/80 text-amber-200 border border-amber-500/60 shadow-sm';
         case 'on_location':
+        case 'arrived':
           return 'bg-purple-900/80 text-purple-200 border border-purple-500/60 shadow-sm';
+        case 'in_progress':
+        case 'started':
         case 'pob':
           return 'bg-orange-900/80 text-orange-200 border border-orange-500/60 shadow-sm';
         case 'completed':
           return 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/60 shadow-sm';
         case 'canceled':
+        case 'cancelled':
           return 'bg-red-900/80 text-red-200 border border-red-500/60 shadow-sm';
         case 'created':
         default:
@@ -748,11 +846,17 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
       const statusTitles = {
         created: 'Created',
         dispatched: 'Dispatched',
+        enroute: 'En Route',
         enroute_pickup: 'En Route',
+        driver_enroute: 'En Route',
+        arrived: 'On Location',
         on_location: 'On Location',
-        pob: 'Passenger On Board',
+        in_progress: 'POB',
+        started: 'POB',
+        pob: 'POB',
         completed: 'Completed',
-        canceled: 'Canceled'
+        canceled: 'Canceled',
+        cancelled: 'Canceled'
       };
       const st = order.status || 'created';
       const statusTitle = statusTitles[st] || st;
@@ -801,18 +905,26 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
       let dotClass = 'bg-emerald-500';
       let statusClass = 'text-emerald-400 font-medium';
 
-      if (order.status === 'enroute_pickup') {
+      if (order.status === 'enroute_pickup' || order.status === 'enroute') {
         status = 'En Route';
         dotClass = 'bg-amber-400';
         statusClass = 'text-amber-300 font-medium';
-      } else if (order.status === 'on_location') {
+      } else if (order.status === 'on_location' || order.status === 'arrived') {
         status = 'On Location';
         dotClass = 'bg-purple-400';
         statusClass = 'text-purple-300 font-medium';
-      } else if (order.status === 'pob') {
-        status = 'In Progress';
+      } else if (order.status === 'pob' || order.status === 'in_progress') {
+        status = 'POB';
         dotClass = 'bg-emerald-400 animate-pulse';
         statusClass = 'text-emerald-300 font-medium';
+      } else if (order.status === 'completed') {
+        status = 'Completed';
+        dotClass = 'bg-emerald-500';
+        statusClass = 'text-emerald-400 font-medium';
+      } else if (order.status === 'canceled' || order.status === 'cancelled') {
+        status = 'Canceled';
+        dotClass = 'bg-red-500';
+        statusClass = 'text-red-400 font-medium';
       } else if (d?.online === false) {
         status = 'Offline';
         dotClass = 'bg-gray-500';
@@ -1550,11 +1662,13 @@ const dispatchGridCss = `
     background-color: rgba(59, 130, 246, 0.15) !important;
 }
 
+.dispatch-grid-row-completed,
 .dispatch-grid-row[data-status="completed"] {
     border-left: 4px solid #10b981 !important; /* green */
     background-color: rgba(16, 185, 129, 0.08) !important;
     color: #F9FAFB !important;
 }
+.dispatch-grid-row-completed:hover,
 .dispatch-grid-row[data-status="completed"]:hover {
     background-color: rgba(16, 185, 129, 0.15) !important;
 }

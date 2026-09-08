@@ -4973,10 +4973,12 @@ body[data-theme='dark'] .next-google-container-map .fleetops-google-draw-actions
     background-color: rgba(168, 85, 247, 0.15) !important;
 }
 
+.dispatch-grid-row-completed,
 .dispatch-grid-row[data-status="completed"] {
     border-left: 4px solid #10b981 !important; /* green */
     background-color: rgba(16, 185, 129, 0.08) !important;
 }
+.dispatch-grid-row-completed:hover,
 .dispatch-grid-row[data-status="completed"]:hover {
     background-color: rgba(16, 185, 129, 0.15) !important;
 }

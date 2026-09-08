@@ -151,19 +151,19 @@ async function main() {
         expression: `
             new Promise((resolve) => {
                 const tabs = Array.from(document.querySelectorAll('.dispatch-grid-toolbar button')).map(b => b.innerText.trim());
-                // Click "Draft" tab
-                const draftBtn = Array.from(document.querySelectorAll('.dispatch-grid-toolbar button')).find(b => b.innerText.trim() === 'Draft');
-                if (draftBtn) {
-                    draftBtn.click();
+                // Click "Created" tab
+                const createdBtn = Array.from(document.querySelectorAll('.dispatch-grid-toolbar button')).find(b => b.innerText.includes('Created'));
+                if (createdBtn) {
+                    createdBtn.click();
                     setTimeout(() => {
                         const filteredRows = document.querySelectorAll('.dispatch-grid-row').length;
                         // Click "All" tab to reset
-                        const allBtn = Array.from(document.querySelectorAll('.dispatch-grid-toolbar button')).find(b => b.innerText.trim() === 'All');
+                        const allBtn = Array.from(document.querySelectorAll('.dispatch-grid-toolbar button')).find(b => b.innerText.includes('All'));
                         if (allBtn) allBtn.click();
-                        resolve({ availableTabs: tabs, draftFilteredRows: filteredRows });
+                        resolve({ availableTabs: tabs, createdFilteredRows: filteredRows });
                     }, 500);
                 } else {
-                    resolve({ availableTabs: tabs, error: 'Draft tab not found' });
+                    resolve({ availableTabs: tabs, error: 'Created tab not found' });
                 }
             })
         `,

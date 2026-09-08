@@ -39,56 +39,87 @@
                 {{/if}}
             </div>
 
-            {{!-- Quick Status Filter Tabs --}}
-            <div class="flex items-center bg-gray-950 p-0.5 rounded-lg border border-gray-800 text-xs">
+            {{!-- Quick Status Filter Tabs (7-Step Limo Anywhere Pipeline) --}}
+            <div class="flex items-center bg-gray-950 p-0.5 rounded-lg border border-gray-800 text-xs overflow-x-auto">
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
                     {{on "click" (fn this.setStatusFilter "all")}}
                 >
-                    All
+                    <span>All</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'all') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.all}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'draft') 'bg-gray-700 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "draft")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'created') 'bg-gray-700 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "created")}}
                 >
-                    Draft
+                    <span>Created</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'created') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.created}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
                     {{on "click" (fn this.setStatusFilter "dispatched")}}
                 >
-                    Dispatched
+                    <span>Dispatched</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'dispatched') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.dispatched}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'enroute') 'bg-amber-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "enroute")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'enroute_pickup') 'bg-amber-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "enroute_pickup")}}
                 >
-                    En Route
+                    <span>En Route</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'enroute_pickup') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.enroute_pickup}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'arrived') 'bg-purple-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "arrived")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'on_location') 'bg-purple-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "on_location")}}
                 >
-                    On Location
+                    <span>On Location</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'on_location') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.on_location}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'in_progress') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "in_progress")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'pob') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "pob")}}
                 >
-                    POB
+                    <span>POB</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'pob') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.pob}}
+                    </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium {{if (eq this.statusFilter 'conflict') 'bg-red-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "conflict")}}
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'completed') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "completed")}}
                 >
-                    Conflicts
+                    <span>Completed</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'completed') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.completed}}
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'canceled') 'bg-red-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    {{on "click" (fn this.setStatusFilter "canceled")}}
+                >
+                    <span>Canceled</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'canceled') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                        {{this.statusCounts.canceled}}
+                    </span>
                 </button>
             </div>
         </div>
