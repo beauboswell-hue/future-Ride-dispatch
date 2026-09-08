@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const compilerPath = require.resolve('ember-source/dist/ember-template-compiler.js', {
-    paths: ['/root/future-limo-dispatch/console']
+    paths: ['/home/wert/fleetbase/console']
 });
 const compiler = require(compilerPath);
 
@@ -11,7 +11,7 @@ console.log('--- Compiling Dispatch Grid HBS Templates ---');
 // 1. Template for <DispatchGrid> component
 const dispatchGridHbs = `<div class="dispatch-grid-wrapper flex flex-col h-full w-full bg-gray-950 text-gray-100 p-4 space-y-4">
     {{!-- Top Toolbar --}}
-    <div class="dispatch-grid-toolbar flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-gray-900/90 border border-gray-800 rounded-xl p-3 shadow-lg">
+    <div class="dispatch-grid-toolbar flex-shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-gray-900/90 border border-gray-800 rounded-xl p-3 shadow-lg relative z-30">
         <div class="flex items-center space-x-3">
             <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30">
                 <FaIcon @icon="table-cells" class="text-base" />
@@ -106,25 +106,25 @@ const dispatchGridHbs = `<div class="dispatch-grid-wrapper flex flex-col h-full 
     </div>
 
     {{!-- Table Container --}}
-    <div class="dispatch-grid-table-container flex-1 overflow-x-auto overflow-y-auto rounded-xl border border-gray-800 bg-gray-900/60 shadow-xl custom-scrollbar">
+    <div class="dispatch-grid-table-container flex-1 min-h-0 overflow-x-auto overflow-y-auto rounded-xl border border-gray-800 bg-gray-900/60 shadow-xl custom-scrollbar relative z-10">
         <table class="w-full text-left border-collapse min-w-[1100px]">
-            <thead class="dispatch-grid-thead sticky top-0 z-10 bg-[#111827] border-b border-gray-700 shadow-md">
+            <thead class="dispatch-grid-thead sticky top-0 z-20 bg-[#111827] border-b border-gray-700 shadow-md">
                 <tr class="bg-[#111827] border-b border-gray-700">
-                    <th class="dispatch-grid-th py-3.5 px-3.5 w-36 min-w-[140px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Order ID</th>
-                    <th class="dispatch-grid-th py-3.5 px-3.5 w-52 min-w-[180px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Passenger</th>
-                    <th class="dispatch-grid-th py-3.5 px-3.5 w-44 min-w-[160px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Vehicle</th>
-                    <th class="dispatch-grid-th py-3.5 px-3.5 w-52 min-w-[190px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Chauffeur</th>
-                    <th class="dispatch-grid-th py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Pickup</th>
-                    <th class="dispatch-grid-th py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Dropoff</th>
-                    <th class="dispatch-grid-th py-3.5 px-3.5 w-48 min-w-[170px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Flags &amp; Conflicts</th>
-                    <th class="dispatch-grid-th py-3.5 px-2 w-12 text-center bg-[#111827]"></th>
+                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-36 min-w-[140px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Order ID</th>
+                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-52 min-w-[180px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Passenger</th>
+                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-44 min-w-[160px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Vehicle</th>
+                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-52 min-w-[190px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Chauffeur</th>
+                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Pickup</th>
+                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Dropoff</th>
+                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-48 min-w-[170px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Flags &amp; Conflicts</th>
+                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-2 w-12 text-center bg-[#111827]"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-800/60 text-sm">
+            <tbody class="divide-y divide-gray-800/60 text-sm relative z-1">
                 {{#if this.gridRows.length}}
                     {{#each this.gridRows as |item|}}
                         <tr
-                            class="dispatch-grid-row {{item.rowClass}} transition-colors duration-150 cursor-pointer select-none"
+                            class="dispatch-grid-row {{item.rowClass}} transition-colors duration-150 cursor-pointer select-none relative z-1"
                             data-status="{{item.order.status}}"
                             {{on "click" (fn this.onClickRow item.order)}}
                         >
@@ -422,7 +422,7 @@ const operationsOrdersIndexHbs = `<MapContainer::Topbar class="next-topbar-{{thi
 {{/if}}
 
 {{#if (eq this.layout "grid")}}
-    <div class="flex-1 overflow-hidden h-full">
+    <div class="dispatch-grid-container flex-1 overflow-hidden h-full pt-10">
         <DispatchGrid @orders={{@model}} @onOrderClick={{fn this.orderActions.transition.view}} />
     </div>
 {{/if}}
@@ -483,14 +483,14 @@ console.log('✓ order/panel-header.hbs compiled');
 
 
 // Write source files in console/app & node_modules
-fs.mkdirSync('/root/future-limo-dispatch/console/app/components', { recursive: true });
-fs.writeFileSync('/root/future-limo-dispatch/console/app/components/dispatch-grid.hbs', dispatchGridHbs, 'utf-8');
+fs.mkdirSync('/home/wert/fleetbase/console/app/components', { recursive: true });
+fs.writeFileSync('/home/wert/fleetbase/console/app/components/dispatch-grid.hbs', dispatchGridHbs, 'utf-8');
 
-fs.mkdirSync('/root/future-limo-dispatch/console/app/templates/console', { recursive: true });
-fs.writeFileSync('/root/future-limo-dispatch/console/app/templates/console/dispatch-grid.hbs', `{{outlet}}`, 'utf-8');
+fs.mkdirSync('/home/wert/fleetbase/console/app/templates/console', { recursive: true });
+fs.writeFileSync('/home/wert/fleetbase/console/app/templates/console/dispatch-grid.hbs', `{{outlet}}`, 'utf-8');
 
-fs.mkdirSync('/root/future-limo-dispatch/console/app/routes/console', { recursive: true });
-fs.writeFileSync('/root/future-limo-dispatch/console/app/routes/console/dispatch-grid.js', `import Route from '@ember/routing/route';
+fs.mkdirSync('/home/wert/fleetbase/console/app/routes/console', { recursive: true });
+fs.writeFileSync('/home/wert/fleetbase/console/app/routes/console/dispatch-grid.js', `import Route from '@ember/routing/route';
 import { inject as service } from '@ember/service';
 
 export default class ConsoleDispatchGridRoute extends Route {
@@ -502,7 +502,7 @@ export default class ConsoleDispatchGridRoute extends Route {
 }
 `, 'utf-8');
 
-const nodeEngineDir = '/root/future-limo-dispatch/console/packages/fleetops';
+const nodeEngineDir = '/home/wert/fleetbase/console/packages/fleetops';
 fs.mkdirSync(path.join(nodeEngineDir, 'addon/components'), { recursive: true });
 fs.writeFileSync(path.join(nodeEngineDir, 'addon/components/dispatch-grid.hbs'), dispatchGridHbs, 'utf-8');
 fs.mkdirSync(path.join(nodeEngineDir, 'addon/templates/operations'), { recursive: true });
@@ -582,7 +582,7 @@ export default class OperationsDispatchGridController extends Controller {
 
 // Also update ember-ui smart-humanize
 try {
-    const nodeUiDir = fs.realpathSync('/root/future-limo-dispatch/console/node_modules/@fleetbase/ember-ui');
+    const nodeUiDir = fs.realpathSync('/home/wert/fleetbase/console/node_modules/@fleetbase/ember-ui');
     const smartHumanizePath = path.join(nodeUiDir, 'addon/utils/smart-humanize.js');
     let smartHumanizeSrc = fs.readFileSync(smartHumanizePath, 'utf-8');
     if (!smartHumanizeSrc.includes("typeof string === 'function'")) {
@@ -1074,7 +1074,7 @@ const operationsDispatchGridTemplateJs = `define("@fleetbase/fleetops-engine/tem
 `;
 
 // 5. Inject into console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js
-const engineJsPath = '/root/future-limo-dispatch/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js';
+const engineJsPath = '/home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js';
 let engineJs = fs.readFileSync(engineJsPath, 'utf-8');
 
 // Append definitions or replace if already present
@@ -1208,7 +1208,7 @@ if (phIdx !== -1 && phNextIdx !== -1) {
 }
 
 // 6c. Precompile and Update order/details/notes template in engine.js safely
-const notesHbsPath = '/root/future-limo-dispatch/console/packages/fleetops/addon/components/order/details/notes.hbs';
+const notesHbsPath = '/home/wert/fleetbase/console/packages/fleetops/addon/components/order/details/notes.hbs';
 if (fs.existsSync(notesHbsPath)) {
     const notesHbs = fs.readFileSync(notesHbsPath, 'utf-8');
     const notesCompiled = compiler.precompile(notesHbs, {
@@ -1238,7 +1238,7 @@ fs.writeFileSync(engineJsPath, engineJs, 'utf-8');
 console.log('✓ engine.js saved successfully');
 
 // 7. Update console/dist/assets/vendor.js route definition & guard smartHumanize
-const vendorJsPath = '/root/future-limo-dispatch/console/dist/assets/vendor.js';
+const vendorJsPath = '/home/wert/fleetbase/console/dist/assets/vendor.js';
 let vendorJs = fs.readFileSync(vendorJsPath, 'utf-8');
 
 const oldSmartHumanize = "function smartHumanize(string) {\n    if ((0, _utils.typeOf)(string) !== 'string') {\n      return string;\n    }";
@@ -1258,7 +1258,7 @@ if (!vendorJs.includes("this.route('dispatch-grid'")) {
 fs.writeFileSync(vendorJsPath, vendorJs, 'utf-8');
 
 // 8. Update console/dist/assets/@fleetbase/console.js
-const consoleJsPath = '/root/future-limo-dispatch/console/dist/assets/@fleetbase/console.js';
+const consoleJsPath = '/home/wert/fleetbase/console/dist/assets/@fleetbase/console.js';
 let consoleJs = fs.readFileSync(consoleJsPath, 'utf-8');
 
 // Add operationsItems menu in console.js
@@ -1359,7 +1359,7 @@ fs.writeFileSync(consoleJsPath, consoleJs, 'utf-8');
 console.log('✓ console.js saved successfully');
 
 // 9. Update fleet-ops-sidebar.js in console/app
-const sidebarJsPath = '/root/future-limo-dispatch/console/app/components/layout/fleet-ops-sidebar.js';
+const sidebarJsPath = '/home/wert/fleetbase/console/app/components/layout/fleet-ops-sidebar.js';
 let sidebarJs = fs.readFileSync(sidebarJsPath, 'utf-8');
 const oldSidebarOp = `{
                 priority: 0,
@@ -1394,7 +1394,7 @@ if (sidebarJs.includes(oldSidebarOp) && !sidebarJs.includes("title: 'Dispatch Gr
 }
 
 // 10. Update console/app/router.js
-const appRouterPath = '/root/future-limo-dispatch/console/app/router.js';
+const appRouterPath = '/home/wert/fleetbase/console/app/router.js';
 let appRouter = fs.readFileSync(appRouterPath, 'utf-8');
 if (!appRouter.includes("this.route('dispatch-grid');")) {
     appRouter = appRouter.replace("this.route('calendar');", "this.route('calendar');\n        this.route('dispatch-grid');");
@@ -1408,15 +1408,46 @@ const dispatchGridCss = `
    Dispatch Grid Table & Row Color Coding Styles
    ========================================================================== */
 
-.dispatch-grid-wrapper {
-    min-height: calc(100vh - 120px);
+.dispatch-grid-container {
+    padding-top: 2.5rem !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
 }
 
-/* 0. Table Header Contrast & Separation */
+.dispatch-grid-wrapper {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.dispatch-grid-toolbar {
+    position: relative !important;
+    z-index: 30 !important;
+    flex-shrink: 0 !important;
+}
+
+.dispatch-grid-table-container {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+/* 0. Table Header Contrast, Sticky Pinned & Separation */
 .dispatch-grid-thead,
-.dispatch-grid-thead tr,
-.dispatch-grid-table-container thead,
-.dispatch-grid-table-container thead tr {
+.dispatch-grid-table-container thead {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
     background-color: #111827 !important;
     border-bottom: 1px solid #374151 !important;
 }
@@ -1424,6 +1455,9 @@ const dispatchGridCss = `
 .dispatch-grid-th,
 .dispatch-grid-thead th,
 .dispatch-grid-table-container thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
     background-color: #111827 !important;
     color: #F9FAFB !important;
     font-weight: 700 !important;
@@ -1435,9 +1469,15 @@ const dispatchGridCss = `
 }
 
 .dispatch-grid-row {
+    position: relative !important;
+    z-index: 1 !important;
     transition: background-color 0.15s ease, transform 0.1s ease;
     cursor: pointer;
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.next-map-container-topbar.next-topbar-grid {
+    z-index: 700 !important;
 }
 
 /* 1. Unassigned / Draft: Slate / Dark Gray (#374151) */
@@ -1631,7 +1671,7 @@ const dispatchGridCss = `
 
 const cssMarker = '/* ==========================================================================\\n   Dispatch Grid Table & Row Color Coding Styles';
 
-const engineCssPath = '/root/future-limo-dispatch/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css';
+const engineCssPath = '/home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css';
 let engineCss = fs.readFileSync(engineCssPath, 'utf-8');
 const engineCssIdx = engineCss.indexOf('/* ==========================================================================\\n   Dispatch Grid Table & Row Color Coding Styles');
 if (engineCssIdx !== -1) {
@@ -1642,7 +1682,7 @@ if (engineCssIdx !== -1) {
 fs.writeFileSync(engineCssPath, engineCss, 'utf-8');
 console.log('✓ Updated Dispatch Grid CSS in engine.css');
 
-const consoleCssPath = '/root/future-limo-dispatch/console/dist/assets/@fleetbase/console.css';
+const consoleCssPath = '/home/wert/fleetbase/console/dist/assets/@fleetbase/console.css';
 let consoleCss = fs.readFileSync(consoleCssPath, 'utf-8');
 const consoleCssIdx = consoleCss.indexOf('/* ==========================================================================\\n   Dispatch Grid Table & Row Color Coding Styles');
 if (consoleCssIdx !== -1) {
@@ -1654,16 +1694,16 @@ fs.writeFileSync(consoleCssPath, consoleCss, 'utf-8');
 console.log('✓ Updated Dispatch Grid CSS in console.css');
 
 
-// 12. Sync updated bundles to future-limo-dispatch-console-1 container
+// 12. Sync updated bundles to fleetbase-console-1 container
 try {
     const { execSync } = require('child_process');
-    console.log('--- Syncing updated bundles to future-limo-dispatch-console-1 ---');
-    execSync('docker cp /root/future-limo-dispatch/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js future-limo-dispatch-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.js', { stdio: 'inherit' });
-    execSync('docker cp /root/future-limo-dispatch/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css future-limo-dispatch-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.css', { stdio: 'inherit' });
-    execSync('docker cp /root/future-limo-dispatch/console/dist/assets/vendor.js future-limo-dispatch-console-1:/usr/share/nginx/html/assets/vendor.js', { stdio: 'inherit' });
-    execSync('docker cp /root/future-limo-dispatch/console/dist/assets/@fleetbase/console.js future-limo-dispatch-console-1:/usr/share/nginx/html/assets/@fleetbase/console.js', { stdio: 'inherit' });
-    execSync('docker cp /root/future-limo-dispatch/console/dist/assets/@fleetbase/console.css future-limo-dispatch-console-1:/usr/share/nginx/html/assets/@fleetbase/console.css', { stdio: 'inherit' });
-    execSync('docker cp /root/future-limo-dispatch/console/public/images/no-avatar.png future-limo-dispatch-console-1:/usr/share/nginx/html/images/no-avatar.png', { stdio: 'inherit' });
+    console.log('--- Syncing updated bundles to fleetbase-console-1 ---');
+    execSync('docker cp /home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js fleetbase-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.js', { stdio: 'inherit' });
+    execSync('docker cp /home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css fleetbase-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.css', { stdio: 'inherit' });
+    execSync('docker cp /home/wert/fleetbase/console/dist/assets/vendor.js fleetbase-console-1:/usr/share/nginx/html/assets/vendor.js', { stdio: 'inherit' });
+    execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.js fleetbase-console-1:/usr/share/nginx/html/assets/@fleetbase/console.js', { stdio: 'inherit' });
+    execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.css fleetbase-console-1:/usr/share/nginx/html/assets/@fleetbase/console.css', { stdio: 'inherit' });
+    execSync('docker cp /home/wert/fleetbase/console/public/images/no-avatar.png fleetbase-console-1:/usr/share/nginx/html/images/no-avatar.png', { stdio: 'inherit' });
     console.log('✓ All assets synced to docker container successfully!');
 } catch (e) {
     console.error('Failed to sync to container:', e.message);

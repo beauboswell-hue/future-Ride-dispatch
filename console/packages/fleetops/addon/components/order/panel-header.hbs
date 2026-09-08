@@ -15,8 +15,12 @@
                     {{/if}}
                 </div>
                 <div class="mt-1">
-                    <div class="text-xs text-gray-400 dark:text-gray-500">Date Created: {{@resource.createdAt}}</div>
-                    <div class="text-xs text-gray-400 dark:text-gray-500">Type: {{smart-humanize @resource.type}}</div>
+                    {{#if this.formattedCreatedAt}}
+                        <div class="text-xs text-gray-400 dark:text-gray-500">Date Created: {{this.formattedCreatedAt}}</div>
+                    {{/if}}
+                    {{#if this.formattedType}}
+                        <div class="text-xs text-gray-400 dark:text-gray-500">Type: {{smart-humanize this.formattedType}}</div>
+                    {{/if}}
                 </div>
             </div>
         </div>

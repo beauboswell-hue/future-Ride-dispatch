@@ -104,3 +104,77 @@ a.logo.navbar-logo img {
     border-radius: 6px !important;
     object-fit: contain !important;
 }
+
+/* ==========================================================================
+   Dispatch Grid Container, Header Pinned & Layering Styles
+   ========================================================================== */
+
+.dispatch-grid-container {
+    padding-top: 2.5rem !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.dispatch-grid-wrapper {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.dispatch-grid-toolbar {
+    position: relative !important;
+    z-index: 30 !important;
+    flex-shrink: 0 !important;
+}
+
+.dispatch-grid-table-container {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+/* 0. Table Header Contrast, Sticky Pinned & Separation */
+.dispatch-grid-thead,
+.dispatch-grid-table-container thead {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
+    background-color: #111827 !important;
+    border-bottom: 1px solid #374151 !important;
+}
+
+.dispatch-grid-th,
+.dispatch-grid-thead th,
+.dispatch-grid-table-container thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
+    background-color: #111827 !important;
+    color: #F9FAFB !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    border-bottom: 1px solid #374151 !important;
+}
+
+.dispatch-grid-row {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.next-map-container-topbar.next-topbar-grid {
+    z-index: 700 !important;
+}
+

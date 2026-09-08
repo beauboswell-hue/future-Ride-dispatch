@@ -1,0 +1,10 @@
+<Layout::Section::Header @title="Dispatch Grid">
+    <div class="flex items-center space-x-2">
+        <Button @text="Dashboard" @icon="home" @onClick={{transition-to "operations.orders.index"}} />
+        <Button @text="New Order" @icon="plus" @type="primary" @onClick={{this.orderActions.transition.create}} />
+    </div>
+</Layout::Section::Header>
+<Layout::Section::Body class="no-padding overflow-hidden h-full">
+    <DispatchGrid @orders={{@model}} @onOrderClick={{fn this.orderActions.transition.view}} />
+</Layout::Section::Body>
+{{outlet}}

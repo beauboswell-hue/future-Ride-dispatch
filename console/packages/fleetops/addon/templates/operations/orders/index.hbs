@@ -12,6 +12,7 @@
             >{{@model.meta.total}}</Badge>
         </button>
         <button type="button" id="ops-kanban-view-button" class="{{if (eq this.layout 'kanban') 'active'}}" {{on "click" (fn this.changeLayout "kanban")}}>{{t "common.board"}}</button>
+        <button type="button" id="ops-grid-view-button" class="{{if (eq this.layout 'grid') 'active'}} ops-grid-view-button" {{on "click" (fn this.changeLayout "grid")}}>Dispatch Grid</button>
     </MapContainer::ViewSwitch>
 </MapContainer::Topbar>
 
@@ -86,6 +87,12 @@
     <Layout::Section::Body>
         <Order::Kanban @orders={{@model}} @headerOffset={{160}} @orderConfig={{this.type}} />
     </Layout::Section::Body>
+{{/if}}
+
+{{#if (eq this.layout "grid")}}
+    <div class="dispatch-grid-container flex-1 overflow-hidden h-full pt-10">
+        <DispatchGrid @orders={{@model}} @onOrderClick={{fn this.orderActions.transition.view}} />
+    </div>
 {{/if}}
 
 {{outlet}}

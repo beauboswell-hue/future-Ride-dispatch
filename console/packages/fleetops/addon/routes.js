@@ -20,6 +20,7 @@ export default buildRoutes(function () {
             this.route('fleet-schedule');
         });
         this.route('calendar', function () {});
+        this.route('dispatch-grid', function () {});
         this.route('orders', { path: '/' }, function () {
             this.route('index', { path: '/' }, function () {
                 this.route('new');
