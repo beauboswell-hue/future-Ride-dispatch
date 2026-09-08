@@ -661,7 +661,7 @@ export default class OrchestratorWorkbenchComponent extends Component {
 
     get tileSourceUrl() {
         const isDark = document.documentElement.classList.contains('dark');
-        return isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+        return isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_32li_1_aa9e6424da513b1200464fad' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_32li_1_aa9e6424da513b1200464fad';
     }
 
     // ── Computed helpers ──────────────────────────────────────────────────────

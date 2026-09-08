@@ -28,7 +28,7 @@ export default class OrderTrackingLookupComponent extends Component {
     @tracked latitude;
     @tracked longitude;
     @tracked route;
-    @tracked tileSourceUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
+    @tracked tileSourceUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png?key=cb1_32li_1_aa9e6424da513b1200464fad';
 
     constructor() {
         super(...arguments);
