@@ -1346,6 +1346,17 @@ if (fs.existsSync(notesHbsPath)) {
     }
 }
 
+// 6d. Configure CARTO Basemaps API key in engine.js
+const cartoKey = 'cb1_32li_1_aa9e6424da513b1200464fad';
+function updateCartoUrls(content) {
+    return content.replace(
+        /https:\/\/\{s\}\.basemaps\.cartocdn\.com\/([a-zA-Z0-9_\/-]+)\/\{z\}\/\{x\}\/\{y\}(\{r\})?\.png(?!\?key=)/g,
+        (match, style, r) => `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}${r || ''}.png?key=${cartoKey}`
+    );
+}
+engineJs = updateCartoUrls(engineJs);
+console.log('✓ Configured CARTO Basemaps API key in engine.js');
+
 fs.writeFileSync(engineJsPath, engineJs, 'utf-8');
 console.log('✓ engine.js saved successfully');
 
@@ -1367,6 +1378,9 @@ if (!vendorJs.includes("this.route('dispatch-grid'")) {
     vendorJs = vendorJs.replace(oldRoutes, newRoutes);
     console.log('✓ Updated vendor.js route definition for dispatch-grid');
 }
+
+vendorJs = updateCartoUrls(vendorJs);
+console.log('✓ Configured CARTO Basemaps API key in vendor.js');
 fs.writeFileSync(vendorJsPath, vendorJs, 'utf-8');
 
 // 8. Update console/dist/assets/@fleetbase/console.js
@@ -1817,7 +1831,11 @@ try {
     execSync('docker cp /home/wert/fleetbase/console/dist/assets/vendor.js fleetbase-console-1:/usr/share/nginx/html/assets/vendor.js', { stdio: 'inherit' });
     execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.js fleetbase-console-1:/usr/share/nginx/html/assets/@fleetbase/console.js', { stdio: 'inherit' });
     execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.css fleetbase-console-1:/usr/share/nginx/html/assets/@fleetbase/console.css', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/public/images/no-avatar.png fleetbase-console-1:/usr/share/nginx/html/images/no-avatar.png', { stdio: 'inherit' });
+    try {
+        execSync('cat /home/wert/fleetbase/console/dist/fleetbase.config.json | docker exec -i fleetbase-console-1 sh -c "cat > /usr/share/nginx/html/fleetbase.config.json"', { stdio: 'inherit' });
+    } catch (cfgErr) {
+        console.warn('Note: Could not overwrite container fleetbase.config.json:', cfgErr.message);
+    }
     console.log('✓ All assets synced to docker container successfully!');
 } catch (e) {
     console.error('Failed to sync to container:', e.message);
