@@ -911,6 +911,14 @@ class OrderController extends FleetOpsController
                     ->whereNotNull('order_config_uuid')
                     ->distinct()
                     ->pluck('order_config_uuid');
+
+                // Fallback to transport order config if no order_config_uuid found on orders
+                if ($targetConfigUuids->isEmpty()) {
+                    $targetConfigUuids = DB::table('order_configs')
+                        ->where('company_uuid', $companyUuid)
+                        ->where('key', 'transport')
+                        ->pluck('uuid');
+                }
             }
 
             if ($targetConfigUuids->isNotEmpty()) {
@@ -927,6 +935,7 @@ class OrderController extends FleetOpsController
 
                     // Handle Collection/array gracefully
                     $codes = collect($activities)
+                        ->sortBy('sequence')
                         ->map(function ($activity) {
                             return data_get($activity, 'code');
                         })
@@ -939,12 +948,36 @@ class OrderController extends FleetOpsController
         }
 
         // ---------------------------------------
-        // Merge & return
+        // Merge & return in exact pipeline order
         // ---------------------------------------
-        $result = $orderStatuses
-            ->merge($activityCodes)
-            ->unique()
-            ->values();
+        $canonicalOrder = [
+            'created',
+            'dispatched',
+            'enroute_pickup',
+            'on_location',
+            'pob',
+            'completed',
+            'canceled',
+        ];
+
+        $merged = $activityCodes->isNotEmpty()
+            ? $activityCodes->merge($orderStatuses)
+            : $orderStatuses;
+
+        // Deduplicate and normalize: collapse 'enroute' to 'enroute_pickup' if 'enroute_pickup' exists
+        $hasEnroutePickup = $merged->contains('enroute_pickup');
+        $hasEnroute       = $merged->contains('enroute');
+        if ($hasEnroutePickup && $hasEnroute) {
+            $merged = $merged->reject(fn ($s) => $s === 'enroute');
+        }
+
+        $uniqueStatuses = $merged->unique()->values();
+
+        $canonicalMap = array_flip($canonicalOrder);
+        $result = $uniqueStatuses->sortBy(function ($status) use ($canonicalMap) {
+            $normalized = $status === 'enroute' ? 'enroute_pickup' : $status;
+            return $canonicalMap[$normalized] ?? 999;
+        })->values();
 
         return response()->json($result);
     }

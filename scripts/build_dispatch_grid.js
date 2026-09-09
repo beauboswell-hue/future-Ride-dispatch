@@ -107,7 +107,7 @@ const dispatchGridHbs = `<div class="dispatch-grid-wrapper flex flex-col h-full 
                     class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'pob') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
                     {{on "click" (fn this.setStatusFilter "pob")}}
                 >
-                    <span>POB</span>
+                    <span>POB (Passenger on Board)</span>
                     <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'pob') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
                         {{this.statusCounts.pob}}
                     </span>
@@ -851,9 +851,9 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
         driver_enroute: 'En Route',
         arrived: 'On Location',
         on_location: 'On Location',
-        in_progress: 'POB',
-        started: 'POB',
-        pob: 'POB',
+        in_progress: 'POB (Passenger on Board)',
+        started: 'POB (Passenger on Board)',
+        pob: 'POB (Passenger on Board)',
         completed: 'Completed',
         canceled: 'Canceled',
         cancelled: 'Canceled'
@@ -868,7 +868,7 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
       const phone = order.customer?.phone || order.customer_phone || '';
       let note = '';
       if (order.notes) {
-        const lines = order.notes.split('\\n').filter(l => !l.includes('Coordinates:') && !l.includes('Locations:'));
+        const lines = order.notes.split('\n').filter(l => !l.includes('Coordinates:') && !l.includes('Locations:'));
         note = lines.slice(0, 2).join(' ').trim();
       }
       return { name, phone, note };
@@ -914,7 +914,7 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
         dotClass = 'bg-purple-400';
         statusClass = 'text-purple-300 font-medium';
       } else if (order.status === 'pob' || order.status === 'in_progress') {
-        status = 'POB';
+        status = 'POB (Passenger on Board)';
         dotClass = 'bg-emerald-400 animate-pulse';
         statusClass = 'text-emerald-300 font-medium';
       } else if (order.status === 'completed') {

@@ -8,19 +8,19 @@ with open(engine_js_path, 'r', encoding='utf-8') as f:
 # Replace start statuses in constructor
 old_start = "start: ['created', 'dispatched', 'started']"
 new_start = "start: ['created', 'dispatched']"
-assert old_start in js_content, "old_start not found in engine.js"
-js_content = js_content.replace(old_start, new_start)
+if old_start in js_content:
+    js_content = js_content.replace(old_start, new_start)
 
 # Replace column title mapping
-old_title = "title: (0, _titleize.default)((0, _smartHumanize.default)(status))"
-new_title = "title: ({created:'Created',dispatched:'Dispatched',enroute_pickup:'En Route',on_location:'On Location',pob:'Passenger On Board',completed:'Completed',canceled:'Canceled'})[status] || (0, _titleize.default)((0, _smartHumanize.default)(status))"
-assert old_title in js_content, "old_title not found in engine.js"
-js_content = js_content.replace(old_title, new_title, 1)
+old_title = "title: ({created:'Created',dispatched:'Dispatched',enroute_pickup:'En Route',on_location:'On Location',pob:'Passenger On Board',completed:'Completed',canceled:'Canceled'})[status] || (0, _titleize.default)((0, _smartHumanize.default)(status))"
+new_title = "title: ({created:'Created',dispatched:'Dispatched',enroute_pickup:'En Route',enroute:'En Route',on_location:'On Location',pob:'POB (Passenger on Board)',completed:'Completed',canceled:'Canceled'})[status] || (0, _titleize.default)((0, _smartHumanize.default)(status))"
+if old_title in js_content:
+    js_content = js_content.replace(old_title, new_title, 1)
 
 with open(engine_js_path, 'w', encoding='utf-8') as f:
     f.write(js_content)
 
-print("Successfully patched console dist engine.js")
+print("Successfully checked console dist engine.js")
 
 # 2. Patch engine.css
 engine_css_path = '/home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css'

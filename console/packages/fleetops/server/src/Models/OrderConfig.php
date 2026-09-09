@@ -264,7 +264,7 @@ class OrderConfig extends Model
             $activities->push(new Activity($activity, $this->flow));
         }
 
-        return $activities;
+        return $activities->sortBy('sequence')->values();
     }
 
     /**

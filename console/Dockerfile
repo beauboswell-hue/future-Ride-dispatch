@@ -16,6 +16,7 @@ ENV PATH=/root/.pnpm/bin:$PATH
 
 # Copy package metadata first for better dependency caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages ./packages
 
 # Copy over .npmrc if applicable
 COPY .npmr[c] ./

@@ -96,7 +96,7 @@
                     class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'pob') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
                     {{on "click" (fn this.setStatusFilter "pob")}}
                 >
-                    <span>POB</span>
+                    <span>POB (Passenger on Board)</span>
                     <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'pob') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
                         {{this.statusCounts.pob}}
                     </span>

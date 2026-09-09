@@ -29,8 +29,8 @@ importers:
         specifier: ^0.1.33
         version: 0.1.33(@ember/string@3.1.1)(@ember/test-helpers@3.3.1(@babel/core@7.29.0)(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(webpack@5.106.2(postcss@8.5.14)))(ember-resolver@11.0.1(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14))))(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(eslint@8.57.1)(webpack@5.106.2(postcss@8.5.14))
       '@fleetbase/fleetops-engine':
-        specifier: ^0.6.49
-        version: 0.6.49(b421113b8e787158f8d42852c5267750)
+        specifier: link:./packages/fleetops
+        version: link:packages/fleetops
       '@fleetbase/iam-engine':
         specifier: ^0.1.9
         version: 0.1.9(b421113b8e787158f8d42852c5267750)
@@ -67,6 +67,27 @@ importers:
       '@fortawesome/ember-fontawesome':
         specifier: ^2.0.0
         version: 2.0.0(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(rollup@2.80.0)(webpack@5.106.2(postcss@8.5.14))
+      '@joint/core':
+        specifier: ^4.0.1
+        version: 4.2.4
+      '@joint/layout-directed-graph':
+        specifier: ^4.0.1
+        version: 4.2.3
+      '@stripe/connect-js':
+        specifier: ^3.3.10
+        version: 3.4.3
+      '@terraformer/spatial':
+        specifier: ^2.1.2
+        version: 2.2.1
+      '@turf/boolean-point-in-polygon':
+        specifier: ^7.2.0
+        version: 7.3.5
+      '@turf/helpers':
+        specifier: ^7.2.0
+        version: 7.3.5
+      '@zestia/ember-dragula':
+        specifier: ^12.0.0
+        version: 12.1.0(@babel/core@7.29.0)(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(webpack@5.106.2(postcss@8.5.14))
       ember-changeset:
         specifier: 4.1.2
         version: 4.1.2(ember-data@4.12.8(@babel/core@7.29.0)(@ember/string@3.1.1)(@glimmer/tracking@1.1.2)(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(webpack@5.106.2(postcss@8.5.14)))(webpack@5.106.2(postcss@8.5.14))
@@ -82,6 +103,9 @@ importers:
       ember-concurrency-decorators:
         specifier: ^2.0.3
         version: 2.0.3(@babel/core@7.29.0)
+      ember-drag-sort:
+        specifier: ^3.0.1
+        version: 3.0.1
       ember-intl:
         specifier: 6.3.2
         version: 6.3.2(@babel/core@7.29.0)(webpack@5.106.2(postcss@8.5.14))
@@ -103,6 +127,12 @@ importers:
       fleetbase-extensions-indexer:
         specifier: ^0.0.5
         version: 0.0.5
+      leaflet-contextmenu:
+        specifier: ^1.4.0
+        version: 1.4.0
+      leaflet-draw:
+        specifier: ^1.0.4
+        version: 1.0.4
       postcss-at-rules-variables:
         specifier: ^0.3.0
         version: 0.3.0(postcss@8.5.14)
@@ -112,6 +142,9 @@ importers:
       postcss-nth-list:
         specifier: ^1.0.2
         version: 1.0.2
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@babel/core':
         specifier: ^7.25.2
@@ -1561,12 +1594,6 @@ packages:
   '@fleetbase/fleetops-data@0.1.33':
     resolution: {integrity: sha512-uH52zftk0E8gK55hv3A2aNfrr0NRotbWjoj5TJgAsSR0RnmDh9ZXA1vrNfVyVImco/y6vNcNSr45+fipJYuAvQ==}
     engines: {node: '>= 18'}
-
-  '@fleetbase/fleetops-engine@0.6.49':
-    resolution: {integrity: sha512-8f6XJCPuLLp7GJ5tsK5QC0uvdMEXP+CId/aRKSnqNHdqszJzdRfYeRrSwYvZNr5OpQxSLpolMiSieNVjkebuiw==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      ember-engines: ^0.9.0
 
   '@fleetbase/iam-engine@0.1.9':
     resolution: {integrity: sha512-LnfCpJ3YBq1MnOOCMle3V5/pOTEIZ0bkfyD86C//5saA42WKSqlTnZUDkTH2IDenrbfcLEnLMVuVtGf3pfYKLQ==}
@@ -11033,76 +11060,6 @@ snapshots:
       - typescript
       - utf-8-validate
       - webpack
-
-  '@fleetbase/fleetops-engine@0.6.49(b421113b8e787158f8d42852c5267750)':
-    dependencies:
-      '@babel/core': 7.29.0
-      '@fleetbase/ember-core': 0.3.19(@ember/string@3.1.1)(@ember/test-helpers@3.3.1(@babel/core@7.29.0)(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(webpack@5.106.2(postcss@8.5.14)))(ember-resolver@11.0.1(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14))))(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(eslint@8.57.1)(webpack@5.106.2(postcss@8.5.14))
-      '@fleetbase/ember-ui': 0.3.31(@ember/test-helpers@3.3.1(@babel/core@7.29.0)(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(webpack@5.106.2(postcss@8.5.14)))(@glimmer/component@1.1.2(@babel/core@7.29.0))(@glimmer/tracking@1.1.2)(ember-resolver@11.0.1(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14))))(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(postcss@8.5.14)(rollup@2.80.0)(tracked-built-ins@3.4.0(@babel/core@7.29.0))(webpack@5.106.2(postcss@8.5.14))(yaml@2.8.4)
-      '@fleetbase/fleetops-data': 0.1.33(@ember/string@3.1.1)(@ember/test-helpers@3.3.1(@babel/core@7.29.0)(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(webpack@5.106.2(postcss@8.5.14)))(ember-resolver@11.0.1(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14))))(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(eslint@8.57.1)(webpack@5.106.2(postcss@8.5.14))
-      '@fleetbase/leaflet-routing-machine': 3.2.17
-      '@fortawesome/ember-fontawesome': 2.0.0(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(rollup@2.80.0)(webpack@5.106.2(postcss@8.5.14))
-      '@fortawesome/fontawesome-svg-core': 6.4.0
-      '@fortawesome/free-brands-svg-icons': 6.4.0
-      '@fortawesome/free-solid-svg-icons': 6.4.0
-      '@joint/core': 4.2.4
-      '@joint/layout-directed-graph': 4.2.3
-      '@stripe/connect-js': 3.4.3
-      '@terraformer/spatial': 2.2.1
-      '@turf/boolean-point-in-polygon': 7.3.5
-      '@turf/helpers': 7.3.5
-      '@zestia/ember-dragula': 12.1.0(@babel/core@7.29.0)(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))(webpack@5.106.2(postcss@8.5.14))
-      broccoli-funnel: 3.0.8
-      broccoli-merge-trees: 4.2.0
-      ember-auto-import: 2.13.1(webpack@5.106.2(postcss@8.5.14))
-      ember-cli-babel: 8.3.1(@babel/core@7.29.0)
-      ember-cli-htmlbars: 6.3.0
-      ember-drag-sort: 3.0.1
-      ember-engines: 0.9.0(@ember/legacy-built-in-components@0.4.2(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14))))(ember-source@5.4.1(@babel/core@7.29.0)(@glimmer/component@1.1.2(@babel/core@7.29.0))(rsvp@4.8.5)(webpack@5.106.2(postcss@8.5.14)))
-      ember-intl: 6.3.2(@babel/core@7.29.0)(webpack@5.106.2(postcss@8.5.14))
-      ember-maybe-in-element: 2.1.0
-      ember-radio-button: 3.0.0-beta.1(postcss@8.5.14)
-      ember-tag-input: 3.1.0
-      ember-wormhole: 0.6.1
-      leaflet-contextmenu: 1.4.0
-      leaflet-draw: 1.0.4
-      xlsx: 0.18.5
-    transitivePeerDependencies:
-      - '@ember/string'
-      - '@ember/test-helpers'
-      - '@glimmer/component'
-      - '@glimmer/tracking'
-      - '@glint/environment-ember-loose'
-      - '@glint/template'
-      - '@minify-html/node'
-      - '@swc/core'
-      - '@swc/css'
-      - '@swc/html'
-      - '@typescript-eslint/types'
-      - bufferutil
-      - clean-css
-      - cssnano
-      - csso
-      - ember-cli-mirage
-      - ember-resolver
-      - ember-source
-      - esbuild
-      - eslint
-      - html-minifier-terser
-      - lightningcss
-      - miragejs
-      - postcss
-      - rollup
-      - supports-color
-      - tracked-built-ins
-      - tsx
-      - typescript
-      - uglify-js
-      - utf-8-validate
-      - webpack
-      - webpack-cli
-      - webpack-command
-      - yaml
 
   '@fleetbase/iam-engine@0.1.9(b421113b8e787158f8d42852c5267750)':
     dependencies:

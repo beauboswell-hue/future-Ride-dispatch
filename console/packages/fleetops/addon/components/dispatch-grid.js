@@ -43,7 +43,7 @@ export default class DispatchGridComponent extends Component {
             on_location: 0,
             pob: 0,
             completed: 0,
-            canceled: 0
+            canceled: 0,
         };
 
         for (let i = 0; i < orders.length; i++) {
@@ -73,7 +73,7 @@ export default class DispatchGridComponent extends Component {
         let list = this.orders;
         if (this.searchQuery && this.searchQuery.trim()) {
             const q = this.searchQuery.trim().toLowerCase();
-            list = list.filter(order => {
+            list = list.filter((order) => {
                 const id = (order.public_id || '').toLowerCase();
                 const trk = (order.tracking || '').toLowerCase();
                 const cust = (order.customer?.name || order.customer_name || '').toLowerCase();
@@ -87,7 +87,7 @@ export default class DispatchGridComponent extends Component {
         }
 
         if (this.statusFilter && this.statusFilter !== 'all') {
-            list = list.filter(order => {
+            list = list.filter((order) => {
                 const st = (order.status || '').toLowerCase();
                 if (this.statusFilter === 'created') {
                     return st === 'created' || st === 'draft' || st === 'pending' || st === 'unassigned';
@@ -189,12 +189,12 @@ export default class DispatchGridComponent extends Component {
             driver_enroute: 'En Route',
             arrived: 'On Location',
             on_location: 'On Location',
-            in_progress: 'POB',
-            started: 'POB',
-            pob: 'POB',
+            in_progress: 'POB (Passenger on Board)',
+            started: 'POB (Passenger on Board)',
+            pob: 'POB (Passenger on Board)',
             completed: 'Completed',
             canceled: 'Canceled',
-            cancelled: 'Canceled'
+            cancelled: 'Canceled',
         };
         const st = order.status || 'created';
         const statusTitle = statusTitles[st] || st;
@@ -206,7 +206,7 @@ export default class DispatchGridComponent extends Component {
         const phone = order.customer?.phone || order.customer_phone || '';
         let note = '';
         if (order.notes) {
-            const lines = order.notes.split('\n').filter(l => !l.includes('Coordinates:') && !l.includes('Locations:'));
+            const lines = order.notes.split('\n').filter((l) => !l.includes('Coordinates:') && !l.includes('Locations:'));
             note = lines.slice(0, 2).join(' ').trim();
         }
         return { name, phone, note };
@@ -233,7 +233,7 @@ export default class DispatchGridComponent extends Component {
                 photoUrl: '/images/no-avatar.png',
                 status: 'Unassigned',
                 dotClass: 'bg-gray-500',
-                statusClass: 'text-gray-400 font-normal italic'
+                statusClass: 'text-gray-400 font-normal italic',
             };
         }
         const name = d?.name || order.driver_name || 'Assigned Driver';
@@ -252,7 +252,7 @@ export default class DispatchGridComponent extends Component {
             dotClass = 'bg-purple-400';
             statusClass = 'text-purple-300 font-medium';
         } else if (order.status === 'pob' || order.status === 'in_progress') {
-            status = 'POB';
+            status = 'POB (Passenger on Board)';
             dotClass = 'bg-emerald-400 animate-pulse';
             statusClass = 'text-emerald-300 font-medium';
         } else if (order.status === 'completed') {
@@ -277,7 +277,7 @@ export default class DispatchGridComponent extends Component {
             photoUrl: avatar_url,
             status,
             dotClass,
-            statusClass
+            statusClass,
         };
     }
 
@@ -305,7 +305,7 @@ export default class DispatchGridComponent extends Component {
                 type: 'conflict',
                 label: 'Conflict Alert',
                 icon: 'exclamation-triangle',
-                badgeClass: 'bg-red-900/80 text-red-200 border-red-500/60 shadow-sm'
+                badgeClass: 'bg-red-900/80 text-red-200 border-red-500/60 shadow-sm',
             });
         }
 
@@ -314,7 +314,7 @@ export default class DispatchGridComponent extends Component {
                 type: 'meet_greet',
                 label: 'Meet & Greet',
                 icon: 'user-tag',
-                badgeClass: 'bg-amber-900/80 text-amber-200 border-amber-500/60 shadow-sm'
+                badgeClass: 'bg-amber-900/80 text-amber-200 border-amber-500/60 shadow-sm',
             });
         }
 
@@ -323,7 +323,7 @@ export default class DispatchGridComponent extends Component {
                 type: 'vip',
                 label: 'VIP',
                 icon: 'crown',
-                badgeClass: 'bg-purple-900/80 text-purple-200 border-purple-500/60 shadow-sm'
+                badgeClass: 'bg-purple-900/80 text-purple-200 border-purple-500/60 shadow-sm',
             });
         }
 
@@ -332,20 +332,20 @@ export default class DispatchGridComponent extends Component {
                 type: 'airport',
                 label: 'Airport Transfer',
                 icon: 'plane',
-                badgeClass: 'bg-blue-900/80 text-blue-200 border-blue-500/60 shadow-sm'
+                badgeClass: 'bg-blue-900/80 text-blue-200 border-blue-500/60 shadow-sm',
             });
         }
 
         const tagMatch = (order.notes || '').match(/\[Tags:\s*([^\]]+)\]/i);
         if (tagMatch && tagMatch[1]) {
-            const rawTags = tagMatch[1].split(',').map(t => t.trim().toLowerCase());
+            const rawTags = tagMatch[1].split(',').map((t) => t.trim().toLowerCase());
             for (const t of rawTags) {
                 if (t === 'vip' || t === 'airport-transfer' || t === 'meet-greet') continue;
                 flags.push({
                     type: 'tag',
                     label: t.charAt(0).toUpperCase() + t.slice(1),
                     icon: 'tag',
-                    badgeClass: 'bg-gray-800 text-gray-200 border-gray-600 shadow-sm'
+                    badgeClass: 'bg-gray-800 text-gray-200 border-gray-600 shadow-sm',
                 });
             }
         }
@@ -354,7 +354,7 @@ export default class DispatchGridComponent extends Component {
     }
 
     get gridRows() {
-        return this.filteredOrders.map(order => ({
+        return this.filteredOrders.map((order) => ({
             order,
             rowClass: this.getRowClass(order),
             statusBadgeClass: this.getStatusBadgeClass(order.status),
@@ -364,7 +364,7 @@ export default class DispatchGridComponent extends Component {
             driver: this.getDriverInfo(order),
             pickup: this.getPickupInfo(order),
             dropoff: this.getDropoffInfo(order),
-            flags: this.getFlags(order)
+            flags: this.getFlags(order),
         }));
     }
 
