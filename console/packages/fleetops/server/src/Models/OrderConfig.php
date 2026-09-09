@@ -191,10 +191,21 @@ class OrderConfig extends Model
      *
      * @return string the type of the order config
      */
+    /**
+     * Accessor method for getting the activities collection.
+     *
+     * @return Collection
+     */
+    public function getActivitiesAttribute(): Collection
+    {
+        return $this->activities();
+    }
+
     public function getTypeAttribute()
     {
         return 'order-config';
     }
+
 
     /**
      * Sets the order context for the current order config.
@@ -291,7 +302,15 @@ class OrderConfig extends Model
             return $this->activities()->firstWhere('code', strtolower($context->status_code));
         }
 
-        return $this->activities()->firstWhere('code', $context->status);
+        $activity = $this->activities()->firstWhere('code', $context->status);
+        if (!$activity && $context->status === 'enroute_pickup') {
+            return $this->activities()->firstWhere('code', 'enroute');
+        }
+        if (!$activity && $context->status === 'enroute') {
+            return $this->activities()->firstWhere('code', 'enroute_pickup');
+        }
+
+        return $activity;
     }
 
     /**
