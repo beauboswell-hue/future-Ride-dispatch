@@ -4,6 +4,68 @@ import { inject as service } from '@ember/service';
 import { isArray } from '@ember/array';
 import { action } from '@ember/object';
 
+function getTodayDateString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function extractDateString(raw) {
+    if (!raw) return null;
+    if (raw instanceof Date) {
+        if (isNaN(raw.getTime())) return null;
+        const y = raw.getFullYear();
+        const m = String(raw.getMonth() + 1).padStart(2, '0');
+        const d = String(raw.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+    if (typeof raw === 'string') {
+        const trimmed = raw.trim();
+        if (trimmed.startsWith('0000-00-00')) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+            return trimmed;
+        }
+        if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(trimmed)) {
+            return trimmed.substring(0, 10);
+        }
+        const parsed = new Date(trimmed);
+        if (!isNaN(parsed.getTime())) {
+            const y = parsed.getFullYear();
+            const m = String(parsed.getMonth() + 1).padStart(2, '0');
+            const d = String(parsed.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        const match = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (match) return match[1];
+    }
+    return null;
+}
+
+function extractTime(raw) {
+    if (!raw) return null;
+    let d = null;
+    if (raw instanceof Date) {
+        d = isNaN(raw.getTime()) ? null : raw;
+    } else if (typeof raw === 'string') {
+        const trimmed = raw.trim();
+        if (trimmed.startsWith('0000-00-00')) return null;
+        const parsed = new Date(trimmed.includes(' ') ? trimmed.replace(' ', 'T') : trimmed);
+        if (!isNaN(parsed.getTime())) {
+            d = parsed;
+        }
+    }
+    if (!d) return null;
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const formattedHours = String(hours).padStart(2, '0');
+    return `${formattedHours}:${minutes} ${ampm}`;
+}
+
 const _driverAvatarCache = new Map();
 function _resolveDriverAvatar(d) {
     if (!d) return '/images/no-avatar.png';
@@ -24,6 +86,12 @@ export default class DispatchGridComponent extends Component {
 
     @tracked searchQuery = '';
     @tracked statusFilter = 'all';
+    @tracked dateFilterMode = 'today';
+    @tracked customSelectedDate = getTodayDateString();
+
+    get todayDateString() {
+        return getTodayDateString();
+    }
 
     get orders() {
         const orders = this.args.orders ?? [];
@@ -33,8 +101,46 @@ export default class DispatchGridComponent extends Component {
         return orders.toArray ? orders.toArray() : [];
     }
 
-    get statusCounts() {
+    getOrderDateString(order) {
+        if (!order) return null;
+        const scheduled = order.scheduled_at || order.scheduledAt;
+        const scheduledDate = extractDateString(scheduled);
+        if (scheduledDate) {
+            return scheduledDate;
+        }
+        const created = order.created_at || order.createdAt;
+        return extractDateString(created);
+    }
+
+    formatPickupTime(order) {
+        if (!order) return '--:--';
+        const scheduled = order.scheduled_at || order.scheduledAt;
+        const scheduledTime = extractTime(scheduled);
+        if (scheduledTime) {
+            return scheduledTime;
+        }
+        const created = order.created_at || order.createdAt;
+        const createdTime = extractTime(created);
+        return createdTime || '--:--';
+    }
+
+    get dateFilteredOrders() {
         const orders = this.orders;
+        if (this.dateFilterMode === 'all') {
+            return orders;
+        }
+        const targetDate = this.dateFilterMode === 'today' ? this.todayDateString : this.customSelectedDate;
+        if (!targetDate) {
+            return orders;
+        }
+        return orders.filter((order) => {
+            const orderDate = this.getOrderDateString(order);
+            return orderDate === targetDate;
+        });
+    }
+
+    get statusCounts() {
+        const orders = this.dateFilteredOrders;
         const counts = {
             all: orders.length,
             created: 0,
@@ -57,7 +163,7 @@ export default class DispatchGridComponent extends Component {
                 counts.enroute_pickup++;
             } else if (st === 'on_location' || st === 'arrived') {
                 counts.on_location++;
-            } else if (st === 'pob' || st === 'in_progress' || st === 'started') {
+            } else if (st === 'pob' || st === 'in_progress' || st === 'started' || st === 'passenger_on_board') {
                 counts.pob++;
             } else if (st === 'completed') {
                 counts.completed++;
@@ -70,7 +176,7 @@ export default class DispatchGridComponent extends Component {
     }
 
     get filteredOrders() {
-        let list = this.orders;
+        let list = this.dateFilteredOrders;
         if (this.searchQuery && this.searchQuery.trim()) {
             const q = this.searchQuery.trim().toLowerCase();
             list = list.filter((order) => {
@@ -95,14 +201,14 @@ export default class DispatchGridComponent extends Component {
                 if (this.statusFilter === 'dispatched') {
                     return st === 'dispatched';
                 }
-                if (this.statusFilter === 'enroute_pickup' || this.statusFilter === 'enroute') {
+                if (this.statusFilter === 'enroute_pickup' || this.statusFilter === 'enroute' || this.statusFilter === 'driver_enroute') {
                     return st === 'enroute_pickup' || st === 'enroute' || st === 'driver_enroute';
                 }
                 if (this.statusFilter === 'on_location' || this.statusFilter === 'arrived') {
                     return st === 'on_location' || st === 'arrived';
                 }
-                if (this.statusFilter === 'pob' || this.statusFilter === 'in_progress') {
-                    return st === 'pob' || st === 'in_progress' || st === 'started';
+                if (this.statusFilter === 'pob' || this.statusFilter === 'in_progress' || this.statusFilter === 'passenger_on_board') {
+                    return st === 'pob' || st === 'in_progress' || st === 'started' || st === 'passenger_on_board';
                 }
                 if (this.statusFilter === 'completed') {
                     return st === 'completed';
@@ -135,6 +241,7 @@ export default class DispatchGridComponent extends Component {
             case 'pob':
             case 'in_progress':
             case 'started':
+            case 'passenger_on_board':
                 return 'dispatch-grid-row-in-progress';
             case 'on_location':
             case 'arrived':
@@ -151,54 +258,69 @@ export default class DispatchGridComponent extends Component {
         }
     }
 
-    getStatusBadgeClass(status) {
-        switch (status) {
+    getStatusBadge(status) {
+        const st = (status || '').toLowerCase();
+        switch (st) {
             case 'dispatched':
-                return 'bg-blue-900/80 text-blue-200 border border-blue-500/60 shadow-sm';
+                return {
+                    title: 'Dispatched',
+                    class: 'bg-blue-900/80 text-blue-200 border border-blue-500/60 shadow-sm',
+                };
             case 'enroute':
             case 'enroute_pickup':
             case 'driver_enroute':
-                return 'bg-amber-900/80 text-amber-200 border border-amber-500/60 shadow-sm';
+                return {
+                    title: 'En Route',
+                    class: 'bg-amber-900/80 text-amber-200 border border-amber-500/60 shadow-sm',
+                };
             case 'on_location':
             case 'arrived':
-                return 'bg-purple-900/80 text-purple-200 border border-purple-500/60 shadow-sm';
+                return {
+                    title: 'On Location',
+                    class: 'bg-purple-900/80 text-purple-200 border border-purple-500/60 shadow-sm',
+                };
+            case 'pob':
+            case 'passenger_on_board':
             case 'in_progress':
             case 'started':
-            case 'pob':
-                return 'bg-orange-900/80 text-orange-200 border border-orange-500/60 shadow-sm';
+                return {
+                    title: 'POB',
+                    class: 'bg-orange-900/80 text-orange-200 border border-orange-500/60 shadow-sm',
+                };
             case 'completed':
-                return 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/60 shadow-sm';
+                return {
+                    title: 'Completed',
+                    class: 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/60 shadow-sm',
+                };
             case 'canceled':
             case 'cancelled':
-                return 'bg-red-900/80 text-red-200 border border-red-500/60 shadow-sm';
+                return {
+                    title: 'Canceled',
+                    class: 'bg-red-900/80 text-red-200 border border-red-500/60 shadow-sm',
+                };
             case 'created':
+            case 'draft':
+            case 'pending':
+            case 'unassigned':
             default:
-                return 'bg-gray-800 text-gray-200 border border-gray-600 shadow-sm';
+                return {
+                    title: 'Created',
+                    class: 'bg-gray-800 text-gray-200 border border-gray-600 shadow-sm',
+                };
         }
+    }
+
+    getStatusBadgeClass(status) {
+        return this.getStatusBadge(status).class;
     }
 
     getOrderInfo(order) {
         const id = order.public_id || order.id || 'N/A';
         const internalId = order.internal_id || order.tracking || '';
         const scheduledAt = order.scheduled_at_formatted || order.scheduled_at || order.createdAtShort || '';
-        const statusTitles = {
-            created: 'Created',
-            dispatched: 'Dispatched',
-            enroute: 'En Route',
-            enroute_pickup: 'En Route',
-            driver_enroute: 'En Route',
-            arrived: 'On Location',
-            on_location: 'On Location',
-            in_progress: 'POB (Passenger on Board)',
-            started: 'POB (Passenger on Board)',
-            pob: 'POB (Passenger on Board)',
-            completed: 'Completed',
-            canceled: 'Canceled',
-            cancelled: 'Canceled',
-        };
         const st = order.status || 'created';
-        const statusTitle = statusTitles[st] || st;
-        return { id, internalId, scheduledAt, status: st, statusTitle };
+        const statusBadge = this.getStatusBadge(st);
+        return { id, internalId, scheduledAt, status: st, statusTitle: statusBadge.title };
     }
 
     getPassengerInfo(order) {
@@ -210,6 +332,19 @@ export default class DispatchGridComponent extends Component {
             note = lines.slice(0, 2).join(' ').trim();
         }
         return { name, phone, note };
+    }
+
+    getRouteInfo(order) {
+        const p = order.payload?.pickup;
+        const d = order.payload?.dropoff;
+        const pickupName = p?.name || order.pickup_name || p?.address || p?.street1 || 'Unspecified Pickup';
+        const dropoffName = d?.name || order.dropoff_name || d?.address || d?.street1 || 'Unspecified Dropoff';
+        const text = `${pickupName} ➔ ${dropoffName}`;
+        return {
+            pickup: pickupName,
+            dropoff: dropoffName,
+            text,
+        };
     }
 
     getVehicleInfo(order) {
@@ -251,10 +386,10 @@ export default class DispatchGridComponent extends Component {
             status = 'On Location';
             dotClass = 'bg-purple-400';
             statusClass = 'text-purple-300 font-medium';
-        } else if (order.status === 'pob' || order.status === 'in_progress') {
-            status = 'POB (Passenger on Board)';
-            dotClass = 'bg-emerald-400 animate-pulse';
-            statusClass = 'text-emerald-300 font-medium';
+        } else if (order.status === 'pob' || order.status === 'in_progress' || order.status === 'passenger_on_board') {
+            status = 'POB';
+            dotClass = 'bg-orange-400 animate-pulse';
+            statusClass = 'text-orange-300 font-medium';
         } else if (order.status === 'completed') {
             status = 'Completed';
             dotClass = 'bg-emerald-500';
@@ -336,20 +471,6 @@ export default class DispatchGridComponent extends Component {
             });
         }
 
-        const tagMatch = (order.notes || '').match(/\[Tags:\s*([^\]]+)\]/i);
-        if (tagMatch && tagMatch[1]) {
-            const rawTags = tagMatch[1].split(',').map((t) => t.trim().toLowerCase());
-            for (const t of rawTags) {
-                if (t === 'vip' || t === 'airport-transfer' || t === 'meet-greet') continue;
-                flags.push({
-                    type: 'tag',
-                    label: t.charAt(0).toUpperCase() + t.slice(1),
-                    icon: 'tag',
-                    badgeClass: 'bg-gray-800 text-gray-200 border-gray-600 shadow-sm',
-                });
-            }
-        }
-
         return flags;
     }
 
@@ -357,15 +478,32 @@ export default class DispatchGridComponent extends Component {
         return this.filteredOrders.map((order) => ({
             order,
             rowClass: this.getRowClass(order),
+            formattedTime: this.formatPickupTime(order),
+            statusBadge: this.getStatusBadge(order.status),
             statusBadgeClass: this.getStatusBadgeClass(order.status),
             orderInfo: this.getOrderInfo(order),
             passenger: this.getPassengerInfo(order),
+            route: this.getRouteInfo(order),
             vehicle: this.getVehicleInfo(order),
             driver: this.getDriverInfo(order),
             pickup: this.getPickupInfo(order),
             dropoff: this.getDropoffInfo(order),
             flags: this.getFlags(order),
         }));
+    }
+
+    @action
+    setDateMode(mode) {
+        this.dateFilterMode = mode;
+    }
+
+    @action
+    onCustomDateChange(event) {
+        const val = event?.target?.value || event;
+        if (val) {
+            this.customSelectedDate = val;
+            this.dateFilterMode = 'custom';
+        }
     }
 
     @action
@@ -379,12 +517,17 @@ export default class DispatchGridComponent extends Component {
     }
 
     @action
-    onClickRow(order) {
+    openOrderDetails(order) {
         if (typeof this.args.onOrderClick === 'function') {
             this.args.onOrderClick(order);
         } else if (this.orderActions?.transition?.view) {
             this.orderActions.transition.view(order);
         }
+    }
+
+    @action
+    onClickRow(order) {
+        return this.openOrderDetails(order);
     }
 
     @action
