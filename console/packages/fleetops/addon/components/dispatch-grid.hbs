@@ -1,18 +1,18 @@
-<div class="dispatch-grid-wrapper flex flex-col h-full w-full bg-gray-950 text-gray-100 p-4 space-y-4">
+<div class="dispatch-grid-wrapper flex flex-col h-full w-full bg-white text-gray-900 p-4 space-y-4">
     {{!-- Top Toolbar --}}
-    <div class="dispatch-grid-toolbar flex-shrink-0 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 bg-gray-900/90 border border-gray-800 rounded-xl p-3 shadow-lg relative z-30">
+    <div class="dispatch-grid-toolbar flex-shrink-0 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 bg-white border border-gray-200 rounded-xl p-3 shadow-sm relative z-30">
         <div class="flex items-center space-x-3">
-            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30">
+            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50 text-blue-600 border border-blue-200">
                 <FaIcon @icon="table-cells" class="text-base" />
             </div>
             <div>
                 <div class="flex items-center space-x-2">
-                    <h2 class="text-base font-bold text-white tracking-wide">Dispatch Grid</h2>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    <h2 class="text-base font-bold text-gray-900 tracking-wide">Dispatch Grid</h2>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                         {{this.gridRows.length}} Orders
                     </span>
                 </div>
-                <p class="text-xs text-gray-400">Live operational manifest &amp; dispatch status matrix</p>
+                <p class="text-xs text-gray-500">Live operational manifest &amp; dispatch status matrix</p>
             </div>
         </div>
 
@@ -27,12 +27,12 @@
                     @type="text"
                     @value={{this.searchQuery}}
                     placeholder="Search passenger, driver..."
-                    class="form-input form-input-sm w-full pl-8 bg-gray-950/80 border-gray-700 text-gray-100 placeholder-gray-500 text-xs rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    class="form-input form-input-sm w-full pl-8 bg-white border-gray-300 text-gray-900 placeholder-gray-400 text-xs rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
                 {{#if this.searchQuery}}
                     <button
                         type="button"
-                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-white text-xs"
+                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 text-xs"
                         {{on "click" this.clearSearch}}
                     >
                         <FaIcon @icon="times-circle" />
@@ -41,94 +41,94 @@
             </div>
 
             {{!-- Quick Status Filter Tabs (7 Canonical Stages) --}}
-            <div class="flex items-center bg-gray-950 p-0.5 rounded-lg border border-gray-800 text-xs overflow-x-auto">
+            <div class="flex items-center bg-gray-100 p-0.5 rounded-lg border border-gray-200 text-xs overflow-x-auto">
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "all")}}
                 >
                     <span>All</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'all') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'all') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.all}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'created') 'bg-gray-700 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'created') 'bg-gray-700 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "created")}}
                 >
                     <span>Created</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'created') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'created') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.created}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "dispatched")}}
                 >
                     <span>Dispatched</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'dispatched') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'dispatched') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.dispatched}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'enroute_pickup') 'bg-amber-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'enroute_pickup') 'bg-amber-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "enroute_pickup")}}
                 >
                     <span>En Route</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'enroute_pickup') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'enroute_pickup') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.enroute_pickup}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'on_location') 'bg-purple-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'on_location') 'bg-purple-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "on_location")}}
                 >
                     <span>On Location</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'on_location') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'on_location') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.on_location}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'pob') 'bg-orange-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'pob') 'bg-orange-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "pob")}}
                 >
                     <span>POB</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'pob') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'pob') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.pob}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'completed') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'completed') 'bg-emerald-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "completed")}}
                 >
                     <span>Completed</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'completed') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'completed') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.completed}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'canceled') 'bg-red-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'canceled') 'bg-red-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "canceled")}}
                 >
                     <span>Canceled</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'canceled') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'canceled') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.canceled}}
                     </span>
                 </button>
             </div>
 
             {{!-- Date Control Cluster --}}
-            <div class="flex items-center bg-gray-950 p-0.5 rounded-lg border border-gray-800 text-xs space-x-1">
+            <div class="flex items-center bg-gray-100 p-0.5 rounded-lg border border-gray-200 text-xs space-x-1">
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.dateFilterMode 'today') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.dateFilterMode 'today') 'bg-blue-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setDateMode "today")}}
                 >
                     <FaIcon @icon="calendar-day" class="text-[10px]" />
@@ -136,17 +136,17 @@
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.dateFilterMode 'all') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.dateFilterMode 'all') 'bg-blue-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setDateMode "all")}}
                 >
                     <FaIcon @icon="calendar-alt" class="text-[10px]" />
                     <span>All</span>
                 </button>
-                <div class="relative flex items-center pl-1 border-l border-gray-800">
+                <div class="relative flex items-center pl-1 border-l border-gray-300">
                     <input
                         type="date"
                         value={{this.customSelectedDate}}
-                        class="px-2 py-0.5 text-xs rounded bg-gray-900 border {{if (eq this.dateFilterMode 'custom') 'border-blue-500 text-white ring-1 ring-blue-500' 'border-gray-700 text-gray-300'}} focus:outline-none focus:border-blue-500"
+                        class="px-2 py-0.5 text-xs rounded bg-white border {{if (eq this.dateFilterMode 'custom') 'border-blue-500 text-gray-900 ring-1 ring-blue-500' 'border-gray-300 text-gray-700'}} focus:outline-none focus:border-blue-500"
                         title="Filter by custom date"
                         {{on "input" this.onCustomDateChange}}
                         {{on "change" this.onCustomDateChange}}
@@ -157,82 +157,82 @@
     </div>
 
     {{!-- Compact Spreadsheet Table Container --}}
-    <div class="dispatch-grid-table-container flex-1 min-h-0 overflow-x-auto overflow-y-auto rounded-xl border border-gray-800 bg-gray-900/60 shadow-xl custom-scrollbar relative z-10">
-        <table class="w-full text-left border-collapse min-w-[900px]">
-            <thead class="dispatch-grid-thead sticky top-0 z-20 bg-[#111827] border-b border-gray-700 shadow-md">
-                <tr class="bg-[#111827] border-b border-gray-700 h-9">
-                    <th class="dispatch-grid-th py-2 px-3.5 w-28 text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Time</th>
-                    <th class="dispatch-grid-th py-2 px-3.5 w-48 text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Passenger</th>
-                    <th class="dispatch-grid-th py-2 px-3.5 w-36 text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Phone</th>
-                    <th class="dispatch-grid-th py-2 px-3.5 min-w-[260px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Route</th>
-                    <th class="dispatch-grid-th py-2 px-3.5 w-44 text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Chauffeur</th>
-                    <th class="dispatch-grid-th py-2 px-3.5 w-28 text-center text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Status</th>
+    <div class="dispatch-grid-table-container flex-1 min-h-0 overflow-x-auto overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm custom-scrollbar relative z-10">
+        <table class="w-full text-left border-collapse min-w-[900px] bg-white">
+            <thead class="dispatch-grid-thead sticky top-0 z-20 bg-gray-100 border-b border-gray-200 shadow-sm">
+                <tr class="bg-gray-100 border-b border-gray-200 h-9">
+                    <th class="dispatch-grid-th py-2 px-3.5 w-28 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Time</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-48 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Passenger</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-36 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Phone</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 min-w-[260px] text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Route</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-44 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Chauffeur</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-28 text-center text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Status</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-800/40 text-xs relative z-1">
+            <tbody class="text-xs relative z-1">
                 {{#if this.gridRows.length}}
                     {{#each this.gridRows as |item|}}
                         <tr
-                            class="dispatch-grid-row h-9 max-h-9 hover:bg-gray-800/60 border-b border-gray-800/40 transition-colors duration-100 cursor-pointer select-none relative z-1 {{item.rowClass}}"
+                            class="dispatch-grid-row h-9 max-h-9 transition-colors duration-100 cursor-pointer select-none relative z-1 {{item.rowClass}}"
                             data-status="{{item.order.status}}"
                             {{on "click" (fn this.openOrderDetails item.order)}}
                         >
-                            {{!-- Time --}}
+                            {{!-- Time: Dark charcoal (text-gray-950, font-mono, semi-bold) --}}
                             <td class="py-1 px-3.5 align-middle whitespace-nowrap">
-                                <div class="font-mono text-xs font-semibold text-gray-200 flex items-center space-x-1.5" title="Scheduled / Pickup Time">
-                                    <FaIcon @icon="clock" class="text-[10px] text-gray-400" />
+                                <div class="font-mono text-xs font-semibold text-gray-950 flex items-center space-x-1.5" title="Scheduled / Pickup Time">
+                                    <FaIcon @icon="clock" class="text-[10px] text-gray-800" />
                                     <span>{{item.formattedTime}}</span>
                                 </div>
                             </td>
 
-                            {{!-- Passenger --}}
+                            {{!-- Passenger: High-contrast dark bold (text-gray-950, font-semibold) --}}
                             <td class="py-1 px-3.5 align-middle whitespace-nowrap">
-                                <div class="truncate max-w-[180px] font-medium text-white text-xs" title={{item.passenger.name}}>
+                                <div class="truncate max-w-[180px] font-semibold text-gray-950 text-xs" title={{item.passenger.name}}>
                                     {{item.passenger.name}}
                                 </div>
                             </td>
 
-                            {{!-- Phone --}}
+                            {{!-- Phone: Deep dark blue (text-blue-900 font-bold underline) --}}
                             <td class="py-1 px-3.5 align-middle whitespace-nowrap">
                                 {{#if item.passenger.phone}}
                                     <a
                                         href="tel:{{item.passenger.phone}}"
-                                        class="text-blue-400 hover:text-blue-300 hover:underline font-mono text-xs"
+                                        class="text-blue-900 hover:text-blue-950 font-mono text-xs font-bold underline"
                                         title="Call {{item.passenger.phone}}"
                                         {{on "click" this.stopEventPropagation}}
                                     >
                                         {{item.passenger.phone}}
                                     </a>
                                 {{else}}
-                                    <span class="text-gray-500 italic text-xs">--</span>
+                                    <span class="text-gray-700 italic text-xs font-semibold">--</span>
                                 {{/if}}
                             </td>
 
-                            {{!-- Route --}}
+                            {{!-- Route: Pickup and dropoff in high-contrast text-gray-950 font-semibold, arrow in text-blue-900 font-bold --}}
                             <td class="py-1 px-3.5 align-middle">
                                 <div class="truncate max-w-lg text-xs flex items-center space-x-1.5" title={{item.route.text}}>
-                                    <span class="truncate font-medium text-gray-200">{{item.route.pickup}}</span>
-                                    <span class="text-blue-400 font-bold shrink-0">➔</span>
-                                    <span class="truncate text-gray-400">{{item.route.dropoff}}</span>
+                                    <span class="truncate font-semibold text-gray-950">{{item.route.pickup}}</span>
+                                    <span class="text-blue-900 font-bold shrink-0">➔</span>
+                                    <span class="truncate font-semibold text-gray-950">{{item.route.dropoff}}</span>
                                 </div>
                             </td>
 
-                            {{!-- Chauffeur --}}
+                            {{!-- Chauffeur: Bold dark text-gray-950 or clean white pill if unassigned --}}
                             <td class="py-1 px-3.5 align-middle whitespace-nowrap">
                                 {{#if item.driver.assigned}}
-                                    <div class="truncate max-w-[160px] font-medium text-gray-200 text-xs" title={{item.driver.name}}>
+                                    <div class="truncate max-w-[160px] font-semibold text-gray-950 text-xs" title={{item.driver.name}}>
                                         {{item.driver.name}}
                                     </div>
                                 {{else}}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-800 text-gray-400 border border-gray-700/60">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white text-gray-950 border border-gray-400 shadow-sm">
                                         Unassigned
                                     </span>
                                 {{/if}}
                             </td>
 
-                            {{!-- Status --}}
+                            {{!-- Status: Bold text and vivid saturated badge colors --}}
                             <td class="py-1 px-3.5 align-middle whitespace-nowrap text-center">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase {{item.statusBadge.class}}" data-status="{{item.order.status}}">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase {{item.statusBadge.class}}" data-status="{{item.order.status}}">
                                     {{item.statusBadge.title}}
                                 </span>
                             </td>
@@ -240,13 +240,13 @@
                     {{/each}}
                 {{else}}
                     <tr>
-                        <td colspan="6" class="py-16 text-center text-gray-400">
+                        <td colspan="6" class="py-16 text-center text-gray-500 bg-white">
                             <div class="flex flex-col items-center justify-center space-y-2">
-                                <div class="w-10 h-10 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-500">
+                                <div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">
                                     <FaIcon @icon="table-cells" class="text-base" />
                                 </div>
-                                <div class="text-sm font-semibold text-white">No orders found in Dispatch Grid</div>
-                                <div class="text-xs text-gray-400 max-w-sm">
+                                <div class="text-sm font-semibold text-gray-900">No orders found in Dispatch Grid</div>
+                                <div class="text-xs text-gray-500 max-w-sm">
                                     {{#if this.searchQuery}}
                                         No orders matching "{{this.searchQuery}}". Try clearing the search filter.
                                     {{else if (eq this.dateFilterMode "today")}}

@@ -1862,31 +1862,98 @@ main.console-fleet-ops-operations-orders-index-index section.next-view-section >
 .kanban-board .kanban-column[data-column-id="created"],
 .kanban-board .kanban-column[data-column-id="pending"],
 .kanban-board .kanban-column[data-column-id="unassigned"] {
-    border-top: 4px solid #94a3b8 !important; /* gray */
+    border-top: 4px solid #64748b !important; /* slate */
 }
 
 .kanban-board .kanban-column[data-column-id="dispatched"] {
-    border-top: 4px solid #8b5cf6 !important; /* purple */
-}
-
-.kanban-board .kanban-column[data-column-id="started"],
-.kanban-board .kanban-column[data-column-id="in_progress"],
-.kanban-board .kanban-column[data-column-id="in-progress"] {
     border-top: 4px solid #3b82f6 !important; /* blue */
 }
 
 .kanban-board .kanban-column[data-column-id="enroute"],
+.kanban-board .kanban-column[data-column-id="enroute_pickup"],
 .kanban-board .kanban-column[data-column-id="driver_enroute"] {
     border-top: 4px solid #f59e0b !important; /* amber */
 }
 
+.kanban-board .kanban-column[data-column-id="on_location"],
+.kanban-board .kanban-column[data-column-id="arrived"] {
+    border-top: 4px solid #a855f7 !important; /* purple */
+}
+
+.kanban-board .kanban-column[data-column-id="pob"],
+.kanban-board .kanban-column[data-column-id="started"],
+.kanban-board .kanban-column[data-column-id="in_progress"],
+.kanban-board .kanban-column[data-column-id="in-progress"] {
+    border-top: 4px solid #f97316 !important; /* orange */
+}
+
 .kanban-board .kanban-column[data-column-id="completed"] {
-    border-top: 4px solid #10b981 !important; /* green */
+    border-top: 4px solid #10b981 !important; /* emerald */
 }
 
 .kanban-board .kanban-column[data-column-id="canceled"],
 .kanban-board .kanban-column[data-column-id="cancelled"] {
-    border-top: 4px solid #ef4444 !important; /* red */
+    border-top: 4px solid #f43f5e !important; /* rose */
+}
+
+/* Kanban card container top accent trim */
+.kanban-board .kanban-card {
+    overflow: hidden !important;
+    border-top: none !important;
+}
+
+.kanban-board .kanban-card .kanban-card-content {
+    border-top-width: 4px;
+    border-top-style: solid;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* Card top border status colors */
+.kanban-board .kanban-card-content.border-t-slate-500,
+.kanban-board .kanban-column[data-column-id="created"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="pending"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="unassigned"] .kanban-card-content {
+    border-top-color: #64748b !important; /* slate-500 */
+}
+
+.kanban-board .kanban-card-content.border-t-blue-500,
+.kanban-board .kanban-column[data-column-id="dispatched"] .kanban-card-content {
+    border-top-color: #3b82f6 !important; /* blue-500 */
+}
+
+.kanban-board .kanban-card-content.border-t-amber-500,
+.kanban-board .kanban-column[data-column-id="enroute"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="enroute_pickup"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="driver_enroute"] .kanban-card-content {
+    border-top-color: #f59e0b !important; /* amber-500 */
+}
+
+.kanban-board .kanban-card-content.border-t-purple-500,
+.kanban-board .kanban-column[data-column-id="on_location"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="arrived"] .kanban-card-content {
+    border-top-color: #a855f7 !important; /* purple-500 */
+}
+
+.kanban-board .kanban-card-content.border-t-orange-500,
+.kanban-board .kanban-column[data-column-id="pob"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="started"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="in_progress"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="in-progress"] .kanban-card-content {
+    border-top-color: #f97316 !important; /* orange-500 */
+}
+
+.kanban-board .kanban-card-content.border-t-emerald-500,
+.kanban-board .kanban-column[data-column-id="completed"] .kanban-card-content {
+    border-top-color: #10b981 !important; /* emerald-500 */
+}
+
+.kanban-board .kanban-card-content.border-t-rose-500,
+.kanban-board .kanban-card-content.border-t-red-500,
+.kanban-board .kanban-column[data-column-id="canceled"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="cancelled"] .kanban-card-content {
+    border-top-color: #f43f5e !important; /* rose-500 */
 }
 
 
@@ -4886,6 +4953,17 @@ body[data-theme='dark'] .next-google-container-map .fleetops-google-draw-actions
     flex-shrink: 0 !important;
 }
 
+.dispatch-grid-toolbar input[type="text"],
+.dispatch-grid-toolbar .form-input {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+}
+
+.dispatch-grid-toolbar input::placeholder {
+    color: #9ca3af !important;
+}
+
 .dispatch-grid-table-container {
     flex: 1 1 0% !important;
     min-height: 0 !important;
@@ -4901,8 +4979,8 @@ body[data-theme='dark'] .next-google-container-map .fleetops-google-draw-actions
     position: sticky !important;
     top: 0 !important;
     z-index: 20 !important;
-    background-color: #111827 !important;
-    border-bottom: 1px solid #374151 !important;
+    background-color: #f3f4f6 !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 .dispatch-grid-th,
@@ -4911,14 +4989,14 @@ body[data-theme='dark'] .next-google-container-map .fleetops-google-draw-actions
     position: sticky !important;
     top: 0 !important;
     z-index: 20 !important;
-    background-color: #111827 !important;
-    color: #F9FAFB !important;
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
     font-size: 0.75rem !important;
     line-height: 1rem !important;
-    border-bottom: 1px solid #374151 !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 .dispatch-grid-row {
@@ -4926,120 +5004,147 @@ body[data-theme='dark'] .next-google-container-map .fleetops-google-draw-actions
     z-index: 1 !important;
 }
 
-.next-map-container-topbar.next-topbar-grid {
-    z-index: 700 !important;
+/* Full-Row Background Tinting by Status - 200-300 Saturated Fills with Left Accent Bar */
+.dispatch-grid-row.bg-emerald-200,
+.dispatch-grid-row[data-status="completed"] {
+    background-color: #a7f3d0 !important;
+    border-bottom: 1px solid #34d399 !important;
+    border-left: 6px solid #059669 !important;
+}
+.dispatch-grid-row.bg-emerald-200:hover,
+.dispatch-grid-row[data-status="completed"]:hover {
+    background-color: #6ee7b7 !important;
 }
 
-/* Dispatch Grid Row & Status Badge Color Coding */
+.dispatch-grid-row.bg-blue-200,
 .dispatch-grid-row[data-status="dispatched"] {
-    border-left: 4px solid #8b5cf6 !important; /* purple */
-    background-color: rgba(139, 92, 246, 0.08) !important;
+    background-color: #bfdbfe !important;
+    border-bottom: 1px solid #60a5fa !important;
+    border-left: 6px solid #2563eb !important;
 }
+.dispatch-grid-row.bg-blue-200:hover,
 .dispatch-grid-row[data-status="dispatched"]:hover {
-    background-color: rgba(139, 92, 246, 0.15) !important;
+    background-color: #93c5fd !important;
 }
 
+.dispatch-grid-row.bg-amber-200,
 .dispatch-grid-row[data-status="enroute"],
 .dispatch-grid-row[data-status="enroute_pickup"],
 .dispatch-grid-row[data-status="driver_enroute"] {
-    border-left: 4px solid #f59e0b !important; /* amber */
-    background-color: rgba(245, 158, 11, 0.08) !important;
+    background-color: #fde68a !important;
+    border-bottom: 1px solid #fbbf24 !important;
+    border-left: 6px solid #d97706 !important;
 }
+.dispatch-grid-row.bg-amber-200:hover,
 .dispatch-grid-row[data-status="enroute"]:hover,
 .dispatch-grid-row[data-status="enroute_pickup"]:hover,
 .dispatch-grid-row[data-status="driver_enroute"]:hover {
-    background-color: rgba(245, 158, 11, 0.15) !important;
+    background-color: #fcd34d !important;
 }
 
-.dispatch-grid-row[data-status="in_progress"],
-.dispatch-grid-row[data-status="started"],
-.dispatch-grid-row[data-status="pob"] {
-    border-left: 4px solid #3b82f6 !important; /* blue */
-    background-color: rgba(59, 130, 246, 0.08) !important;
-}
-.dispatch-grid-row[data-status="in_progress"]:hover,
-.dispatch-grid-row[data-status="started"]:hover,
-.dispatch-grid-row[data-status="pob"]:hover {
-    background-color: rgba(59, 130, 246, 0.15) !important;
-}
-
+.dispatch-grid-row.bg-purple-200,
 .dispatch-grid-row[data-status="on_location"],
 .dispatch-grid-row[data-status="arrived"] {
-    border-left: 4px solid #a855f7 !important; /* light purple */
-    background-color: rgba(168, 85, 247, 0.08) !important;
+    background-color: #e9d5ff !important;
+    border-bottom: 1px solid #c084fc !important;
+    border-left: 6px solid #9333ea !important;
 }
+.dispatch-grid-row.bg-purple-200:hover,
 .dispatch-grid-row[data-status="on_location"]:hover,
 .dispatch-grid-row[data-status="arrived"]:hover {
-    background-color: rgba(168, 85, 247, 0.15) !important;
+    background-color: #d8b4fe !important;
 }
 
-.dispatch-grid-row-completed,
-.dispatch-grid-row[data-status="completed"] {
-    border-left: 4px solid #10b981 !important; /* green */
-    background-color: rgba(16, 185, 129, 0.08) !important;
+.dispatch-grid-row.bg-orange-200,
+.dispatch-grid-row[data-status="in_progress"],
+.dispatch-grid-row[data-status="started"],
+.dispatch-grid-row[data-status="pob"],
+.dispatch-grid-row[data-status="passenger_on_board"] {
+    background-color: #fed7aa !important;
+    border-bottom: 1px solid #fb923c !important;
+    border-left: 6px solid #ea580c !important;
 }
-.dispatch-grid-row-completed:hover,
-.dispatch-grid-row[data-status="completed"]:hover {
-    background-color: rgba(16, 185, 129, 0.15) !important;
+.dispatch-grid-row.bg-orange-200:hover,
+.dispatch-grid-row[data-status="in_progress"]:hover,
+.dispatch-grid-row[data-status="started"]:hover,
+.dispatch-grid-row[data-status="pob"]:hover,
+.dispatch-grid-row[data-status="passenger_on_board"]:hover {
+    background-color: #fdba74 !important;
 }
 
+.dispatch-grid-row.bg-rose-200,
 .dispatch-grid-row[data-status="canceled"],
 .dispatch-grid-row[data-status="cancelled"] {
-    border-left: 4px solid #ef4444 !important; /* red */
-    background-color: rgba(239, 68, 68, 0.08) !important;
+    background-color: #fecdd3 !important;
+    border-bottom: 1px solid #fb7185 !important;
+    border-left: 6px solid #e11d48 !important;
 }
+.dispatch-grid-row.bg-rose-200:hover,
 .dispatch-grid-row[data-status="canceled"]:hover,
 .dispatch-grid-row[data-status="cancelled"]:hover {
-    background-color: rgba(239, 68, 68, 0.15) !important;
+    background-color: #fda4af !important;
 }
 
-.dispatch-grid-row[data-status="created"] {
-    border-left: 4px solid #94a3b8 !important; /* slate/gray */
-    background-color: rgba(148, 163, 184, 0.08) !important;
+.dispatch-grid-row.bg-slate-200,
+.dispatch-grid-row[data-status="created"],
+.dispatch-grid-row[data-status="draft"],
+.dispatch-grid-row[data-status="pending"],
+.dispatch-grid-row[data-status="unassigned"] {
+    background-color: #e2e8f0 !important;
+    border-bottom: 1px solid #94a3b8 !important;
+    border-left: 6px solid #64748b !important;
 }
-.dispatch-grid-row[data-status="created"]:hover {
-    background-color: rgba(148, 163, 184, 0.15) !important;
+.dispatch-grid-row.bg-slate-200:hover,
+.dispatch-grid-row[data-status="created"]:hover,
+.dispatch-grid-row[data-status="draft"]:hover,
+.dispatch-grid-row[data-status="pending"]:hover,
+.dispatch-grid-row[data-status="unassigned"]:hover {
+    background-color: #cbd5e1 !important;
 }
 
-/* Dispatch Grid Status Badge Color Coding */
+/* Dispatch Grid High-Vibrancy Status Badge Color Coding */
 .dispatch-grid-row span[data-status="dispatched"] {
-    background-color: rgba(139, 92, 246, 0.2) !important;
-    color: #c084fc !important;
-    border-color: rgba(139, 92, 246, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #1e3a8a !important;
+    border: 1px solid #3b82f6 !important;
 }
 .dispatch-grid-row span[data-status="enroute"],
 .dispatch-grid-row span[data-status="enroute_pickup"],
 .dispatch-grid-row span[data-status="driver_enroute"] {
-    background-color: rgba(245, 158, 11, 0.2) !important;
-    color: #fbd38d !important;
-    border-color: rgba(245, 158, 11, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #78350f !important;
+    border: 1px solid #d97706 !important;
 }
 .dispatch-grid-row span[data-status="in_progress"],
 .dispatch-grid-row span[data-status="started"],
-.dispatch-grid-row span[data-status="pob"] {
-    background-color: rgba(59, 130, 246, 0.2) !important;
-    color: #93c5fd !important;
-    border-color: rgba(59, 130, 246, 0.5) !important;
+.dispatch-grid-row span[data-status="pob"],
+.dispatch-grid-row span[data-status="passenger_on_board"] {
+    background-color: #ffffff !important;
+    color: #7c2d12 !important;
+    border: 1px solid #ea580c !important;
 }
 .dispatch-grid-row span[data-status="on_location"],
 .dispatch-grid-row span[data-status="arrived"] {
-    background-color: rgba(168, 85, 247, 0.2) !important;
-    color: #d8b4fe !important;
-    border-color: rgba(168, 85, 247, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #581c87 !important;
+    border: 1px solid #9333ea !important;
 }
 .dispatch-grid-row span[data-status="completed"] {
-    background-color: rgba(16, 185, 129, 0.2) !important;
-    color: #6ee7b7 !important;
-    border-color: rgba(16, 185, 129, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #064e3b !important;
+    border: 1px solid #059669 !important;
 }
 .dispatch-grid-row span[data-status="canceled"],
 .dispatch-grid-row span[data-status="cancelled"] {
-    background-color: rgba(239, 68, 68, 0.2) !important;
-    color: #fca5a5 !important;
-    border-color: rgba(239, 68, 68, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #881337 !important;
+    border: 1px solid #e11d48 !important;
 }
-.dispatch-grid-row span[data-status="created"] {
-    background-color: rgba(148, 163, 184, 0.2) !important;
-    color: #cbd5e1 !important;
-    border-color: rgba(148, 163, 184, 0.5) !important;
+.dispatch-grid-row span[data-status="created"],
+.dispatch-grid-row span[data-status="draft"],
+.dispatch-grid-row span[data-status="pending"],
+.dispatch-grid-row span[data-status="unassigned"] {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #64748b !important;
 }

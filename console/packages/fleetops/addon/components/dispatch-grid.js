@@ -133,9 +133,14 @@ export default class DispatchGridComponent extends Component {
         if (!targetDate) {
             return orders;
         }
-        return orders.filter((order) => {
+        const filtered = orders.filter((order) => {
             const orderDate = this.getOrderDateString(order);
             return orderDate === targetDate;
+        });
+        return [...filtered].sort((a, b) => {
+            const timeA = new Date(a.scheduled_at || a.scheduledAt || a.created_at || a.createdAt || 0).getTime();
+            const timeB = new Date(b.scheduled_at || b.scheduledAt || b.created_at || b.createdAt || 0).getTime();
+            return timeA - timeB;
         });
     }
 
@@ -232,29 +237,33 @@ export default class DispatchGridComponent extends Component {
     }
 
     getRowClass(order) {
-        if (this.hasConflict(order) || order.status === 'canceled' || order.status === 'cancelled') {
-            return 'dispatch-grid-row-conflict';
-        }
-        switch (order.status) {
+        const st = (order?.status || '').toLowerCase();
+        switch (st) {
             case 'completed':
-                return 'dispatch-grid-row-completed';
-            case 'pob':
-            case 'in_progress':
-            case 'started':
-            case 'passenger_on_board':
-                return 'dispatch-grid-row-in-progress';
+                return 'bg-emerald-200 hover:bg-emerald-300 border-b border-emerald-400 border-l-[6px] border-l-emerald-600';
+            case 'dispatched':
+                return 'bg-blue-200 hover:bg-blue-300 border-b border-blue-400 border-l-[6px] border-l-blue-600';
+            case 'enroute':
+            case 'enroute_pickup':
+            case 'driver_enroute':
+                return 'bg-amber-200 hover:bg-amber-300 border-b border-amber-400 border-l-[6px] border-l-amber-600';
             case 'on_location':
             case 'arrived':
-                return 'dispatch-grid-row-arrived';
-            case 'enroute_pickup':
-            case 'enroute':
-            case 'driver_enroute':
-                return 'dispatch-grid-row-enroute';
-            case 'dispatched':
-                return 'dispatch-grid-row-dispatched';
+                return 'bg-purple-200 hover:bg-purple-300 border-b border-purple-400 border-l-[6px] border-l-purple-600';
+            case 'pob':
+            case 'passenger_on_board':
+            case 'in_progress':
+            case 'started':
+                return 'bg-orange-200 hover:bg-orange-300 border-b border-orange-400 border-l-[6px] border-l-orange-600';
+            case 'canceled':
+            case 'cancelled':
+                return 'bg-rose-200 hover:bg-rose-300 border-b border-rose-400 border-l-[6px] border-l-rose-600';
             case 'created':
+            case 'draft':
+            case 'pending':
+            case 'unassigned':
             default:
-                return 'dispatch-grid-row-draft';
+                return 'bg-slate-200 hover:bg-slate-300 border-b border-slate-400 border-l-[6px] border-l-slate-500';
         }
     }
 
@@ -264,20 +273,20 @@ export default class DispatchGridComponent extends Component {
             case 'dispatched':
                 return {
                     title: 'Dispatched',
-                    class: 'bg-blue-900/80 text-blue-200 border border-blue-500/60 shadow-sm',
+                    class: 'bg-white text-blue-900 border border-blue-500 shadow-sm',
                 };
             case 'enroute':
             case 'enroute_pickup':
             case 'driver_enroute':
                 return {
                     title: 'En Route',
-                    class: 'bg-amber-900/80 text-amber-200 border border-amber-500/60 shadow-sm',
+                    class: 'bg-white text-amber-900 border border-amber-500 shadow-sm',
                 };
             case 'on_location':
             case 'arrived':
                 return {
                     title: 'On Location',
-                    class: 'bg-purple-900/80 text-purple-200 border border-purple-500/60 shadow-sm',
+                    class: 'bg-white text-purple-900 border border-purple-500 shadow-sm',
                 };
             case 'pob':
             case 'passenger_on_board':
@@ -285,18 +294,18 @@ export default class DispatchGridComponent extends Component {
             case 'started':
                 return {
                     title: 'POB',
-                    class: 'bg-orange-900/80 text-orange-200 border border-orange-500/60 shadow-sm',
+                    class: 'bg-white text-orange-900 border border-orange-500 shadow-sm',
                 };
             case 'completed':
                 return {
                     title: 'Completed',
-                    class: 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/60 shadow-sm',
+                    class: 'bg-white text-emerald-900 border border-emerald-500 shadow-sm',
                 };
             case 'canceled':
             case 'cancelled':
                 return {
                     title: 'Canceled',
-                    class: 'bg-red-900/80 text-red-200 border border-red-500/60 shadow-sm',
+                    class: 'bg-white text-rose-900 border border-rose-500 shadow-sm',
                 };
             case 'created':
             case 'draft':
@@ -305,7 +314,7 @@ export default class DispatchGridComponent extends Component {
             default:
                 return {
                     title: 'Created',
-                    class: 'bg-gray-800 text-gray-200 border border-gray-600 shadow-sm',
+                    class: 'bg-white text-slate-900 border border-slate-500 shadow-sm',
                 };
         }
     }

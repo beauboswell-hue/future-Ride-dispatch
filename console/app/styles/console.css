@@ -134,6 +134,17 @@ a.logo.navbar-logo img {
     flex-shrink: 0 !important;
 }
 
+.dispatch-grid-toolbar input[type="text"],
+.dispatch-grid-toolbar .form-input {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+}
+
+.dispatch-grid-toolbar input::placeholder {
+    color: #9ca3af !important;
+}
+
 .dispatch-grid-table-container {
     flex: 1 1 0% !important;
     min-height: 0 !important;
@@ -149,8 +160,8 @@ a.logo.navbar-logo img {
     position: sticky !important;
     top: 0 !important;
     z-index: 20 !important;
-    background-color: #111827 !important;
-    border-bottom: 1px solid #374151 !important;
+    background-color: #f3f4f6 !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 .dispatch-grid-th,
@@ -159,19 +170,164 @@ a.logo.navbar-logo img {
     position: sticky !important;
     top: 0 !important;
     z-index: 20 !important;
-    background-color: #111827 !important;
-    color: #F9FAFB !important;
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
     font-size: 0.75rem !important;
     line-height: 1rem !important;
-    border-bottom: 1px solid #374151 !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 .dispatch-grid-row {
     position: relative !important;
     z-index: 1 !important;
+}
+
+/* Full-Row Background Tinting by Status - 200-300 Saturated Fills with Left Accent Bar */
+.dispatch-grid-row.bg-emerald-200,
+.dispatch-grid-row[data-status="completed"] {
+    background-color: #a7f3d0 !important;
+    border-bottom: 1px solid #34d399 !important;
+    border-left: 6px solid #059669 !important;
+}
+.dispatch-grid-row.bg-emerald-200:hover,
+.dispatch-grid-row[data-status="completed"]:hover {
+    background-color: #6ee7b7 !important;
+}
+
+.dispatch-grid-row.bg-blue-200,
+.dispatch-grid-row[data-status="dispatched"] {
+    background-color: #bfdbfe !important;
+    border-bottom: 1px solid #60a5fa !important;
+    border-left: 6px solid #2563eb !important;
+}
+.dispatch-grid-row.bg-blue-200:hover,
+.dispatch-grid-row[data-status="dispatched"]:hover {
+    background-color: #93c5fd !important;
+}
+
+.dispatch-grid-row.bg-amber-200,
+.dispatch-grid-row[data-status="enroute"],
+.dispatch-grid-row[data-status="enroute_pickup"],
+.dispatch-grid-row[data-status="driver_enroute"] {
+    background-color: #fde68a !important;
+    border-bottom: 1px solid #fbbf24 !important;
+    border-left: 6px solid #d97706 !important;
+}
+.dispatch-grid-row.bg-amber-200:hover,
+.dispatch-grid-row[data-status="enroute"]:hover,
+.dispatch-grid-row[data-status="enroute_pickup"]:hover,
+.dispatch-grid-row[data-status="driver_enroute"]:hover {
+    background-color: #fcd34d !important;
+}
+
+.dispatch-grid-row.bg-purple-200,
+.dispatch-grid-row[data-status="on_location"],
+.dispatch-grid-row[data-status="arrived"] {
+    background-color: #e9d5ff !important;
+    border-bottom: 1px solid #c084fc !important;
+    border-left: 6px solid #9333ea !important;
+}
+.dispatch-grid-row.bg-purple-200:hover,
+.dispatch-grid-row[data-status="on_location"]:hover,
+.dispatch-grid-row[data-status="arrived"]:hover {
+    background-color: #d8b4fe !important;
+}
+
+.dispatch-grid-row.bg-orange-200,
+.dispatch-grid-row[data-status="in_progress"],
+.dispatch-grid-row[data-status="started"],
+.dispatch-grid-row[data-status="pob"],
+.dispatch-grid-row[data-status="passenger_on_board"] {
+    background-color: #fed7aa !important;
+    border-bottom: 1px solid #fb923c !important;
+    border-left: 6px solid #ea580c !important;
+}
+.dispatch-grid-row.bg-orange-200:hover,
+.dispatch-grid-row[data-status="in_progress"]:hover,
+.dispatch-grid-row[data-status="started"]:hover,
+.dispatch-grid-row[data-status="pob"]:hover,
+.dispatch-grid-row[data-status="passenger_on_board"]:hover {
+    background-color: #fdba74 !important;
+}
+
+.dispatch-grid-row.bg-rose-200,
+.dispatch-grid-row[data-status="canceled"],
+.dispatch-grid-row[data-status="cancelled"] {
+    background-color: #fecdd3 !important;
+    border-bottom: 1px solid #fb7185 !important;
+    border-left: 6px solid #e11d48 !important;
+}
+.dispatch-grid-row.bg-rose-200:hover,
+.dispatch-grid-row[data-status="canceled"]:hover,
+.dispatch-grid-row[data-status="cancelled"]:hover {
+    background-color: #fda4af !important;
+}
+
+.dispatch-grid-row.bg-slate-200,
+.dispatch-grid-row[data-status="created"],
+.dispatch-grid-row[data-status="draft"],
+.dispatch-grid-row[data-status="pending"],
+.dispatch-grid-row[data-status="unassigned"] {
+    background-color: #e2e8f0 !important;
+    border-bottom: 1px solid #94a3b8 !important;
+    border-left: 6px solid #64748b !important;
+}
+.dispatch-grid-row.bg-slate-200:hover,
+.dispatch-grid-row[data-status="created"]:hover,
+.dispatch-grid-row[data-status="draft"]:hover,
+.dispatch-grid-row[data-status="pending"]:hover,
+.dispatch-grid-row[data-status="unassigned"]:hover {
+    background-color: #cbd5e1 !important;
+}
+
+/* Dispatch Grid High-Vibrancy Status Badge Color Coding */
+.dispatch-grid-row span[data-status="dispatched"] {
+    background-color: #ffffff !important;
+    color: #1e3a8a !important;
+    border: 1px solid #3b82f6 !important;
+}
+.dispatch-grid-row span[data-status="enroute"],
+.dispatch-grid-row span[data-status="enroute_pickup"],
+.dispatch-grid-row span[data-status="driver_enroute"] {
+    background-color: #ffffff !important;
+    color: #78350f !important;
+    border: 1px solid #d97706 !important;
+}
+.dispatch-grid-row span[data-status="in_progress"],
+.dispatch-grid-row span[data-status="started"],
+.dispatch-grid-row span[data-status="pob"],
+.dispatch-grid-row span[data-status="passenger_on_board"] {
+    background-color: #ffffff !important;
+    color: #7c2d12 !important;
+    border: 1px solid #ea580c !important;
+}
+.dispatch-grid-row span[data-status="on_location"],
+.dispatch-grid-row span[data-status="arrived"] {
+    background-color: #ffffff !important;
+    color: #581c87 !important;
+    border: 1px solid #9333ea !important;
+}
+.dispatch-grid-row span[data-status="completed"] {
+    background-color: #ffffff !important;
+    color: #064e3b !important;
+    border: 1px solid #059669 !important;
+}
+.dispatch-grid-row span[data-status="canceled"],
+.dispatch-grid-row span[data-status="cancelled"] {
+    background-color: #ffffff !important;
+    color: #881337 !important;
+    border: 1px solid #e11d48 !important;
+}
+.dispatch-grid-row span[data-status="created"],
+.dispatch-grid-row span[data-status="draft"],
+.dispatch-grid-row span[data-status="pending"],
+.dispatch-grid-row span[data-status="unassigned"] {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #64748b !important;
 }
 
 .next-map-container-topbar.next-topbar-grid {

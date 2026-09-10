@@ -1,37 +1,38 @@
-<div class="dispatch-grid-wrapper flex flex-col h-full w-full bg-gray-950 text-gray-100 p-4 space-y-4">
+<div class="dispatch-grid-wrapper flex flex-col h-full w-full bg-white text-gray-900 p-4 space-y-4">
     {{!-- Top Toolbar --}}
-    <div class="dispatch-grid-toolbar flex-shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-gray-900/90 border border-gray-800 rounded-xl p-3 shadow-lg relative z-30">
+    <div class="dispatch-grid-toolbar flex-shrink-0 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 bg-white border border-gray-200 rounded-xl p-3 shadow-sm relative z-30">
         <div class="flex items-center space-x-3">
-            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30">
+            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50 text-blue-600 border border-blue-200">
                 <FaIcon @icon="table-cells" class="text-base" />
             </div>
             <div>
                 <div class="flex items-center space-x-2">
-                    <h2 class="text-base font-bold text-white tracking-wide">Dispatch Grid</h2>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    <h2 class="text-base font-bold text-gray-900 tracking-wide">Dispatch Grid</h2>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                         {{this.gridRows.length}} Orders
                     </span>
                 </div>
-                <p class="text-xs text-gray-400">Live operational manifest &amp; dispatch status matrix</p>
+                <p class="text-xs text-gray-500">Live operational manifest &amp; dispatch status matrix</p>
             </div>
         </div>
 
-        {{!-- Search & Filters --}}
-        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            <div class="relative flex-1 md:w-64">
+        {{!-- Search & Filters & Date Controls --}}
+        <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+            {{!-- Search Input --}}
+            <div class="relative flex-1 sm:w-56 sm:flex-initial">
                 <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
                     <FaIcon @icon="search" class="text-xs" />
                 </div>
                 <Input
                     @type="text"
                     @value={{this.searchQuery}}
-                    placeholder="Search passenger, driver, vehicle, ID..."
-                    class="form-input form-input-sm w-full pl-8 bg-gray-950/80 border-gray-700 text-gray-100 placeholder-gray-500 text-xs rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    placeholder="Search passenger, driver..."
+                    class="form-input form-input-sm w-full pl-8 bg-white border-gray-300 text-gray-900 placeholder-gray-400 text-xs rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
                 {{#if this.searchQuery}}
                     <button
                         type="button"
-                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-white text-xs"
+                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 text-xs"
                         {{on "click" this.clearSearch}}
                     >
                         <FaIcon @icon="times-circle" />
@@ -39,283 +40,221 @@
                 {{/if}}
             </div>
 
-            {{!-- Quick Status Filter Tabs (7-Step Limo Anywhere Pipeline) --}}
-            <div class="flex items-center bg-gray-950 p-0.5 rounded-lg border border-gray-800 text-xs overflow-x-auto">
+            {{!-- Quick Status Filter Tabs (7 Canonical Stages) --}}
+            <div class="flex items-center bg-gray-100 p-0.5 rounded-lg border border-gray-200 text-xs overflow-x-auto">
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "all")}}
                 >
                     <span>All</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'all') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'all') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.all}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'created') 'bg-gray-700 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'created') 'bg-gray-700 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "created")}}
                 >
                     <span>Created</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'created') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'created') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.created}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "dispatched")}}
                 >
                     <span>Dispatched</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'dispatched') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'dispatched') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.dispatched}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'enroute_pickup') 'bg-amber-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'enroute_pickup') 'bg-amber-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "enroute_pickup")}}
                 >
                     <span>En Route</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'enroute_pickup') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'enroute_pickup') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.enroute_pickup}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'on_location') 'bg-purple-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'on_location') 'bg-purple-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "on_location")}}
                 >
                     <span>On Location</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'on_location') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'on_location') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.on_location}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'pob') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'pob') 'bg-orange-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "pob")}}
                 >
-                    <span>POB (Passenger on Board)</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'pob') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span>POB</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'pob') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.pob}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'completed') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'completed') 'bg-emerald-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "completed")}}
                 >
                     <span>Completed</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'completed') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'completed') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.completed}}
                     </span>
                 </button>
                 <button
                     type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'canceled') 'bg-red-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'canceled') 'bg-red-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
                     {{on "click" (fn this.setStatusFilter "canceled")}}
                 >
                     <span>Canceled</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'canceled') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'canceled') 'bg-black/20 text-white border border-white/20' 'bg-white text-gray-600 border border-gray-200'}}">
                         {{this.statusCounts.canceled}}
                     </span>
                 </button>
             </div>
+
+            {{!-- Date Control Cluster --}}
+            <div class="flex items-center bg-gray-100 p-0.5 rounded-lg border border-gray-200 text-xs space-x-1">
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.dateFilterMode 'today') 'bg-blue-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
+                    {{on "click" (fn this.setDateMode "today")}}
+                >
+                    <FaIcon @icon="calendar-day" class="text-[10px]" />
+                    <span>Today</span>
+                </button>
+                <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.dateFilterMode 'all') 'bg-blue-600 text-white shadow' 'text-gray-600 hover:text-gray-900'}}"
+                    {{on "click" (fn this.setDateMode "all")}}
+                >
+                    <FaIcon @icon="calendar-alt" class="text-[10px]" />
+                    <span>All</span>
+                </button>
+                <div class="relative flex items-center pl-1 border-l border-gray-300">
+                    <input
+                        type="date"
+                        value={{this.customSelectedDate}}
+                        class="px-2 py-0.5 text-xs rounded bg-white border {{if (eq this.dateFilterMode 'custom') 'border-blue-500 text-gray-900 ring-1 ring-blue-500' 'border-gray-300 text-gray-700'}} focus:outline-none focus:border-blue-500"
+                        title="Filter by custom date"
+                        {{on "input" this.onCustomDateChange}}
+                        {{on "change" this.onCustomDateChange}}
+                    />
+                </div>
+            </div>
         </div>
     </div>
 
-    {{!-- Table Container --}}
-    <div class="dispatch-grid-table-container flex-1 min-h-0 overflow-x-auto overflow-y-auto rounded-xl border border-gray-800 bg-gray-900/60 shadow-xl custom-scrollbar relative z-10">
-        <table class="w-full text-left border-collapse min-w-[1100px]">
-            <thead class="dispatch-grid-thead sticky top-0 z-20 bg-[#111827] border-b border-gray-700 shadow-md">
-                <tr class="bg-[#111827] border-b border-gray-700">
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-36 min-w-[140px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Order ID</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-52 min-w-[180px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Passenger</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-44 min-w-[160px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Vehicle</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-52 min-w-[190px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Chauffeur</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Pickup</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Dropoff</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-48 min-w-[170px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Flags &amp; Conflicts</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-2 w-12 text-center bg-[#111827]"></th>
+    {{!-- Compact Spreadsheet Table Container --}}
+    <div class="dispatch-grid-table-container flex-1 min-h-0 overflow-x-auto overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm custom-scrollbar relative z-10">
+        <table class="w-full text-left border-collapse min-w-[900px] bg-white">
+            <thead class="dispatch-grid-thead sticky top-0 z-20 bg-gray-100 border-b border-gray-200 shadow-sm">
+                <tr class="bg-gray-100 border-b border-gray-200 h-9">
+                    <th class="dispatch-grid-th py-2 px-3.5 w-28 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Time</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-48 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Passenger</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-36 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Phone</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 min-w-[260px] text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Route</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-44 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Chauffeur</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-28 text-center text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Status</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-800/60 text-sm relative z-1">
+            <tbody class="text-xs relative z-1">
                 {{#if this.gridRows.length}}
                     {{#each this.gridRows as |item|}}
                         <tr
-                            class="dispatch-grid-row {{item.rowClass}} transition-colors duration-150 cursor-pointer select-none relative z-1"
+                            class="dispatch-grid-row h-9 max-h-9 transition-colors duration-100 cursor-pointer select-none relative z-1 {{item.rowClass}}"
                             data-status="{{item.order.status}}"
-                            {{on "click" (fn this.onClickRow item.order)}}
+                            {{on "click" (fn this.openOrderDetails item.order)}}
                         >
-                            {{!-- Column 1: Order ID --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex flex-col">
-                                    <div class="font-mono font-bold text-white text-xs tracking-tight flex items-center space-x-1.5">
-                                        <span>{{item.orderInfo.id}}</span>
-                                    </div>
-                                    {{#if item.orderInfo.scheduledAt}}
-                                        <div class="text-[11px] text-gray-300 mt-0.5 flex items-center space-x-1">
-                                            <FaIcon @icon="clock" class="text-[10px] text-gray-400" />
-                                            <span>{{item.orderInfo.scheduledAt}}</span>
-                                        </div>
-                                    {{/if}}
-                                    <div class="mt-1">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase {{item.statusBadgeClass}}" data-status="{{item.order.status}}">
-                                            {{item.orderInfo.statusTitle}}
-                                        </span>
-                                    </div>
+                            {{!-- Time: Dark charcoal (text-gray-950, font-mono, semi-bold) --}}
+                            <td class="py-1 px-3.5 align-middle whitespace-nowrap">
+                                 <div class="font-mono text-xs font-semibold text-gray-950 flex items-center space-x-1.5" title="Scheduled / Pickup Time">
+                                     <FaIcon @icon="clock" class="text-[10px] text-gray-800" />
+                                     <span>{{item.formattedTime}}</span>
+                                 </div>
+                            </td>
+
+                            {{!-- Passenger: High-contrast dark bold (text-gray-950, font-semibold) --}}
+                            <td class="py-1 px-3.5 align-middle whitespace-nowrap">
+                                <div class="truncate max-w-[180px] font-semibold text-gray-950 text-xs" title={{item.passenger.name}}>
+                                    {{item.passenger.name}}
                                 </div>
                             </td>
 
-                            {{!-- Column 2: Passenger --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex flex-col">
-                                    <div class="font-semibold text-white text-sm">
-                                        {{item.passenger.name}}
-                                    </div>
-                                    {{#if item.passenger.phone}}
-                                        <div class="text-xs text-gray-300 mt-0.5 flex items-center space-x-1">
-                                            <FaIcon @icon="phone" class="text-[10px] text-gray-400" />
-                                            <span>{{item.passenger.phone}}</span>
-                                        </div>
-                                    {{/if}}
-                                    {{#if item.passenger.note}}
-                                        <div class="text-[11px] text-gray-400 italic truncate max-w-xs mt-0.5" title={{item.passenger.note}}>
-                                            {{item.passenger.note}}
-                                        </div>
-                                    {{/if}}
+                            {{!-- Phone: Deep dark blue (text-blue-900 font-bold underline) --}}
+                            <td class="py-1 px-3.5 align-middle whitespace-nowrap">
+                                {{#if item.passenger.phone}}
+                                    <a
+                                        href="tel:{{item.passenger.phone}}"
+                                        class="text-blue-900 hover:text-blue-950 font-mono text-xs font-bold underline"
+                                        title="Call {{item.passenger.phone}}"
+                                        {{on "click" this.stopEventPropagation}}
+                                    >
+                                        {{item.passenger.phone}}
+                                    </a>
+                                {{else}}
+                                    <span class="text-gray-700 italic text-xs font-semibold">--</span>
+                                {{/if}}
+                            </td>
+
+                            {{!-- Route: Pickup and dropoff in high-contrast text-gray-950 font-semibold, arrow in text-blue-900 font-bold --}}
+                            <td class="py-1 px-3.5 align-middle">
+                                <div class="truncate max-w-lg text-xs flex items-center space-x-1.5" title={{item.route.text}}>
+                                    <span class="truncate font-semibold text-gray-950">{{item.route.pickup}}</span>
+                                    <span class="text-blue-900 font-bold shrink-0">➔</span>
+                                    <span class="truncate font-semibold text-gray-900">{{item.route.dropoff}}</span>
                                 </div>
                             </td>
 
-                            {{!-- Column 3: Vehicle --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex flex-col">
-                                    {{#if item.vehicle.assigned}}
-                                        <div class="font-medium text-white text-xs">
-                                            {{item.vehicle.type}}
-                                        </div>
-                                        {{#if item.vehicle.plate}}
-                                            <div class="mt-1 inline-flex items-center px-1.5 py-0.5 rounded bg-gray-800/90 text-gray-200 border border-gray-700 font-mono text-[10px] font-semibold tracking-wider w-fit">
-                                                <FaIcon @icon="car" class="mr-1 text-[9px] text-gray-400" />
-                                                {{item.vehicle.plate}}
-                                            </div>
-                                        {{/if}}
-                                    {{else}}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-800/80 text-gray-400 border border-gray-700/60 w-fit">
-                                            <FaIcon @icon="car" class="mr-1 text-gray-500 text-[10px]" />
-                                            Unassigned
-                                        </span>
-                                    {{/if}}
-                                </div>
+                            {{!-- Chauffeur: Bold dark text-gray-950 or clean white pill if unassigned --}}
+                            <td class="py-1 px-3.5 align-middle whitespace-nowrap">
+                                {{#if item.driver.assigned}}
+                                    <div class="truncate max-w-[160px] font-semibold text-gray-950 text-xs" title={{item.driver.name}}>
+                                        {{item.driver.name}}
+                                    </div>
+                                {{else}}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white text-gray-950 border border-gray-400 shadow-sm">
+                                        Unassigned
+                                    </span>
+                                {{/if}}
                             </td>
 
-                            {{!-- Column 4: Chauffeur --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex items-center space-x-2.5">
-                                    <img
-                                        src={{item.driver.avatar_url}}
-                                        alt={{item.driver.name}}
-                                        width="32"
-                                        height="32"
-                                        loading="lazy"
-                                        class="w-8 h-8 rounded-full flex-shrink-0 object-cover border border-gray-700 bg-gray-800 shadow-sm"
-                                        onerror="this.onerror=null;this.src='/images/no-avatar.png';"
-                                    />
-                                    <div class="flex flex-col min-w-0 truncate">
-                                        <div class="font-semibold text-white text-xs truncate">
-                                            {{item.driver.name}}
-                                        </div>
-                                        <div class="inline-flex items-center space-x-1.5 mt-0.5">
-                                            <span class="w-1.5 h-1.5 rounded-full {{item.driver.dotClass}} flex-shrink-0"></span>
-                                            <span class="text-[11px] font-medium {{item.driver.statusClass}} truncate">{{item.driver.status}}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-
-                            {{!-- Column 5: Pickup --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex items-start space-x-2">
-                                    <div class="mt-0.5 shrink-0 text-emerald-400">
-                                        <FaIcon @icon="map-marker-alt" class="text-xs" />
-                                    </div>
-                                    <div class="flex flex-col min-w-0">
-                                        {{#if item.pickup.name}}
-                                            <div class="font-semibold text-white text-xs truncate" title={{item.pickup.name}}>
-                                                {{item.pickup.name}}
-                                            </div>
-                                        {{/if}}
-                                        <div class="text-xs text-gray-300 line-clamp-2 leading-relaxed" title={{item.pickup.address}}>
-                                            {{item.pickup.address}}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-
-                            {{!-- Column 6: Dropoff --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex items-start space-x-2">
-                                    <div class="mt-0.5 shrink-0 text-red-400">
-                                        <FaIcon @icon="flag-checkered" class="text-xs" />
-                                    </div>
-                                    <div class="flex flex-col min-w-0">
-                                        {{#if item.dropoff.name}}
-                                            <div class="font-semibold text-white text-xs truncate" title={{item.dropoff.name}}>
-                                                {{item.dropoff.name}}
-                                            </div>
-                                        {{/if}}
-                                        <div class="text-xs text-gray-300 line-clamp-2 leading-relaxed" title={{item.dropoff.address}}>
-                                            {{item.dropoff.address}}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-
-                            {{!-- Column 7: Flags & Conflicts --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex flex-wrap gap-1 items-center">
-                                    {{#if item.flags.length}}
-                                        {{#each item.flags as |flag|}}
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border {{flag.badgeClass}}">
-                                                <FaIcon @icon={{flag.icon}} class="mr-1 text-[9px]" />
-                                                {{flag.label}}
-                                            </span>
-                                        {{/each}}
-                                    {{else}}
-                                        <span class="text-xs text-gray-500 font-normal italic">
-                                            None
-                                        </span>
-                                    {{/if}}
-                                </div>
-                            </td>
-
-                            {{!-- Column 8: Actions --}}
-                            <td class="py-3 px-2 align-middle text-center" {{on "click" this.stopEventPropagation}}>
-                                <button
-                                    type="button"
-                                    class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition-colors border border-gray-700 shadow-sm"
-                                    title="View Order Details"
-                                    {{on "click" (fn this.onClickRow item.order)}}
-                                >
-                                    <FaIcon @icon="eye" class="text-xs" />
-                                </button>
+                            {{!-- Status: Bold text and vivid saturated badge colors --}}
+                            <td class="py-1 px-3.5 align-middle whitespace-nowrap text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase {{item.statusBadge.class}}" data-status="{{item.order.status}}">
+                                    {{item.statusBadge.title}}
+                                </span>
                             </td>
                         </tr>
                     {{/each}}
                 {{else}}
                     <tr>
-                        <td colspan="8" class="py-16 text-center text-gray-400">
-                            <div class="flex flex-col items-center justify-center space-y-3">
-                                <div class="w-12 h-12 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-500">
-                                    <FaIcon @icon="table-cells" class="text-xl" />
+                        <td colspan="6" class="py-16 text-center text-gray-500 bg-white">
+                            <div class="flex flex-col items-center justify-center space-y-2">
+                                <div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">
+                                    <FaIcon @icon="table-cells" class="text-base" />
                                 </div>
-                                <div class="text-sm font-semibold text-white">No active orders found in Dispatch Grid</div>
-                                <div class="text-xs text-gray-400 max-w-sm">
+                                <div class="text-sm font-semibold text-gray-900">No orders found in Dispatch Grid</div>
+                                <div class="text-xs text-gray-500 max-w-sm">
                                     {{#if this.searchQuery}}
                                         No orders matching "{{this.searchQuery}}". Try clearing the search filter.
+                                    {{else if (eq this.dateFilterMode "today")}}
+                                        No orders scheduled for today ({{this.todayDateString}}) matching the active filter.
+                                    {{else if (eq this.dateFilterMode "custom")}}
+                                        No orders scheduled for {{this.customSelectedDate}} matching the active filter.
                                     {{else}}
-                                        All orders are completed or no orders match the selected status filter.
+                                        No orders match the selected filter.
                                     {{/if}}
                                 </div>
                             </div>

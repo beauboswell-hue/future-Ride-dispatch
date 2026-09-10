@@ -9,334 +9,7 @@ const compiler = require(compilerPath);
 console.log('--- Compiling Dispatch Grid HBS Templates ---');
 
 // 1. Template for <DispatchGrid> component
-const dispatchGridHbs = `<div class="dispatch-grid-wrapper flex flex-col h-full w-full bg-gray-950 text-gray-100 p-4 space-y-4">
-    {{!-- Top Toolbar --}}
-    <div class="dispatch-grid-toolbar flex-shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-gray-900/90 border border-gray-800 rounded-xl p-3 shadow-lg relative z-30">
-        <div class="flex items-center space-x-3">
-            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30">
-                <FaIcon @icon="table-cells" class="text-base" />
-            </div>
-            <div>
-                <div class="flex items-center space-x-2">
-                    <h2 class="text-base font-bold text-white tracking-wide">Dispatch Grid</h2>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                        {{this.gridRows.length}} Orders
-                    </span>
-                </div>
-                <p class="text-xs text-gray-400">Live operational manifest &amp; dispatch status matrix</p>
-            </div>
-        </div>
-
-        {{!-- Search & Filters --}}
-        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            <div class="relative flex-1 md:w-64">
-                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
-                    <FaIcon @icon="search" class="text-xs" />
-                </div>
-                <Input
-                    @type="text"
-                    @value={{this.searchQuery}}
-                    placeholder="Search passenger, driver, vehicle, ID..."
-                    class="form-input form-input-sm w-full pl-8 bg-gray-950/80 border-gray-700 text-gray-100 placeholder-gray-500 text-xs rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-                {{#if this.searchQuery}}
-                    <button
-                        type="button"
-                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-white text-xs"
-                        {{on "click" this.clearSearch}}
-                    >
-                        <FaIcon @icon="times-circle" />
-                    </button>
-                {{/if}}
-            </div>
-
-            {{!-- Quick Status Filter Tabs (7-Step Limo Anywhere Pipeline) --}}
-            <div class="flex items-center bg-gray-950 p-0.5 rounded-lg border border-gray-800 text-xs overflow-x-auto">
-                <button
-                    type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'all') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "all")}}
-                >
-                    <span>All</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'all') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
-                        {{this.statusCounts.all}}
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'created') 'bg-gray-700 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "created")}}
-                >
-                    <span>Created</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'created') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
-                        {{this.statusCounts.created}}
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'dispatched') 'bg-blue-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "dispatched")}}
-                >
-                    <span>Dispatched</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'dispatched') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
-                        {{this.statusCounts.dispatched}}
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'enroute_pickup') 'bg-amber-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "enroute_pickup")}}
-                >
-                    <span>En Route</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'enroute_pickup') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
-                        {{this.statusCounts.enroute_pickup}}
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'on_location') 'bg-purple-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "on_location")}}
-                >
-                    <span>On Location</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'on_location') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
-                        {{this.statusCounts.on_location}}
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'pob') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "pob")}}
-                >
-                    <span>POB (Passenger on Board)</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'pob') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
-                        {{this.statusCounts.pob}}
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'completed') 'bg-emerald-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "completed")}}
-                >
-                    <span>Completed</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'completed') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
-                        {{this.statusCounts.completed}}
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    class="px-2.5 py-1 rounded-md transition-colors font-medium flex items-center space-x-1.5 {{if (eq this.statusFilter 'canceled') 'bg-red-600 text-white shadow' 'text-gray-400 hover:text-white'}}"
-                    {{on "click" (fn this.setStatusFilter "canceled")}}
-                >
-                    <span>Canceled</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{if (eq this.statusFilter 'canceled') 'bg-black/30 text-white border border-white/20' 'bg-gray-800 text-gray-400 border border-gray-700/50'}}">
-                        {{this.statusCounts.canceled}}
-                    </span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    {{!-- Table Container --}}
-    <div class="dispatch-grid-table-container flex-1 min-h-0 overflow-x-auto overflow-y-auto rounded-xl border border-gray-800 bg-gray-900/60 shadow-xl custom-scrollbar relative z-10">
-        <table class="w-full text-left border-collapse min-w-[1100px]">
-            <thead class="dispatch-grid-thead sticky top-0 z-20 bg-[#111827] border-b border-gray-700 shadow-md">
-                <tr class="bg-[#111827] border-b border-gray-700">
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-36 min-w-[140px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Order ID</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-52 min-w-[180px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Passenger</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-44 min-w-[160px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Vehicle</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-52 min-w-[190px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Chauffeur</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Pickup</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 min-w-[220px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Dropoff</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-3.5 w-48 min-w-[170px] text-[#F9FAFB] font-bold text-xs uppercase tracking-wider bg-[#111827]">Flags &amp; Conflicts</th>
-                    <th class="dispatch-grid-th sticky top-0 z-20 py-3.5 px-2 w-12 text-center bg-[#111827]"></th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-800/60 text-sm relative z-1">
-                {{#if this.gridRows.length}}
-                    {{#each this.gridRows as |item|}}
-                        <tr
-                            class="dispatch-grid-row {{item.rowClass}} transition-colors duration-150 cursor-pointer select-none relative z-1"
-                            data-status="{{item.order.status}}"
-                            {{on "click" (fn this.onClickRow item.order)}}
-                        >
-                            {{!-- Column 1: Order ID --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex flex-col">
-                                    <div class="font-mono font-bold text-white text-xs tracking-tight flex items-center space-x-1.5">
-                                        <span>{{item.orderInfo.id}}</span>
-                                    </div>
-                                    {{#if item.orderInfo.scheduledAt}}
-                                        <div class="text-[11px] text-gray-300 mt-0.5 flex items-center space-x-1">
-                                            <FaIcon @icon="clock" class="text-[10px] text-gray-400" />
-                                            <span>{{item.orderInfo.scheduledAt}}</span>
-                                        </div>
-                                    {{/if}}
-                                    <div class="mt-1">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase {{item.statusBadgeClass}}" data-status="{{item.order.status}}">
-                                            {{item.orderInfo.statusTitle}}
-                                        </span>
-                                    </div>
-                                </div>
-                            </td>
-
-                            {{!-- Column 2: Passenger --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex flex-col">
-                                    <div class="font-semibold text-white text-sm">
-                                        {{item.passenger.name}}
-                                    </div>
-                                    {{#if item.passenger.phone}}
-                                        <div class="text-xs text-gray-300 mt-0.5 flex items-center space-x-1">
-                                            <FaIcon @icon="phone" class="text-[10px] text-gray-400" />
-                                            <span>{{item.passenger.phone}}</span>
-                                        </div>
-                                    {{/if}}
-                                    {{#if item.passenger.note}}
-                                        <div class="text-[11px] text-gray-400 italic truncate max-w-xs mt-0.5" title={{item.passenger.note}}>
-                                            {{item.passenger.note}}
-                                        </div>
-                                    {{/if}}
-                                </div>
-                            </td>
-
-                            {{!-- Column 3: Vehicle --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex flex-col">
-                                    {{#if item.vehicle.assigned}}
-                                        <div class="font-medium text-white text-xs">
-                                            {{item.vehicle.type}}
-                                        </div>
-                                        {{#if item.vehicle.plate}}
-                                            <div class="mt-1 inline-flex items-center px-1.5 py-0.5 rounded bg-gray-800/90 text-gray-200 border border-gray-700 font-mono text-[10px] font-semibold tracking-wider w-fit">
-                                                <FaIcon @icon="car" class="mr-1 text-[9px] text-gray-400" />
-                                                {{item.vehicle.plate}}
-                                            </div>
-                                        {{/if}}
-                                    {{else}}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-800/80 text-gray-400 border border-gray-700/60 w-fit">
-                                            <FaIcon @icon="car" class="mr-1 text-gray-500 text-[10px]" />
-                                            Unassigned
-                                        </span>
-                                    {{/if}}
-                                </div>
-                            </td>
-
-                            {{!-- Column 4: Chauffeur --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex items-center space-x-2.5">
-                                    <img
-                                        src={{item.driver.avatar_url}}
-                                        alt={{item.driver.name}}
-                                        width="32"
-                                        height="32"
-                                        loading="lazy"
-                                        class="w-8 h-8 rounded-full flex-shrink-0 object-cover border border-gray-700 bg-gray-800 shadow-sm"
-                                        onerror="this.onerror=null;this.src='/images/no-avatar.png';"
-                                    />
-                                    <div class="flex flex-col min-w-0 truncate">
-                                        <div class="font-semibold text-white text-xs truncate">
-                                            {{item.driver.name}}
-                                        </div>
-                                        <div class="inline-flex items-center space-x-1.5 mt-0.5">
-                                            <span class="w-1.5 h-1.5 rounded-full {{item.driver.dotClass}} flex-shrink-0"></span>
-                                            <span class="text-[11px] font-medium {{item.driver.statusClass}} truncate">{{item.driver.status}}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-
-                            {{!-- Column 5: Pickup --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex items-start space-x-2">
-                                    <div class="mt-0.5 shrink-0 text-emerald-400">
-                                        <FaIcon @icon="map-marker-alt" class="text-xs" />
-                                    </div>
-                                    <div class="flex flex-col min-w-0">
-                                        {{#if item.pickup.name}}
-                                            <div class="font-semibold text-white text-xs truncate" title={{item.pickup.name}}>
-                                                {{item.pickup.name}}
-                                            </div>
-                                        {{/if}}
-                                        <div class="text-xs text-gray-300 line-clamp-2 leading-relaxed" title={{item.pickup.address}}>
-                                            {{item.pickup.address}}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-
-                            {{!-- Column 6: Dropoff --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex items-start space-x-2">
-                                    <div class="mt-0.5 shrink-0 text-red-400">
-                                        <FaIcon @icon="flag-checkered" class="text-xs" />
-                                    </div>
-                                    <div class="flex flex-col min-w-0">
-                                        {{#if item.dropoff.name}}
-                                            <div class="font-semibold text-white text-xs truncate" title={{item.dropoff.name}}>
-                                                {{item.dropoff.name}}
-                                            </div>
-                                        {{/if}}
-                                        <div class="text-xs text-gray-300 line-clamp-2 leading-relaxed" title={{item.dropoff.address}}>
-                                            {{item.dropoff.address}}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-
-                            {{!-- Column 7: Flags & Conflicts --}}
-                            <td class="py-3 px-3.5 align-middle">
-                                <div class="flex flex-wrap gap-1 items-center">
-                                    {{#if item.flags.length}}
-                                        {{#each item.flags as |flag|}}
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border {{flag.badgeClass}}">
-                                                <FaIcon @icon={{flag.icon}} class="mr-1 text-[9px]" />
-                                                {{flag.label}}
-                                            </span>
-                                        {{/each}}
-                                    {{else}}
-                                        <span class="text-xs text-gray-500 font-normal italic">
-                                            None
-                                        </span>
-                                    {{/if}}
-                                </div>
-                            </td>
-
-                            {{!-- Column 8: Actions --}}
-                            <td class="py-3 px-2 align-middle text-center" {{on "click" this.stopEventPropagation}}>
-                                <button
-                                    type="button"
-                                    class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition-colors border border-gray-700 shadow-sm"
-                                    title="View Order Details"
-                                    {{on "click" (fn this.onClickRow item.order)}}
-                                >
-                                    <FaIcon @icon="eye" class="text-xs" />
-                                </button>
-                            </td>
-                        </tr>
-                    {{/each}}
-                {{else}}
-                    <tr>
-                        <td colspan="8" class="py-16 text-center text-gray-400">
-                            <div class="flex flex-col items-center justify-center space-y-3">
-                                <div class="w-12 h-12 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-500">
-                                    <FaIcon @icon="table-cells" class="text-xl" />
-                                </div>
-                                <div class="text-sm font-semibold text-white">No active orders found in Dispatch Grid</div>
-                                <div class="text-xs text-gray-400 max-w-sm">
-                                    {{#if this.searchQuery}}
-                                        No orders matching "{{this.searchQuery}}". Try clearing the search filter.
-                                    {{else}}
-                                        All orders are completed or no orders match the selected status filter.
-                                    {{/if}}
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                {{/if}}
-            </tbody>
-        </table>
-    </div>
-</div>`;
+const dispatchGridHbs = fs.readFileSync('/home/wert/fleetbase/console/packages/fleetops/addon/components/dispatch-grid.hbs', 'utf-8');
 
 const dispatchGridCompiled = compiler.precompile(dispatchGridHbs, {
     moduleName: '@fleetbase/fleetops-engine/components/dispatch-grid.hbs'
@@ -788,28 +461,33 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
     }
 
     getRowClass(order) {
-      if (this.hasConflict(order) || order.status === 'canceled' || order.status === 'cancelled') {
-        return 'dispatch-grid-row-conflict';
-      }
-      switch (order.status) {
+      const st = (order?.status || '').toLowerCase();
+      switch (st) {
         case 'completed':
-          return 'dispatch-grid-row-completed';
-        case 'pob':
-        case 'in_progress':
-        case 'started':
-          return 'dispatch-grid-row-in-progress';
+          return 'bg-emerald-200 hover:bg-emerald-300 border-b border-emerald-400 border-l-[6px] border-l-emerald-600';
+        case 'dispatched':
+          return 'bg-blue-200 hover:bg-blue-300 border-b border-blue-400 border-l-[6px] border-l-blue-600';
+        case 'enroute':
+        case 'enroute_pickup':
+        case 'driver_enroute':
+          return 'bg-amber-200 hover:bg-amber-300 border-b border-amber-400 border-l-[6px] border-l-amber-600';
         case 'on_location':
         case 'arrived':
-          return 'dispatch-grid-row-arrived';
-        case 'enroute_pickup':
-        case 'enroute':
-        case 'driver_enroute':
-          return 'dispatch-grid-row-enroute';
-        case 'dispatched':
-          return 'dispatch-grid-row-dispatched';
+          return 'bg-purple-200 hover:bg-purple-300 border-b border-purple-400 border-l-[6px] border-l-purple-600';
+        case 'pob':
+        case 'passenger_on_board':
+        case 'in_progress':
+        case 'started':
+          return 'bg-orange-200 hover:bg-orange-300 border-b border-orange-400 border-l-[6px] border-l-orange-600';
+        case 'canceled':
+        case 'cancelled':
+          return 'bg-rose-200 hover:bg-rose-300 border-b border-rose-400 border-l-[6px] border-l-rose-600';
         case 'created':
+        case 'draft':
+        case 'pending':
+        case 'unassigned':
         default:
-          return 'dispatch-grid-row-draft';
+          return 'bg-slate-200 hover:bg-slate-300 border-b border-slate-400 border-l-[6px] border-l-slate-500';
       }
     }
 
@@ -1559,6 +1237,17 @@ const dispatchGridCss = `
     flex-shrink: 0 !important;
 }
 
+.dispatch-grid-toolbar input[type="text"],
+.dispatch-grid-toolbar .form-input {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+}
+
+.dispatch-grid-toolbar input::placeholder {
+    color: #9ca3af !important;
+}
+
 .dispatch-grid-table-container {
     flex: 1 1 0% !important;
     min-height: 0 !important;
@@ -1574,8 +1263,8 @@ const dispatchGridCss = `
     position: sticky !important;
     top: 0 !important;
     z-index: 20 !important;
-    background-color: #111827 !important;
-    border-bottom: 1px solid #374151 !important;
+    background-color: #f3f4f6 !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 .dispatch-grid-th,
@@ -1584,164 +1273,164 @@ const dispatchGridCss = `
     position: sticky !important;
     top: 0 !important;
     z-index: 20 !important;
-    background-color: #111827 !important;
-    color: #F9FAFB !important;
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
     font-size: 0.75rem !important;
     line-height: 1rem !important;
-    border-bottom: 1px solid #374151 !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 .dispatch-grid-row {
     position: relative !important;
     z-index: 1 !important;
-    transition: background-color 0.15s ease, transform 0.1s ease;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.next-map-container-topbar.next-topbar-grid {
-    z-index: 700 !important;
+/* Full-Row Background Tinting by Status - 200-300 Saturated Fills with Left Accent Bar */
+.dispatch-grid-row.bg-emerald-200,
+.dispatch-grid-row[data-status="completed"] {
+    background-color: #a7f3d0 !important;
+    border-bottom: 1px solid #34d399 !important;
+    border-left: 6px solid #059669 !important;
+}
+.dispatch-grid-row.bg-emerald-200:hover,
+.dispatch-grid-row[data-status="completed"]:hover {
+    background-color: #6ee7b7 !important;
 }
 
-/* 1. Unassigned / Draft: Slate / Dark Gray (#374151) */
-.dispatch-grid-row-draft,
-.dispatch-grid-row[data-status="created"] {
-    border-left: 4px solid #374151 !important;
-    background-color: rgba(55, 65, 81, 0.45) !important;
-    color: #F9FAFB !important;
-}
-.dispatch-grid-row-draft:hover,
-.dispatch-grid-row[data-status="created"]:hover {
-    background-color: rgba(55, 65, 81, 0.70) !important;
-}
-
-/* 2. Assigned / Dispatched: Blue (#1D4ED8) / Purple (#8b5cf6) */
-.dispatch-grid-row-dispatched,
+.dispatch-grid-row.bg-blue-200,
 .dispatch-grid-row[data-status="dispatched"] {
-    border-left: 4px solid #8b5cf6 !important; /* purple */
-    background-color: rgba(139, 92, 246, 0.08) !important;
-    color: #F9FAFB !important;
+    background-color: #bfdbfe !important;
+    border-bottom: 1px solid #60a5fa !important;
+    border-left: 6px solid #2563eb !important;
 }
-.dispatch-grid-row-dispatched:hover,
+.dispatch-grid-row.bg-blue-200:hover,
 .dispatch-grid-row[data-status="dispatched"]:hover {
-    background-color: rgba(139, 92, 246, 0.15) !important;
+    background-color: #93c5fd !important;
 }
 
-/* 3. En Route: Amber / Gold (#f59e0b) */
-.dispatch-grid-row-enroute,
+.dispatch-grid-row.bg-amber-200,
 .dispatch-grid-row[data-status="enroute"],
 .dispatch-grid-row[data-status="enroute_pickup"],
 .dispatch-grid-row[data-status="driver_enroute"] {
-    border-left: 4px solid #f59e0b !important; /* amber */
-    background-color: rgba(245, 158, 11, 0.08) !important;
-    color: #F9FAFB !important;
+    background-color: #fde68a !important;
+    border-bottom: 1px solid #fbbf24 !important;
+    border-left: 6px solid #d97706 !important;
 }
-.dispatch-grid-row-enroute:hover,
+.dispatch-grid-row.bg-amber-200:hover,
 .dispatch-grid-row[data-status="enroute"]:hover,
 .dispatch-grid-row[data-status="enroute_pickup"]:hover,
 .dispatch-grid-row[data-status="driver_enroute"]:hover {
-    background-color: rgba(245, 158, 11, 0.15) !important;
+    background-color: #fcd34d !important;
 }
 
-/* 4. Staged / Arrived: Purple (#a855f7) */
-.dispatch-grid-row-arrived,
+.dispatch-grid-row.bg-purple-200,
 .dispatch-grid-row[data-status="on_location"],
 .dispatch-grid-row[data-status="arrived"] {
-    border-left: 4px solid #a855f7 !important; /* light purple */
-    background-color: rgba(168, 85, 247, 0.08) !important;
-    color: #F9FAFB !important;
+    background-color: #e9d5ff !important;
+    border-bottom: 1px solid #c084fc !important;
+    border-left: 6px solid #9333ea !important;
 }
-.dispatch-grid-row-arrived:hover,
+.dispatch-grid-row.bg-purple-200:hover,
 .dispatch-grid-row[data-status="on_location"]:hover,
 .dispatch-grid-row[data-status="arrived"]:hover {
-    background-color: rgba(168, 85, 247, 0.15) !important;
+    background-color: #d8b4fe !important;
 }
 
-/* 5. Trip Active / In Progress: Blue (#3b82f6) / Green (#10b981) */
-.dispatch-grid-row-in-progress,
+.dispatch-grid-row.bg-orange-200,
 .dispatch-grid-row[data-status="in_progress"],
 .dispatch-grid-row[data-status="started"],
-.dispatch-grid-row[data-status="pob"] {
-    border-left: 4px solid #3b82f6 !important; /* blue */
-    background-color: rgba(59, 130, 246, 0.08) !important;
-    color: #F9FAFB !important;
+.dispatch-grid-row[data-status="pob"],
+.dispatch-grid-row[data-status="passenger_on_board"] {
+    background-color: #fed7aa !important;
+    border-bottom: 1px solid #fb923c !important;
+    border-left: 6px solid #ea580c !important;
 }
-.dispatch-grid-row-in-progress:hover,
+.dispatch-grid-row.bg-orange-200:hover,
 .dispatch-grid-row[data-status="in_progress"]:hover,
 .dispatch-grid-row[data-status="started"]:hover,
-.dispatch-grid-row[data-status="pob"]:hover {
-    background-color: rgba(59, 130, 246, 0.15) !important;
+.dispatch-grid-row[data-status="pob"]:hover,
+.dispatch-grid-row[data-status="passenger_on_board"]:hover {
+    background-color: #fdba74 !important;
 }
 
-.dispatch-grid-row-completed,
-.dispatch-grid-row[data-status="completed"] {
-    border-left: 4px solid #10b981 !important; /* green */
-    background-color: rgba(16, 185, 129, 0.08) !important;
-    color: #F9FAFB !important;
-}
-.dispatch-grid-row-completed:hover,
-.dispatch-grid-row[data-status="completed"]:hover {
-    background-color: rgba(16, 185, 129, 0.15) !important;
-}
-
-/* 6. Flagged / Conflict: Crimson / Red (#ef4444) */
-.dispatch-grid-row-conflict,
+.dispatch-grid-row.bg-rose-200,
 .dispatch-grid-row[data-status="canceled"],
 .dispatch-grid-row[data-status="cancelled"] {
-    border-left: 4px solid #ef4444 !important; /* red */
-    background-color: rgba(239, 68, 68, 0.08) !important;
-    color: #F9FAFB !important;
+    background-color: #fecdd3 !important;
+    border-bottom: 1px solid #fb7185 !important;
+    border-left: 6px solid #e11d48 !important;
 }
-.dispatch-grid-row-conflict:hover,
+.dispatch-grid-row.bg-rose-200:hover,
 .dispatch-grid-row[data-status="canceled"]:hover,
 .dispatch-grid-row[data-status="cancelled"]:hover {
-    background-color: rgba(239, 68, 68, 0.15) !important;
+    background-color: #fda4af !important;
 }
 
-/* Dispatch Grid Status Badge Color Coding */
+.dispatch-grid-row.bg-slate-200,
+.dispatch-grid-row[data-status="created"],
+.dispatch-grid-row[data-status="draft"],
+.dispatch-grid-row[data-status="pending"],
+.dispatch-grid-row[data-status="unassigned"] {
+    background-color: #e2e8f0 !important;
+    border-bottom: 1px solid #94a3b8 !important;
+    border-left: 6px solid #64748b !important;
+}
+.dispatch-grid-row.bg-slate-200:hover,
+.dispatch-grid-row[data-status="created"]:hover,
+.dispatch-grid-row[data-status="draft"]:hover,
+.dispatch-grid-row[data-status="pending"]:hover,
+.dispatch-grid-row[data-status="unassigned"]:hover {
+    background-color: #cbd5e1 !important;
+}
+
+/* Dispatch Grid High-Vibrancy Status Badge Color Coding */
 .dispatch-grid-row span[data-status="dispatched"] {
-    background-color: rgba(139, 92, 246, 0.2) !important;
-    color: #c084fc !important;
-    border-color: rgba(139, 92, 246, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #1e3a8a !important;
+    border: 1px solid #3b82f6 !important;
 }
 .dispatch-grid-row span[data-status="enroute"],
 .dispatch-grid-row span[data-status="enroute_pickup"],
 .dispatch-grid-row span[data-status="driver_enroute"] {
-    background-color: rgba(245, 158, 11, 0.2) !important;
-    color: #fbd38d !important;
-    border-color: rgba(245, 158, 11, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #78350f !important;
+    border: 1px solid #d97706 !important;
 }
 .dispatch-grid-row span[data-status="in_progress"],
 .dispatch-grid-row span[data-status="started"],
-.dispatch-grid-row span[data-status="pob"] {
-    background-color: rgba(59, 130, 246, 0.2) !important;
-    color: #93c5fd !important;
-    border-color: rgba(59, 130, 246, 0.5) !important;
+.dispatch-grid-row span[data-status="pob"],
+.dispatch-grid-row span[data-status="passenger_on_board"] {
+    background-color: #ffffff !important;
+    color: #7c2d12 !important;
+    border: 1px solid #ea580c !important;
 }
 .dispatch-grid-row span[data-status="on_location"],
 .dispatch-grid-row span[data-status="arrived"] {
-    background-color: rgba(168, 85, 247, 0.2) !important;
-    color: #d8b4fe !important;
-    border-color: rgba(168, 85, 247, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #581c87 !important;
+    border: 1px solid #9333ea !important;
 }
 .dispatch-grid-row span[data-status="completed"] {
-    background-color: rgba(16, 185, 129, 0.2) !important;
-    color: #6ee7b7 !important;
-    border-color: rgba(16, 185, 129, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #064e3b !important;
+    border: 1px solid #059669 !important;
 }
 .dispatch-grid-row span[data-status="canceled"],
 .dispatch-grid-row span[data-status="cancelled"] {
-    background-color: rgba(239, 68, 68, 0.2) !important;
-    color: #fca5a5 !important;
-    border-color: rgba(239, 68, 68, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #881337 !important;
+    border: 1px solid #e11d48 !important;
 }
-.dispatch-grid-row span[data-status="created"] {
-    background-color: rgba(148, 163, 184, 0.2) !important;
-    color: #cbd5e1 !important;
-    border-color: rgba(148, 163, 184, 0.5) !important;
+.dispatch-grid-row span[data-status="created"],
+.dispatch-grid-row span[data-status="draft"],
+.dispatch-grid-row span[data-status="pending"],
+.dispatch-grid-row span[data-status="unassigned"] {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #64748b !important;
 }
 
 /* Topbar Dispatch Grid Button */

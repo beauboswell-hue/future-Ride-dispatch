@@ -10,12 +10,25 @@ module.exports = {
             './node_modules/@fleetbase/ember-ui/addon/templates/**/*.{hbs,js}',
             './node_modules/@fleetbase/ember-ui/addon/components/**/*.{hbs,js}',
             './node_modules/**/*-engine/addon/**/*.{hbs,js}',
+            './packages/**/*.{hbs,js}',
         ],
     },
     safelist: [
         {
             pattern: /(py|px|mx|my|gap)-[1-9][0-9]?/,
         },
+        'border-t-4',
+        'border-t-slate-500',
+        'border-t-blue-500',
+        'border-t-amber-500',
+        'border-t-purple-500',
+        'border-t-orange-500',
+        'border-t-emerald-500',
+        'border-t-rose-500',
+        'border-t-red-500',
+        'rounded-t',
+        'rounded-t-lg',
+        'overflow-hidden',
     ],
     theme: {
         extend: {
