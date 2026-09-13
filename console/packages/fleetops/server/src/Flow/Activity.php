@@ -113,7 +113,7 @@ class Activity extends FlowResource
      *
      * @return \Illuminate\Support\Collection a collection of child activities
      */
-    public function getChildActivities(Order|Waypoint|null $context = null)
+    public function getChildActivities(Order|Waypoint|null $context = null, array &$visited = [])
     {
         $children   = collect();
         $activities = $this->activities;
@@ -124,18 +124,25 @@ class Activity extends FlowResource
         if (is_array($activities)) {
             foreach ($activities as $childActivityCode) {
                 $childActivity = $this->flow->getActivity($childActivityCode);
-                // if waypoint context skip `created` - `started` - `dispatched`
-                if ($waypointContext && in_array($childActivity->code, ['created', 'started', 'dispatched'])) {
-                    return $childActivity->getChildActivities($context);
+                if (!$childActivity) {
+                    continue;
                 }
 
-                if ($childActivity) {
-                    $children->push($childActivity);
+                // if waypoint context skip `created` - `started` - `dispatched`
+                if ($waypointContext && in_array($childActivity->code, ['created', 'started', 'dispatched'])) {
+                    if (in_array($childActivity->code, $visited)) {
+                        continue;
+                    }
+                    $visited[] = $childActivity->code;
+                    $children = $children->merge($childActivity->getChildActivities($context, $visited));
+                    continue;
                 }
+
+                $children->push($childActivity);
             }
         }
 
-        return $children;
+        return $children->unique('code')->values();
     }
 
     /**

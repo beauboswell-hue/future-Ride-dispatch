@@ -17,7 +17,7 @@ export default class OrderKanbanComponent extends Component {
     @tracked orders = this.args.orders ?? [];
     @tracked orderConfig = this.args.orderConfig ?? null;
 
-    #canonicalStages = ['created', 'dispatched', 'enroute_pickup', 'on_location', 'pob', 'completed', 'canceled'];
+    #canonicalStages = ['created', 'dispatched', 'started', 'on_location', 'pob', 'completed', 'canceled'];
 
     #stageTitles = {
         created: 'Created',
@@ -25,10 +25,10 @@ export default class OrderKanbanComponent extends Component {
         enroute: 'En Route',
         enroute_pickup: 'En Route',
         driver_enroute: 'En Route',
+        started: 'En Route',
         on_location: 'On Location',
         arrived: 'On Location',
         pob: 'POB (Passenger on Board)',
-        started: 'POB (Passenger on Board)',
         in_progress: 'POB (Passenger on Board)',
         completed: 'Completed',
         canceled: 'Canceled',
@@ -39,8 +39,15 @@ export default class OrderKanbanComponent extends Component {
         const loaded = isArray(this.statuses) ? this.statuses : [];
 
         // Normalize loaded statuses:
-        // Collapse 'enroute' to 'enroute_pickup' to prevent duplicate 'En Route' columns
-        const normalized = loaded.map((s) => (s === 'enroute' ? 'enroute_pickup' : s)).filter(Boolean);
+        // Collapse 'enroute', 'enroute_pickup', and 'driver_enroute' to 'started' to prevent duplicate 'En Route' columns
+        const normalized = loaded
+            .map((s) => {
+                if (s === 'enroute' || s === 'enroute_pickup' || s === 'driver_enroute') {
+                    return 'started';
+                }
+                return s;
+            })
+            .filter(Boolean);
 
         const canonical = this.#canonicalStages;
         const canonicalSet = new Set(canonical);
@@ -108,6 +115,7 @@ export default class OrderKanbanComponent extends Component {
                 const activity = nextActivities.find(
                     (activity) =>
                         activity.code === targetColumnId ||
+                        (targetColumnId === 'started' && (activity.code === 'enroute' || activity.code === 'enroute_pickup' || activity.code === 'started')) ||
                         (targetColumnId === 'enroute_pickup' && activity.code === 'enroute') ||
                         (targetColumnId === 'enroute' && activity.code === 'enroute_pickup')
                 );
@@ -153,14 +161,14 @@ export default class OrderKanbanComponent extends Component {
             if (status === 'dispatched') {
                 return st === 'dispatched';
             }
-            if (status === 'enroute_pickup' || status === 'enroute') {
-                return st === 'enroute_pickup' || st === 'enroute' || st === 'driver_enroute';
+            if (status === 'started' || status === 'enroute_pickup' || status === 'enroute') {
+                return st === 'started' || st === 'enroute_pickup' || st === 'enroute' || st === 'driver_enroute';
             }
             if (status === 'on_location') {
                 return st === 'on_location' || st === 'arrived';
             }
             if (status === 'pob') {
-                return st === 'pob' || st === 'in_progress' || st === 'started';
+                return st === 'pob' || st === 'in_progress';
             }
             if (status === 'completed') {
                 return st === 'completed';

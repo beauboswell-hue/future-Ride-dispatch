@@ -17,13 +17,13 @@ export default class OrderKanbanCardComponent extends Component {
             case 'enroute':
             case 'enroute_pickup':
             case 'driver_enroute':
+            case 'started':
                 return 'border-t-amber-500';
             case 'on_location':
             case 'arrived':
                 return 'border-t-purple-500';
             case 'pob':
             case 'passenger_on_board':
-            case 'started':
             case 'in_progress':
                 return 'border-t-orange-500';
             case 'completed':

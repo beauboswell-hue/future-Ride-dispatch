@@ -55,6 +55,22 @@ class Order extends Model
     use HasTrackingNumber;
     use HasCustomFields;
 
+    public function newEloquentBuilder($query)
+    {
+        return new class($query) extends \Illuminate\Database\Eloquent\Builder {
+            public function where($column, $operator = null, $value = null, $boolean = 'and')
+            {
+                if ($column === 'tracking_number' || (is_string($column) && str_ends_with($column, '.tracking_number'))) {
+                    $trackingNumber = $value ?? $operator;
+                    return $this->whereHas('trackingNumber', function ($q) use ($trackingNumber) {
+                        $q->where('tracking_number', $trackingNumber);
+                    });
+                }
+                return parent::where($column, $operator, $value, $boolean);
+            }
+        };
+    }
+
     /**
      * The database table used by the model.
      *
