@@ -59,7 +59,102 @@ class OrderObserver
             $order->facilitator->provider()->callback('onDeleted', $order);
         }
 
+        $this->cleanupOrderPlaces($order);
         $this->invalidateCache($order);
+    }
+
+    /**
+     * Soft-delete ad-hoc places tied to a deleted order if they are not reusable landmarks
+     * or referenced by any other active (non-deleted) order.
+     *
+     * @param Order $order
+     * @return void
+     */
+    protected function cleanupOrderPlaces(Order $order): void
+    {
+        $payloadUuid = $order->payload_uuid;
+        if (!$payloadUuid) {
+            return;
+        }
+
+        $payload = \Illuminate\Support\Facades\DB::table('payloads')->where('uuid', $payloadUuid)->first();
+        if (!$payload) {
+            return;
+        }
+
+        $placeUuids = array_filter([
+            $payload->pickup_uuid,
+            $payload->dropoff_uuid,
+            $payload->return_uuid,
+        ]);
+
+        $waypointPlaces = \Illuminate\Support\Facades\DB::table('waypoints')
+            ->where('payload_uuid', $payloadUuid)
+            ->pluck('place_uuid')
+            ->all();
+
+        $placeUuids = array_unique(array_merge($placeUuids, array_filter($waypointPlaces)));
+
+        if (empty($placeUuids)) {
+            return;
+        }
+
+        foreach ($placeUuids as $placeUuid) {
+            // Check if place is a reusable landmark / contact / vendor / company / asset
+            $isReusable = \Illuminate\Support\Facades\DB::table('places')
+                ->where('uuid', $placeUuid)
+                ->where(function ($q) use ($placeUuid) {
+                    $q->whereNotNull('owner_uuid')
+                        ->orWhereExists(function ($sub) use ($placeUuid) {
+                            $sub->selectRaw(1)->from('companies')->where('place_uuid', $placeUuid);
+                        })
+                        ->orWhereExists(function ($sub) use ($placeUuid) {
+                            $sub->selectRaw(1)->from('contacts')->where('place_uuid', $placeUuid);
+                        })
+                        ->orWhereExists(function ($sub) use ($placeUuid) {
+                            $sub->selectRaw(1)->from('vendors')->where('place_uuid', $placeUuid);
+                        })
+                        ->orWhereExists(function ($sub) use ($placeUuid) {
+                            $sub->selectRaw(1)->from('assets')->where('current_place_uuid', $placeUuid);
+                        });
+                })
+                ->exists();
+
+            if ($isReusable) {
+                continue;
+            }
+
+            // Check if place is referenced by any other active (non-deleted) order
+            $isUsedByOtherActiveOrder = \Illuminate\Support\Facades\DB::table('orders')
+                ->join('payloads', 'orders.payload_uuid', '=', 'payloads.uuid')
+                ->where('orders.uuid', '!=', $order->uuid)
+                ->whereNull('orders.deleted_at')
+                ->whereRaw('(payloads.pickup_uuid = ? OR payloads.dropoff_uuid = ? OR payloads.return_uuid = ?)', [$placeUuid, $placeUuid, $placeUuid])
+                ->exists();
+
+            if ($isUsedByOtherActiveOrder) {
+                continue;
+            }
+
+            $isUsedByOtherActiveWaypoint = \Illuminate\Support\Facades\DB::table('orders')
+                ->join('payloads', 'orders.payload_uuid', '=', 'payloads.uuid')
+                ->join('waypoints', 'waypoints.payload_uuid', '=', 'payloads.uuid')
+                ->where('orders.uuid', '!=', $order->uuid)
+                ->whereNull('orders.deleted_at')
+                ->whereNull('waypoints.deleted_at')
+                ->where('waypoints.place_uuid', $placeUuid)
+                ->exists();
+
+            if ($isUsedByOtherActiveWaypoint) {
+                continue;
+            }
+
+            // Soft-delete the place
+            \Illuminate\Support\Facades\DB::table('places')
+                ->where('uuid', $placeUuid)
+                ->whereNull('deleted_at')
+                ->update(['deleted_at' => now()]);
+        }
     }
 
     /**
@@ -69,7 +164,7 @@ class OrderObserver
      */
     protected function invalidateCache(?Order $order = null): void
     {
-        LiveCacheService::invalidateMultiple(['orders', 'routes', 'coordinates']);
+        LiveCacheService::invalidateMultiple(['orders', 'routes', 'coordinates', 'places']);
 
         // Invalidate order-specific tracker cache if order is provided
         if ($order && $order->uuid) {

@@ -279,6 +279,43 @@ class Order extends Model
     }
 
     /**
+     * Override bulk remove to ensure individual model deletion events fire.
+     * This ensures OrderObserver runs place cleanup, live cache invalidation,
+     * and external callbacks for every deleted order.
+     *
+     * @param array $ids
+     * @return int
+     */
+    public function bulkRemove($ids = [])
+    {
+        $records = $this->where(function ($q) use ($ids) {
+            $publicIdColumn = $this->getQualifiedPublicId();
+
+            $q->whereIn($this->getQualifiedKeyName(), $ids);
+            if ($this->isColumn($publicIdColumn)) {
+                $q->orWhereIn($publicIdColumn, $ids);
+            }
+        });
+
+        $companyUuid = session('company');
+        if ($companyUuid && $this->isColumn($this->qualifyColumn('company_uuid'))) {
+            $records->where($this->qualifyColumn('company_uuid'), $companyUuid);
+        }
+
+        $orderRecords = $records->get();
+        $count = 0;
+
+        foreach ($orderRecords as $order) {
+            $order->delete();
+            $count++;
+        }
+
+        $this->invalidateApiCacheOnChange();
+
+        return $count;
+    }
+
+    /**
      * Get the activity log options for the model.
      */
     public function getActivitylogOptions(): LogOptions

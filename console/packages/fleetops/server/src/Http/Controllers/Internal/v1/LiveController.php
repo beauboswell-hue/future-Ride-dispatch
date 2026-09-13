@@ -247,6 +247,57 @@ class LiveController extends Controller
                 );
             }
 
+            // Filter out places associated only with completed, canceled, expired, or deleted orders.
+            $query->where(function ($q) {
+                // 1a. Payload pickup / dropoff / return for active, non-terminal orders
+                $q->whereExists(function ($sub) {
+                    $sub->selectRaw(1)
+                        ->from('payloads')
+                        ->join('orders', 'orders.payload_uuid', '=', 'payloads.uuid')
+                        ->whereRaw('(payloads.pickup_uuid = places.uuid OR payloads.dropoff_uuid = places.uuid OR payloads.return_uuid = places.uuid)')
+                        ->whereNull('orders.deleted_at')
+                        ->whereNotIn('orders.status', ['completed', 'canceled', 'expired']);
+                })
+                // 1b. Waypoints for active, non-terminal orders
+                ->orWhereExists(function ($sub) {
+                    $sub->selectRaw(1)
+                        ->from('waypoints')
+                        ->join('payloads', 'waypoints.payload_uuid', '=', 'payloads.uuid')
+                        ->join('orders', 'orders.payload_uuid', '=', 'payloads.uuid')
+                        ->whereColumn('waypoints.place_uuid', 'places.uuid')
+                        ->whereNull('waypoints.deleted_at')
+                        ->whereNull('orders.deleted_at')
+                        ->whereNotIn('orders.status', ['completed', 'canceled', 'expired']);
+                })
+                // 2. Reusable organization landmark / contact / vendor / company / asset
+                ->orWhereNotNull('places.owner_uuid')
+                ->orWhereExists(function ($sub) {
+                    $sub->selectRaw(1)->from('companies')->whereColumn('companies.place_uuid', 'places.uuid');
+                })
+                ->orWhereExists(function ($sub) {
+                    $sub->selectRaw(1)->from('contacts')->whereColumn('contacts.place_uuid', 'places.uuid');
+                })
+                ->orWhereExists(function ($sub) use ($q) {
+                    $sub->selectRaw(1)->from('vendors')->whereColumn('vendors.place_uuid', 'places.uuid');
+                })
+                ->orWhereExists(function ($sub) {
+                    $sub->selectRaw(1)->from('assets')->whereColumn('assets.current_place_uuid', 'places.uuid');
+                })
+                // 3. Standalone places (created without payloads)
+                ->orWhere(function ($standalone) {
+                    $standalone->whereNotExists(function ($sub) {
+                        $sub->selectRaw(1)
+                            ->from('payloads')
+                            ->whereRaw('(payloads.pickup_uuid = places.uuid OR payloads.dropoff_uuid = places.uuid OR payloads.return_uuid = places.uuid)');
+                    })
+                    ->whereNotExists(function ($sub) {
+                        $sub->selectRaw(1)
+                            ->from('waypoints')
+                            ->whereColumn('waypoints.place_uuid', 'places.uuid');
+                    });
+                });
+            });
+
             $places = $query->get();
 
             return PlaceIndexResource::collection($places);
