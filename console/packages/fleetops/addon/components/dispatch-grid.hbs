@@ -164,6 +164,9 @@
                     <th class="dispatch-grid-th py-2 px-3.5 w-28 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Time</th>
                     <th class="dispatch-grid-th py-2 px-3.5 w-48 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Passenger</th>
                     <th class="dispatch-grid-th py-2 px-3.5 w-36 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Phone</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-24 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Vehicle</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-16 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Pax</th>
+                    <th class="dispatch-grid-th py-2 px-3.5 w-16 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Seats</th>
                     <th class="dispatch-grid-th py-2 px-3.5 min-w-[260px] text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Route</th>
                     <th class="dispatch-grid-th py-2 px-3.5 w-44 text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Chauffeur</th>
                     <th class="dispatch-grid-th py-2 px-3.5 w-28 text-center text-gray-700 font-bold text-xs uppercase tracking-wider bg-gray-100">Status</th>
@@ -208,6 +211,21 @@
                                 {{/if}}
                             </td>
 
+                            {{!-- VehicleChoice column --}}
+                            <td class="py-1 px-3.5 align-middle whitespace-nowrap text-gray-950 text-xs font-semibold">
+                                {{item.vehicleChoice}}
+                            </td>
+
+                            {{!-- PaxCount column --}}
+                            <td class="py-1 px-3.5 align-middle whitespace-nowrap text-gray-950 text-xs font-semibold">
+                                {{item.paxCount}}
+                            </td>
+
+                            {{!-- ChildSeatsCount column --}}
+                            <td class="py-1 px-3.5 align-middle whitespace-nowrap text-gray-950 text-xs font-semibold">
+                                {{item.childSeatsCount}}
+                            </td>
+
                             {{!-- Route: Pickup and dropoff in high-contrast text-gray-950 font-semibold, arrow in text-blue-900 font-bold --}}
                             <td class="py-1 px-3.5 align-middle">
                                 <div class="truncate max-w-lg text-xs flex items-center space-x-1.5" title={{item.route.text}}>
@@ -240,7 +258,7 @@
                     {{/each}}
                 {{else}}
                     <tr>
-                        <td colspan="6" class="py-16 text-center text-gray-500 bg-white">
+                        <td colspan="9" class="py-16 text-center text-gray-500 bg-white">
                             <div class="flex flex-col items-center justify-center space-y-2">
                                 <div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">
                                     <FaIcon @icon="table-cells" class="text-base" />

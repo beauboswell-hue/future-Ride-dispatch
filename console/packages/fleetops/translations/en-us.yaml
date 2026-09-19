@@ -1924,7 +1924,7 @@ settings:
         payment-settings: Payment Settings
         account-not-setup-for-payments: Your account is not setup to accept payments yet.
         to-accept-payments: To accept and process payments, you must complete the onboard process via Stripe.
-        system-stripe-not-setup: This system is unable to acceot or process payments at this time, contact the system administrator to configure payments.
+        system-stripe-not-setup: This system is unable to accept or process payments at this time, contact the system administrator to configure payments.
         loading-settings: Loading payment settings...
         onboard:
             header-title: Payments Onboard

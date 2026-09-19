@@ -333,8 +333,40 @@ export default class DispatchGridComponent extends Component {
     }
 
     getPassengerInfo(order) {
-        const name = order.customer?.name || order.customer_name || 'Guest Passenger';
-        const phone = order.customer?.phone || order.customer_phone || '';
+        const meta = typeof order.meta === 'string' ? (function() { try { return JSON.parse(order.meta); } catch(e) { return {}; } })() : (order.meta || {});
+        
+        // Extract Name with multiple fallback paths
+        let name = order.customer?.name 
+            || order.payload?.customer?.name 
+            || meta?.passenger_name 
+            || meta?.name;
+
+        if (!name) {
+            const pickupName = order.payload?.pickup?.name || order.payload?.pickup_place?.name;
+            if (pickupName) {
+                const extracted = pickupName.split(' (')[0].trim();
+                if (extracted && !['pickup', 'pickup place', 'pickup location'].includes(extracted.toLowerCase())) {
+                    name = extracted;
+                }
+            }
+        }
+        if (!name) {
+            name = 'Guest Passenger';
+        }
+
+        // Extract Phone with multiple fallback paths
+        let phone = order.customer?.phone 
+            || order.payload?.customer?.phone 
+            || meta?.phone 
+            || meta?.passenger_phone 
+            || meta?.contact_phone 
+            || order.payload?.pickup?.phone 
+            || order.payload?.pickup_place?.phone;
+
+        if (!phone) {
+            phone = '--';
+        }
+
         let note = '';
         if (order.notes) {
             const lines = order.notes.split('\n').filter((l) => !l.includes('Coordinates:') && !l.includes('Locations:'));
@@ -484,21 +516,27 @@ export default class DispatchGridComponent extends Component {
     }
 
     get gridRows() {
-        return this.filteredOrders.map((order) => ({
-            order,
-            rowClass: this.getRowClass(order),
-            formattedTime: this.formatPickupTime(order),
-            statusBadge: this.getStatusBadge(order.status),
-            statusBadgeClass: this.getStatusBadgeClass(order.status),
-            orderInfo: this.getOrderInfo(order),
-            passenger: this.getPassengerInfo(order),
-            route: this.getRouteInfo(order),
-            vehicle: this.getVehicleInfo(order),
-            driver: this.getDriverInfo(order),
-            pickup: this.getPickupInfo(order),
-            dropoff: this.getDropoffInfo(order),
-            flags: this.getFlags(order),
-        }));
+        return this.filteredOrders.map((order) => {
+            const meta = typeof order.meta === 'string' ? (function() { try { return JSON.parse(order.meta); } catch(e) { return {}; } })() : (order.meta || {});
+            return {
+                order,
+                rowClass: this.getRowClass(order),
+                formattedTime: this.formatPickupTime(order),
+                statusBadge: this.getStatusBadge(order.status),
+                statusBadgeClass: this.getStatusBadgeClass(order.status),
+                orderInfo: this.getOrderInfo(order),
+                passenger: this.getPassengerInfo(order),
+                route: this.getRouteInfo(order),
+                vehicle: this.getVehicleInfo(order),
+                driver: this.getDriverInfo(order),
+                pickup: this.getPickupInfo(order),
+                dropoff: this.getDropoffInfo(order),
+                flags: this.getFlags(order),
+                vehicleChoice: meta?.vehicle_type || meta?.vehicle || meta?.carChoice || meta?.car_choice || order.payload?.meta?.vehicle_type || order.payload?.meta?.vehicle || order.payload?.meta?.carChoice || order.payload?.meta?.car_choice || order.payload?.entities?.[0]?.meta?.vehicle_type || order.payload?.entities?.[0]?.meta?.vehicle || order.payload?.entities?.[0]?.meta?.carChoice || order.payload?.entities?.[0]?.meta?.car_choice || '-',
+                paxCount: meta?.passengers || meta?.passenger_count || meta?.pax || order.payload?.meta?.passengers || order.payload?.meta?.passenger_count || order.payload?.meta?.pax || order.payload?.entities?.[0]?.meta?.passengers || order.payload?.entities?.[0]?.meta?.passenger_count || order.payload?.entities?.[0]?.meta?.pax || '-',
+                childSeatsCount: meta?.child_seats || meta?.child_seats_count || meta?.seats || order.payload?.meta?.child_seats || order.payload?.meta?.child_seats_count || order.payload?.meta?.seats || order.payload?.entities?.[0]?.meta?.child_seats || order.payload?.entities?.[0]?.meta?.child_seats_count || order.payload?.entities?.[0]?.meta?.seats || '-',
+            };
+        });
     }
 
     @action

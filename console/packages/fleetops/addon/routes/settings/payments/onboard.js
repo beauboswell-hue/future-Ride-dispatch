@@ -16,7 +16,7 @@ export default class SettingsPaymentsOnboardRoute extends Route {
 
     async beforeModel() {
         if (!this.isStripeEnabled) {
-            this.notifications.warning('This system is unable to acceot or process payments at this time, contact the system administrator to configure payments.');
+            this.notifications.warning('This system is unable to accept or process payments at this time, contact the system administrator to configure payments.');
             return this.hostRouter.transitionTo('console.fleet-ops.settings.payments.index');
         }
 

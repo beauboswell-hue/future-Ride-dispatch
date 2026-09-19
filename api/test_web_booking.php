@@ -110,23 +110,15 @@ echo "----------------------------------------------------\n";
 
 // Assertions for Test 1
 $t1_checks = [
-    'Header Contact Info'    => str_contains($order1->notes, '### 👤 Contact Information'),
-    'Name'                   => str_contains($order1->notes, '• Name: Alex Smith'),
-    'Phone'                  => str_contains($order1->notes, '• Phone:') && str_contains($order1->notes, '212'),
-    'Email'                  => str_contains($order1->notes, '• Email: alex.smith@example.com'),
-    'Username'               => str_contains($order1->notes, '• Account Username:'),
-    'Timezone'               => str_contains($order1->notes, '• Account Timezone:'),
-    'Header Ride Info'       => str_contains($order1->notes, "### 📅 Ride Information (Order {$order1->public_id})"),
-    'Scheduled UTC'          => str_contains($order1->notes, '- UTC:'),
-    'Scheduled Local'        => str_contains($order1->notes, '- Local Pickup Time:'),
-    'Scheduled Eastern'      => str_contains($order1->notes, '- Eastern Time:'),
-    'Pickup Location'        => str_contains($order1->notes, '- Pickup:'),
-    'Dropoff Location'       => str_contains($order1->notes, '- Dropoff:'),
+    'Passenger'              => str_contains($order1->notes, 'PASSENGER: Alex Smith'),
+    'Phone'                  => str_contains($order1->notes, '212'),
+    'Email'                  => str_contains($order1->notes, 'EMAIL: alex.smith@example.com'),
+    'Vehicle'                => str_contains($order1->notes, 'VEHICLE: N/A'),
+    'Passengers'             => str_contains($order1->notes, 'PASSENGERS: N/A'),
+    'Child Seats'            => str_contains($order1->notes, 'CHILD SEATS: N/A'),
+    'Pickup Location'        => str_contains($order1->notes, 'PICKUP:'),
+    'Dropoff Location'       => str_contains($order1->notes, 'DROPOFF:'),
     'No Warning Flag'        => !str_contains($order1->notes, 'WARNING'),
-    'Status'                 => str_contains($order1->notes, '• Status: created'),
-    'Driver None Assigned'   => str_contains($order1->notes, '• Assigned Driver: None Assigned'),
-    'Vehicle None Assigned'  => str_contains($order1->notes, '• Assigned Vehicle: None Assigned'),
-    'Booking Notes / Source' => str_contains($order1->notes, '• Booking Notes / Source: Website Form - Web Booking via Homepage Form [Tags: vip, airport-transfer]'),
 ];
 
 foreach ($t1_checks as $label => $passed) {
@@ -167,7 +159,7 @@ echo $order2->notes . "\n";
 echo "----------------------------------------------------\n";
 
 $t2_checks = [
-    'Warning in notes' => str_contains($order2->notes, 'WARNING') && (str_contains($order2->notes, 'identical') || str_contains($order2->notes, 'Matches pickup')),
+    'Warning in notes' => str_contains($order2->notes, 'WARNING') && (str_contains($order2->notes, 'identical') || str_contains($order2->notes, 'Matches pickup') || str_contains($order2->notes, 'Same as pickup')),
     'Warning flag icon' => str_contains($order2->notes, '⚠️'),
 ];
 
@@ -219,14 +211,11 @@ echo $order3->notes . "\n";
 echo "----------------------------------------------------\n";
 
 $t3_checks = [
-    'Name N/A'          => str_contains($order3->notes, '• Name: N/A'),
-    'Phone N/A'         => str_contains($order3->notes, '• Phone: N/A'),
-    'Email N/A'         => str_contains($order3->notes, '• Email: N/A'),
-    'Username N/A'      => str_contains($order3->notes, '• Account Username: N/A'),
-    'Timezone N/A'      => str_contains($order3->notes, '• Account Timezone: N/A'),
-    'Scheduled UTC N/A' => str_contains($order3->notes, '- UTC: N/A'),
-    'Driver None'       => str_contains($order3->notes, '• Assigned Driver: None Assigned'),
-    'Vehicle None'      => str_contains($order3->notes, '• Assigned Vehicle: None Assigned'),
+    'Passenger N/A'     => str_contains($order3->notes, 'PASSENGER: N/A'),
+    'Email N/A'         => str_contains($order3->notes, 'EMAIL: N/A'),
+    'Vehicle N/A'       => str_contains($order3->notes, 'VEHICLE: N/A'),
+    'Passengers N/A'    => str_contains($order3->notes, 'PASSENGERS: N/A'),
+    'Child Seats N/A'   => str_contains($order3->notes, 'CHILD SEATS: N/A'),
 ];
 
 foreach ($t3_checks as $label => $passed) {

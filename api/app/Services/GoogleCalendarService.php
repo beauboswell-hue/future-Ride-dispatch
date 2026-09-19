@@ -62,7 +62,16 @@ class GoogleCalendarService
         $internalId = $order->id ?? 'N/A';
         $fleetbaseOrderId = $order->public_id ?? $order->uuid ?? 'N/A';
 
-        return "#{$internalId} ({$fleetbaseOrderId})";
+        $meta = $order->meta ?? [];
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true) ?? [];
+        }
+
+        $carChoice = data_get($meta, 'vehicle_type') ?? 'N/A';
+        $pax = data_get($meta, 'passengers') ?? 'N/A';
+        $childSeats = data_get($meta, 'child_seats') ?? 'N/A';
+
+        return "#{$internalId} ({$fleetbaseOrderId}) - Vehicle: {$carChoice}, Pax: {$pax}, Child Seats: {$childSeats}";
     }
 
     /**
@@ -103,10 +112,22 @@ class GoogleCalendarService
             $pickupTime = 'N/A';
         }
 
+        $meta = $order->meta ?? [];
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true) ?? [];
+        }
+
+        $carChoice = data_get($meta, 'vehicle_type') ?? 'N/A';
+        $pax = data_get($meta, 'passengers') ?? 'N/A';
+        $childSeats = data_get($meta, 'child_seats') ?? 'N/A';
+
         return implode("\n", [
             "Order: #{$internalId}",
             "Time: {$pickupTime}",
             "Fleetbase ID: {$fleetbaseOrderId}",
+            "Vehicle: {$carChoice}",
+            "Pax: {$pax}",
+            "Child Seats: {$childSeats}",
             "",
             "https://console.futurelimo.website/fleet-ops/orders?id={$fleetbaseOrderId}",
         ]);

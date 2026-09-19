@@ -192,17 +192,13 @@ class TestWebBookingNotes extends Command
 
         // 9. Verify Required Elements in Notes
         $checks = [
-            'Header: Future Limo Dispatch' => str_contains($order->notes, 'Future Limo Dispatch'),
-            'Scheduled Time'              => str_contains($order->notes, '🕒 Scheduled:'),
-            'Passenger Name'              => str_contains($order->notes, '👤 Passenger:'),
-            'Passenger Phone'             => str_contains($order->notes, '📞 Phone:'),
-            'Passenger Email'             => str_contains($order->notes, '✉️ Email:'),
-            'Locations: Pickup'           => str_contains($order->notes, '📍 Pickup:'),
-            'Locations: Dropoff'          => str_contains($order->notes, '🏁 Dropoff:'),
-            'Status & Assignment'         => str_contains($order->notes, '🚗 Status:'),
-            'Order ID'                    => str_contains($order->notes, '🆔 Order ID:'),
-            'Internal ID'                 => str_contains($order->notes, '🔢 Internal ID:'),
-            'Tracking Number'             => str_contains($order->notes, '📦 Tracking #:'),
+            'Passenger Line'              => str_contains($order->notes, 'PASSENGER:'),
+            'Email Line'                  => str_contains($order->notes, 'EMAIL:'),
+            'Vehicle Line'                => str_contains($order->notes, 'VEHICLE:'),
+            'Passengers Count Line'       => str_contains($order->notes, 'PASSENGERS:'),
+            'Child Seats Line'            => str_contains($order->notes, 'CHILD SEATS:'),
+            'Pickup Location Line'        => str_contains($order->notes, 'PICKUP:'),
+            'Dropoff Location Line'       => str_contains($order->notes, 'DROPOFF:'),
         ];
 
         if ($isMatching) {

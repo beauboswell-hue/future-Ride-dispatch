@@ -26,39 +26,250 @@ class WebBookingNoteFormatter
     public static function formatAndSave(Order $order, bool $force = false): bool
     {
         // Guard against infinite recursive update loops & repeated formatting
-        if (str_contains($order->notes ?? '', 'Future Limo Dispatch')) {
-            return false;
+        if (!$force && (str_contains($order->notes ?? '', 'PASSENGER:') || str_contains($order->notes ?? '', 'Future Limo Dispatch'))) {
+            if ($order->customer_uuid) {
+                return false;
+            }
         }
 
         // Only format if this order is from a web booking source (unless forced)
         if (!$force && !static::isWebBooking($order)) {
-            return false;
+            if ($order->customer_uuid) {
+                return false;
+            }
         }
 
         if ($order->exists) {
             $order->refresh();
         }
 
-        $formattedNotes = static::generateMarkdownNote($order);
-
-        // Assign formatted markdown block to notes attribute
-        $order->notes = $formattedNotes;
-
-        // If meta was missing 'source' but request metadata has it, persist it too
+        // 1. Ingest and extract metadata
         $meta = $order->meta ?? [];
         if (is_string($meta)) {
             $meta = json_decode($meta, true) ?? [];
         }
-        if (empty($meta['source']) && request()) {
-            $reqSource = request()->input('metadata.source') ?? request()->input('meta.source');
-            if (!empty($reqSource)) {
-                $meta['source'] = $reqSource;
-                $order->meta = $meta;
+
+        $order->loadMissing('payload');
+        $payloadMeta = $order->payload?->meta ?? [];
+        if (is_string($payloadMeta)) {
+            $payloadMeta = json_decode($payloadMeta, true) ?? [];
+        }
+
+        $isValidVal = function ($v) {
+            if ($v === null || $v === '') {
+                return false;
             }
+            if (is_string($v)) {
+                $clean = strtolower(trim($v));
+                return !in_array($clean, ['n/a', 'none', '--', 'null', 'undefined']);
+            }
+            return true;
+        };
+
+        $getVal = function ($keys) use ($meta, $payloadMeta, $order, $isValidVal) {
+            foreach ((array)$keys as $k) {
+                if (request()) {
+                    $v = request()->input($k) 
+                        ?? request()->input("metadata.{$k}") 
+                        ?? request()->input("meta.{$k}")
+                        ?? request()->input("payload.meta.{$k}")
+                        ?? request()->input("payload.customer.{$k}")
+                        ?? request()->input("payload.pickup.{$k}")
+                        ?? request()->input("payload.dropoff.{$k}");
+                    if ($isValidVal($v)) {
+                        return $v;
+                    }
+                }
+                $v = data_get($meta, $k) 
+                    ?? data_get($meta, "metadata.{$k}") 
+                    ?? data_get($meta, "meta.{$k}")
+                    ?? data_get($payloadMeta, $k)
+                    ?? data_get($payloadMeta, "metadata.{$k}")
+                    ?? data_get($payloadMeta, "meta.{$k}")
+                    ?? data_get($order->payload, "pickup.{$k}")
+                    ?? data_get($order->payload, "dropoff.{$k}")
+                    ?? data_get($order->payload, "customer.{$k}")
+                    ?? data_get($order->customer, $k);
+                if ($isValidVal($v)) {
+                    return $v;
+                }
+            }
+            return null;
+        };
+
+        $vehicleType = $getVal(['vehicle_type', 'vehicle', 'carChoice', 'car_choice', 'vehicle_name', 'car_type', 'fleet']);
+        $passengers = $getVal(['passengers', 'passenger_count', 'pax', 'passengers_count', 'num_passengers']);
+        $childSeats = $getVal(['child_seats', 'child_seats_count', 'car_seats', 'seats', 'childSeats']);
+        $passengerName = $getVal(['passenger_name', 'customer.name', 'customer_name', 'name']);
+        $passengerPhone = $getVal(['passenger_phone', 'customer.phone', 'customer_phone', 'phone']);
+        $passengerEmail = $getVal(['email', 'passenger_email', 'customer_email', 'billing_email', 'user_email', 'contact_email', 'customer.email']);
+
+        // Fallbacks from original notes or description text patterns
+        $origNotes = $order->getOriginal('notes') ?: $order->notes;
+        $origDescription = data_get($meta, 'description') ?: '';
+
+        if (empty($vehicleType) || $vehicleType === 'N/A') {
+            if ($origNotes && preg_match('/(?:Car|Vehicle):\s*([^|\n\r]+)/i', $origNotes, $matches)) {
+                $vehicleType = trim($matches[1]);
+            } elseif ($origDescription && preg_match('/(?:Car|Vehicle):\s*([^|\n\r]+)/i', $origDescription, $matches)) {
+                $vehicleType = trim($matches[1]);
+            }
+        }
+        if ($passengers === null || $passengers === '' || $passengers === 'N/A') {
+            if ($origNotes && preg_match('/(?:Pax|Passengers?|Passenger Count):\s*(\d+)/i', $origNotes, $matches)) {
+                $passengers = (int)$matches[1];
+            } elseif ($origDescription && preg_match('/(?:Pax|Passengers?|Passenger Count):\s*(\d+)/i', $origDescription, $matches)) {
+                $passengers = (int)$matches[1];
+            }
+        }
+        if ($childSeats === null || $childSeats === '' || $childSeats === 'N/A') {
+            if ($origNotes && preg_match('/(?:Child\s*Seats?|Car\s*Seats?|Seats?):\s*(\d+)/i', $origNotes, $matches)) {
+                $childSeats = (int)$matches[1];
+            } elseif ($origDescription && preg_match('/(?:Child\s*Seats?|Car\s*Seats?|Seats?):\s*(\d+)/i', $origDescription, $matches)) {
+                $childSeats = (int)$matches[1];
+            }
+        }
+
+        // Fallbacks if not provided in request or metadata
+        if (empty($passengerName)) {
+            $order->loadMissing('payload.pickup');
+            $pickup = $order->payload?->pickup;
+            if ($pickup && $pickup->name) {
+                $extractedName = trim(explode(' (', $pickup->name)[0]);
+                if (strcasecmp($extractedName, 'pickup') !== 0 && strcasecmp($extractedName, 'pickup place') !== 0 && strcasecmp($extractedName, 'pickup location') !== 0) {
+                    $passengerName = $extractedName;
+                }
+            }
+        }
+
+        if (empty($passengerPhone)) {
+            $order->loadMissing('payload.pickup');
+            $pickup = $order->payload?->pickup;
+            if ($pickup && $pickup->phone) {
+                $passengerPhone = $pickup->phone;
+            }
+        }
+
+        if (!$order->relationLoaded('customer') && $order->customer_uuid) {
+            $order->load('customer');
+        }
+        $customer = $order->customer;
+        if ($customer) {
+            $passengerName = $passengerName ?: $customer->name;
+            $passengerPhone = $passengerPhone ?: $customer->phone;
+            $passengerEmail = $passengerEmail ?: $customer->email;
+        }
+
+        // Normalize / Fallbacks
+        $meta['vehicle_type'] = $vehicleType ?: (data_get($meta, 'vehicle_type') ?: 'N/A');
+        $meta['passengers'] = $passengers !== null ? $passengers : (data_get($meta, 'passengers') ?: 'N/A');
+        $meta['child_seats'] = $childSeats !== null ? $childSeats : (data_get($meta, 'child_seats') ?: 'N/A');
+        $meta['passenger_name'] = $passengerName ?: (data_get($meta, 'passenger_name') ?: 'N/A');
+        $meta['passenger_phone'] = $passengerPhone ?: (data_get($meta, 'passenger_phone') ?: 'N/A');
+        $meta['passenger_email'] = $passengerEmail ?: (data_get($meta, 'passenger_email') ?: 'N/A');
+
+        // Make sure source is present
+        if (empty($meta['source'])) {
+            $meta['source'] = $getVal(['source', 'source_form', 'booking_source']) ?: 'Website Form';
+        }
+
+        $order->meta = $meta;
+
+        // 2. Customer & Contact Binding
+        $customer = $order->customer;
+        $email = $meta['passenger_email'] !== 'N/A' ? $meta['passenger_email'] : null;
+        $phone = $meta['passenger_phone'] !== 'N/A' ? $meta['passenger_phone'] : null;
+        $name = $meta['passenger_name'] !== 'N/A' ? $meta['passenger_name'] : null;
+
+        if (!$customer && $email) {
+            $customer = Contact::where('company_uuid', $order->company_uuid)
+                ->where('email', $email)
+                ->first();
+        }
+        if (!$customer && $phone) {
+            $customer = Contact::where('company_uuid', $order->company_uuid)
+                ->where('phone', $phone)
+                ->first();
+        }
+        if (!$customer && $name) {
+            $customer = Contact::create([
+                'company_uuid' => $order->company_uuid,
+                'name'         => $name,
+                'phone'        => $phone,
+                'email'        => $email,
+                'type'         => 'customer',
+            ]);
+        }
+
+        if ($customer) {
+            $order->customer_uuid = $customer->uuid;
+            $order->customer_type = get_class($customer);
+
+            $contactUpdated = false;
+            if ($name && $customer->name !== $name) {
+                $customer->name = $name;
+                $contactUpdated = true;
+            }
+            if ($phone && $customer->phone !== $phone) {
+                $customer->phone = $phone;
+                $contactUpdated = true;
+            }
+            if ($email && $customer->email !== $email) {
+                $customer->email = $email;
+                $contactUpdated = true;
+            }
+            if ($contactUpdated) {
+                $customer->save();
+            }
+        }
+
+        // 3. Pickup Place Binding
+        $order->loadMissing('payload.pickup');
+        $pickupPlace = $order->payload?->pickup;
+        if ($pickupPlace) {
+            if ($phone) {
+                $pickupPlace->phone = $phone;
+            }
+            
+            $placeMeta = $pickupPlace->meta ?? [];
+            if (is_string($placeMeta)) {
+                $placeMeta = json_decode($placeMeta, true) ?? [];
+            }
+            $placeMeta['passenger_name'] = $name ?: 'N/A';
+            $placeMeta['passenger_phone'] = $phone ?: 'N/A';
+            $placeMeta['passenger_email'] = $email ?: 'N/A';
+            $pickupPlace->meta = $placeMeta;
+
+            $pickupPlace->saveQuietly();
+        }
+
+        // 4. Generate & Save notes / description
+        $formattedNotes = static::generateMarkdownNote($order);
+        $order->notes = $formattedNotes;
+
+        // Persist description in JSON metadata since there is no description database column
+        $meta = $order->meta ?? [];
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true) ?? [];
+        }
+        $meta['description'] = $formattedNotes;
+        $order->meta = $meta;
+
+        // Set description as an in-memory attribute
+        $order->setAttribute('description', $formattedNotes);
+
+        // Temporarily remove description from Eloquent attributes to avoid SQL column not found error
+        $rawAttributes = $order->getAttributes();
+        if (array_key_exists('description', $rawAttributes)) {
+            unset($rawAttributes['description']);
+            $order->setRawAttributes($rawAttributes);
         }
 
         // Persist quietly to prevent firing updating/updated events recursively
         $order->saveQuietly();
+
+        // Restore description attribute on the in-memory model
+        $order->setAttribute('description', $formattedNotes);
 
         return true;
     }
@@ -121,54 +332,32 @@ class WebBookingNoteFormatter
      * @param Order $order
      * @return string
      */
-    /**
-     * Generate the markdown note string for the order.
-     *
-     * @param Order $order
-     * @return string
-     */
     public static function generateMarkdownNote(Order $order): string
     {
-        $customerInfo = static::extractCustomerInfo($order);
-        $timingInfo = static::extractTimingInfo($order, $customerInfo['timezone_raw']);
+        $meta = $order->meta ?? [];
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true) ?? [];
+        }
+
+        $passengerName = data_get($meta, 'passenger_name') ?? 'N/A';
+        $passengerPhone = static::formatPhone(data_get($meta, 'passenger_phone'));
+        $passengerEmail = data_get($meta, 'passenger_email') ?? 'N/A';
+        $vehicleType = data_get($meta, 'vehicle_type') ?? 'N/A';
+        $passengers = data_get($meta, 'passengers') ?? 'N/A';
+        $childSeats = data_get($meta, 'child_seats') ?? 'N/A';
+
         $locationInfo = static::extractLocationInfo($order);
-        $assignmentInfo = static::extractAssignmentInfo($order);
-
-        $scheduledLocalFormatted = $timingInfo['local'];
-        $scheduledUtcFormatted = str_replace(' UTC', '', $timingInfo['utc']);
-
-        $passengerName = $customerInfo['name'];
-        $passengerPhone = static::formatPhone($customerInfo['phone']);
-        $passengerEmail = $customerInfo['email'];
-
         $cleanPickupAddress = static::sanitizeAddress($locationInfo['pickup']);
         $cleanDropoffAddress = static::sanitizeAddress($locationInfo['dropoff']);
 
-        $status = !empty($order->status) ? $order->status : 'created';
-        $driverName = $assignmentInfo['driver'];
-        $vehicleName = $assignmentInfo['vehicle'];
-
-        $orderPublicId = $order->public_id ?? $order->uuid ?? 'N/A';
-        $orderInternalId = $order->id ?? 'N/A';
-        $trackingNumber = $order->tracking_number ?? 'N/A';
-
         $lines = [
-            "🕒 Scheduled: {$scheduledLocalFormatted} ({$scheduledUtcFormatted} UTC)",
-            "Future Limo Dispatch",
-            "────────────────────────────────────────",
-            "👤 Passenger: {$passengerName}",
-            "📞 Phone: {$passengerPhone}",
-            "✉️ Email: {$passengerEmail}",
-            "",
-            "📍 Pickup: {$cleanPickupAddress}",
-            "🏁 Dropoff: {$cleanDropoffAddress}",
-            "",
-            "🚗 Status: {$status} | Driver: {$driverName} | Vehicle: {$vehicleName}",
-            "────────────────────────────────────────",
-            "🆔 Order ID: {$orderPublicId}",
-            "🔢 Internal ID: {$orderInternalId}",
-            "📦 Tracking #: {$trackingNumber}",
-            "────────────────────────────────────────",
+            "PASSENGER: {$passengerName}" . ($passengerPhone && $passengerPhone !== 'N/A' ? " ({$passengerPhone})" : " (N/A)"),
+            "EMAIL: {$passengerEmail}",
+            "VEHICLE: {$vehicleType}",
+            "PASSENGERS: {$passengers}",
+            "CHILD SEATS: {$childSeats}",
+            "PICKUP: {$cleanPickupAddress}",
+            "DROPOFF: {$cleanDropoffAddress}",
         ];
 
         return implode("\n", $lines);
@@ -480,7 +669,7 @@ class WebBookingNoteFormatter
 
         $dropoffDisplay = $dropoffData['display'];
         if ($isMatch) {
-            $dropoffDisplay .= ' ⚠️ [WARNING: Same as pickup location]';
+            $dropoffDisplay .= ' ⚠️ [WARNING: Same as pickup location - Identical coordinates/addresses]';
         }
 
         return [

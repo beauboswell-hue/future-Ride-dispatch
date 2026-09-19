@@ -331,7 +331,7 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
     value: true
   });
   _exports.default = void 0;
-  var _class, _descriptor, _descriptor2, _descriptor3;
+  var _class, _descriptor, _descriptor2, _descriptor3, _descriptor4, _descriptor5;
   function _initializerDefineProperty(e, i, r, l) { r && Object.defineProperty(e, i, { enumerable: r.enumerable, configurable: r.configurable, writable: r.writable, value: r.initializer ? r.initializer.call(l) : void 0 }); }
   function _applyDecoratedDescriptor(i, e, r, n, l) { var a = {}; return Object.keys(n).forEach(function (i) { a[i] = n[i]; }), a.enumerable = !!a.enumerable, a.configurable = !!a.configurable, ("value" in a || a.initializer) && (a.writable = !0), a = r.slice().reverse().reduce(function (r, n) { return n(i, e, r) || r; }, a), l && void 0 !== a.initializer && (a.value = a.initializer ? a.initializer.call(l) : void 0, a.initializer = void 0), void 0 === a.initializer ? (Object.defineProperty(i, e, a), null) : a; }
 
@@ -352,12 +352,80 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
     return url;
   }
 
+  function getTodayDateString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return \`\${year}-\${month}-\${day}\`;
+  }
+
+  function extractDateString(raw) {
+    if (!raw) return null;
+    if (raw instanceof Date) {
+      if (isNaN(raw.getTime())) return null;
+      const y = raw.getFullYear();
+      const m = String(raw.getMonth() + 1).padStart(2, '0');
+      const d = String(raw.getDate()).padStart(2, '0');
+      return \`\${y}-\${m}-\${d}\`;
+    }
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      if (trimmed.startsWith('0000-00-00')) return null;
+      if (/^\\d{4}-\\d{2}-\\d{2}$/.test(trimmed)) {
+        return trimmed;
+      }
+      if (/^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}/.test(trimmed)) {
+        return trimmed.substring(0, 10);
+      }
+      const parsed = new Date(trimmed);
+      if (!isNaN(parsed.getTime())) {
+        const y = parsed.getFullYear();
+        const m = String(parsed.getMonth() + 1).padStart(2, '0');
+        const d = String(parsed.getDate()).padStart(2, '0');
+        return \`\${y}-\${m}-\${d}\`;
+      }
+      const match = trimmed.match(/^(\\d{4}-\\d{2}-\\d{2})/);
+      if (match) return match[1];
+    }
+    return null;
+  }
+
+  function extractTime(raw) {
+    if (!raw) return null;
+    let d = null;
+    if (raw instanceof Date) {
+      d = isNaN(raw.getTime()) ? null : raw;
+    } else if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      if (trimmed.startsWith('0000-00-00')) return null;
+      const parsed = new Date(trimmed.includes(' ') ? trimmed.replace(' ', 'T') : trimmed);
+      if (!isNaN(parsed.getTime())) {
+        d = parsed;
+      }
+    }
+    if (!d) return null;
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const formattedHours = String(hours).padStart(2, '0');
+    return \`\${formattedHours}:\${minutes} \${ampm}\`;
+  }
+
   let DispatchGridComponent = _exports.default = (_class = class DispatchGridComponent extends _component2.default {
     constructor(...args) {
       super(...args);
       _initializerDefineProperty(this, "searchQuery", _descriptor, this);
       _initializerDefineProperty(this, "statusFilter", _descriptor2, this);
       _initializerDefineProperty(this, "orderActions", _descriptor3, this);
+      _initializerDefineProperty(this, "dateFilterMode", _descriptor4, this);
+      _initializerDefineProperty(this, "customSelectedDate", _descriptor5, this);
+    }
+
+    get todayDateString() {
+      return getTodayDateString();
     }
 
     get orders() {
@@ -368,8 +436,51 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
       return orders.toArray ? orders.toArray() : [];
     }
 
-    get statusCounts() {
+    getOrderDateString(order) {
+      if (!order) return null;
+      const scheduled = order.scheduled_at || order.scheduledAt;
+      const scheduledDate = extractDateString(scheduled);
+      if (scheduledDate) {
+        return scheduledDate;
+      }
+      const created = order.created_at || order.createdAt;
+      return extractDateString(created);
+    }
+
+    formatPickupTime(order) {
+      if (!order) return '--:--';
+      const scheduled = order.scheduled_at || order.scheduledAt;
+      const scheduledTime = extractTime(scheduled);
+      if (scheduledTime) {
+        return scheduledTime;
+      }
+      const created = order.created_at || order.createdAt;
+      const createdTime = extractTime(created);
+      return createdTime || '--:--';
+    }
+
+    get dateFilteredOrders() {
       const orders = this.orders;
+      if (this.dateFilterMode === 'all') {
+        return orders;
+      }
+      const targetDate = this.dateFilterMode === 'today' ? this.todayDateString : this.customSelectedDate;
+      if (!targetDate) {
+        return orders;
+      }
+      const filtered = orders.filter(order => {
+        const orderDate = this.getOrderDateString(order);
+        return orderDate === targetDate;
+      });
+      return [...filtered].sort((a, b) => {
+        const timeA = new Date(a.scheduled_at || a.scheduledAt || a.created_at || a.createdAt || 0).getTime();
+        const timeB = new Date(b.scheduled_at || b.scheduledAt || b.created_at || b.createdAt || 0).getTime();
+        return timeA - timeB;
+      });
+    }
+
+    get statusCounts() {
+      const orders = this.dateFilteredOrders;
       const counts = {
         all: orders.length,
         created: 0,
@@ -392,7 +503,7 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
           counts.enroute_pickup++;
         } else if (st === 'on_location' || st === 'arrived') {
           counts.on_location++;
-        } else if (st === 'pob' || st === 'in_progress' || st === 'started') {
+        } else if (st === 'pob' || st === 'in_progress' || st === 'started' || st === 'passenger_on_board') {
           counts.pob++;
         } else if (st === 'completed') {
           counts.completed++;
@@ -405,7 +516,7 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
     }
 
     get filteredOrders() {
-      let list = this.orders;
+      let list = this.dateFilteredOrders;
       if (this.searchQuery && this.searchQuery.trim()) {
         const q = this.searchQuery.trim().toLowerCase();
         list = list.filter(order => {
@@ -430,14 +541,14 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
           if (this.statusFilter === 'dispatched') {
             return st === 'dispatched';
           }
-          if (this.statusFilter === 'enroute_pickup' || this.statusFilter === 'enroute') {
+          if (this.statusFilter === 'enroute_pickup' || this.statusFilter === 'enroute' || this.statusFilter === 'driver_enroute') {
             return st === 'enroute_pickup' || st === 'enroute' || st === 'driver_enroute';
           }
           if (this.statusFilter === 'on_location' || this.statusFilter === 'arrived') {
             return st === 'on_location' || st === 'arrived';
           }
-          if (this.statusFilter === 'pob' || this.statusFilter === 'in_progress') {
-            return st === 'pob' || st === 'in_progress' || st === 'started';
+          if (this.statusFilter === 'pob' || this.statusFilter === 'in_progress' || this.statusFilter === 'passenger_on_board') {
+            return st === 'pob' || st === 'in_progress' || st === 'started' || st === 'passenger_on_board';
           }
           if (this.statusFilter === 'completed') {
             return st === 'completed';
@@ -491,47 +602,92 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
       }
     }
 
-    getStatusBadgeClass(status) {
-      switch (status) {
+    getStatusBadge(status) {
+      const st = (status || '').toLowerCase();
+      switch (st) {
         case 'dispatched':
-          return 'bg-blue-900/80 text-blue-200 border border-blue-500/60 shadow-sm';
+          return {
+            title: 'Dispatched',
+            class: 'bg-white text-blue-900 border border-blue-500 shadow-sm'
+          };
         case 'enroute':
         case 'enroute_pickup':
         case 'driver_enroute':
-          return 'bg-amber-900/80 text-amber-200 border border-amber-500/60 shadow-sm';
+          return {
+            title: 'En Route',
+            class: 'bg-white text-amber-900 border border-amber-500 shadow-sm'
+          };
         case 'on_location':
         case 'arrived':
-          return 'bg-purple-900/80 text-purple-200 border border-purple-500/60 shadow-sm';
+          return {
+            title: 'On Location',
+            class: 'bg-white text-purple-900 border border-purple-500 shadow-sm'
+          };
+        case 'pob':
+        case 'passenger_on_board':
         case 'in_progress':
         case 'started':
-        case 'pob':
-          return 'bg-orange-900/80 text-orange-200 border border-orange-500/60 shadow-sm';
+          return {
+            title: 'POB',
+            class: 'bg-white text-orange-900 border border-orange-500 shadow-sm'
+          };
         case 'completed':
-          return 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/60 shadow-sm';
+          return {
+            title: 'Completed',
+            class: 'bg-white text-emerald-950 border border-emerald-500 shadow-sm'
+          };
         case 'canceled':
         case 'cancelled':
-          return 'bg-red-900/80 text-red-200 border border-red-500/60 shadow-sm';
+          return {
+            title: 'Canceled',
+            class: 'bg-white text-red-900 border border-red-500 shadow-sm'
+          };
         case 'created':
+        case 'draft':
+        case 'pending':
+        case 'unassigned':
         default:
-          return 'bg-gray-800 text-gray-200 border border-gray-600 shadow-sm';
+          return {
+            title: 'Created',
+            class: 'bg-white text-slate-900 border border-slate-500 shadow-sm'
+          };
       }
     }
 
+    getStatusBadgeClass(status) {
+      const st = (status || '').toLowerCase();
+      if (st === 'dispatched') {
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      } else if (st === 'enroute' || st === 'enroute_pickup' || st === 'driver_enroute') {
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200';
+      } else if (st === 'on_location' || st === 'arrived') {
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200';
+      } else if (st === 'pob' || st === 'in_progress' || st === 'started' || st === 'passenger_on_board') {
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200';
+      } else if (st === 'completed') {
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
+      } else if (st === 'canceled' || st === 'cancelled') {
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      }
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+    }
+
     getOrderInfo(order) {
-      const id = order.public_id || order.id || 'N/A';
-      const internalId = order.internal_id || order.tracking || '';
-      const scheduledAt = order.scheduled_at_formatted || order.scheduled_at || order.createdAtShort || '';
+      const id = order.public_id || order.id || '';
+      const internalId = order.internal_id || '';
+      const scheduledAt = order.scheduled_at || order.scheduledAt || '';
       const statusTitles = {
         created: 'Created',
         dispatched: 'Dispatched',
         enroute: 'En Route',
         enroute_pickup: 'En Route',
         driver_enroute: 'En Route',
-        arrived: 'On Location',
         on_location: 'On Location',
-        in_progress: 'POB (Passenger on Board)',
-        started: 'POB (Passenger on Board)',
-        pob: 'POB (Passenger on Board)',
+        arrived: 'On Location',
+        pob: 'Passenger On Board',
+        passenger_on_board: 'Passenger On Board',
+        in_progress: 'Passenger On Board',
+        started: 'Passenger On Board',
         completed: 'Completed',
         canceled: 'Canceled',
         cancelled: 'Canceled'
@@ -542,11 +698,43 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
     }
 
     getPassengerInfo(order) {
-      const name = order.customer?.name || order.customer_name || 'Guest Passenger';
-      const phone = order.customer?.phone || order.customer_phone || '';
+      const meta = typeof order.meta === 'string' ? (function() { try { return JSON.parse(order.meta); } catch(e) { return {}; } })() : (order.meta || {});
+      
+      // Extract Name with multiple fallback paths
+      let name = order.customer?.name 
+          || order.payload?.customer?.name 
+          || meta?.passenger_name 
+          || meta?.name;
+
+      if (!name) {
+          const pickupName = order.payload?.pickup?.name || order.payload?.pickup_place?.name;
+          if (pickupName) {
+              const extracted = pickupName.split(' (')[0].trim();
+              if (extracted && !['pickup', 'pickup place', 'pickup location'].includes(extracted.toLowerCase())) {
+                  name = extracted;
+              }
+          }
+      }
+      if (!name) {
+          name = 'Guest Passenger';
+      }
+
+      // Extract Phone with multiple fallback paths
+      let phone = order.customer?.phone 
+          || order.payload?.customer?.phone 
+          || meta?.phone 
+          || meta?.passenger_phone 
+          || meta?.contact_phone 
+          || order.payload?.pickup?.phone 
+          || order.payload?.pickup_place?.phone;
+
+      if (!phone) {
+          phone = '--';
+      }
+
       let note = '';
       if (order.notes) {
-        const lines = order.notes.split('\n').filter(l => !l.includes('Coordinates:') && !l.includes('Locations:'));
+        const lines = order.notes.split('\\n').filter(l => !l.includes('Coordinates:') && !l.includes('Locations:'));
         note = lines.slice(0, 2).join(' ').trim();
       }
       return { name, phone, note };
@@ -564,46 +752,43 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
 
     getDriverInfo(order) {
       const d = order.driver_assigned;
-      if (!d && !order.driver_name) {
-        return {
-          assigned: false,
-          name: 'Unassigned',
-          avatar_url: '/images/no-avatar.png',
-          avatarUrl: '/images/no-avatar.png',
-          photoUrl: '/images/no-avatar.png',
-          status: 'Unassigned',
-          dotClass: 'bg-gray-500',
-          statusClass: 'text-gray-400 font-normal italic'
-        };
+      if (!d) {
+        return { assigned: false, name: 'Unassigned', avatar_url: '/images/no-avatar.png' };
       }
-      const name = d?.name || order.driver_name || 'Assigned Driver';
+      const name = d.name || 'Chauffeur';
       const avatar_url = _resolveDriverAvatar(d);
+      let status = 'Offline';
+      let dotClass = 'bg-gray-500';
+      let statusClass = 'text-gray-400 font-medium';
 
-      let status = 'Online';
-      let dotClass = 'bg-emerald-500';
-      let statusClass = 'text-emerald-400 font-medium';
+      if (d.online) {
+        status = 'Online';
+        dotClass = 'bg-emerald-500';
+        statusClass = 'text-emerald-400 font-medium';
+      }
 
-      if (order.status === 'enroute_pickup' || order.status === 'enroute') {
+      const st = (order.status || '').toLowerCase();
+      if (st === 'dispatched' || st === 'enroute_pickup' || st === 'enroute' || st === 'driver_enroute') {
         status = 'En Route';
-        dotClass = 'bg-amber-400';
-        statusClass = 'text-amber-300 font-medium';
-      } else if (order.status === 'on_location' || order.status === 'arrived') {
+        dotClass = 'bg-amber-500';
+        statusClass = 'text-amber-400 font-medium';
+      } else if (st === 'on_location' || st === 'arrived') {
         status = 'On Location';
-        dotClass = 'bg-purple-400';
-        statusClass = 'text-purple-300 font-medium';
-      } else if (order.status === 'pob' || order.status === 'in_progress') {
-        status = 'POB (Passenger on Board)';
-        dotClass = 'bg-emerald-400 animate-pulse';
-        statusClass = 'text-emerald-300 font-medium';
-      } else if (order.status === 'completed') {
+        dotClass = 'bg-purple-500';
+        statusClass = 'text-purple-400 font-medium';
+      } else if (st === 'pob' || st === 'in_progress' || st === 'started' || st === 'passenger_on_board') {
+        status = 'POB';
+        dotClass = 'bg-orange-500';
+        statusClass = 'text-orange-300 font-medium';
+      } else if (st === 'completed') {
         status = 'Completed';
         dotClass = 'bg-emerald-500';
         statusClass = 'text-emerald-400 font-medium';
-      } else if (order.status === 'canceled' || order.status === 'cancelled') {
+      } else if (st === 'canceled' || st === 'cancelled') {
         status = 'Canceled';
         dotClass = 'bg-red-500';
         statusClass = 'text-red-400 font-medium';
-      } else if (d?.online === false) {
+      } else if (d.online === false) {
         status = 'Offline';
         dotClass = 'bg-gray-500';
         statusClass = 'text-gray-400 font-medium';
@@ -633,6 +818,13 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
       const name = d?.name || order.dropoff_name || '';
       const address = d?.address || d?.street1 || 'No dropoff specified';
       return { name, address };
+    }
+
+    getRouteInfo(order) {
+      const p = this.getPickupInfo(order);
+      const d = this.getDropoffInfo(order);
+      const text = \`\${p.address} ➔ \${d.address}\`;
+      return { pickup: p.address, dropoff: d.address, text };
     }
 
     getFlags(order) {
@@ -676,37 +868,44 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
         });
       }
 
-      const tagMatch = (order.notes || '').match(/\\[Tags:\\s*([^\\]]+)\\]/i);
-      if (tagMatch && tagMatch[1]) {
-        const rawTags = tagMatch[1].split(',').map(t => t.trim().toLowerCase());
-        for (const t of rawTags) {
-          if (t === 'vip' || t === 'airport-transfer' || t === 'meet-greet') continue;
-          flags.push({
-            type: 'tag',
-            label: t.charAt(0).toUpperCase() + t.slice(1),
-            icon: 'tag',
-            badgeClass: 'bg-gray-800 text-gray-200 border-gray-600 shadow-sm'
-          });
-        }
-      }
-
       return flags;
     }
 
     get gridRows() {
-      return this.filteredOrders.map(order => ({
-        order,
-        rowClass: this.getRowClass(order),
-        statusBadgeClass: this.getStatusBadgeClass(order.status),
-        orderInfo: this.getOrderInfo(order),
-        passenger: this.getPassengerInfo(order),
-        vehicle: this.getVehicleInfo(order),
-        driver: this.getDriverInfo(order),
-        pickup: this.getPickupInfo(order),
-        dropoff: this.getDropoffInfo(order),
-        flags: this.getFlags(order)
-      }));
+      return this.filteredOrders.map(order => {
+        const meta = typeof order.meta === 'string' ? (function() { try { return JSON.parse(order.meta); } catch(e) { return {}; } })() : (order.meta || {});
+        return {
+          order,
+          rowClass: this.getRowClass(order),
+          formattedTime: this.formatPickupTime(order),
+          statusBadge: this.getStatusBadge(order.status),
+          statusBadgeClass: this.getStatusBadgeClass(order.status),
+          orderInfo: this.getOrderInfo(order),
+          passenger: this.getPassengerInfo(order),
+          route: this.getRouteInfo(order),
+          vehicle: this.getVehicleInfo(order),
+          driver: this.getDriverInfo(order),
+          pickup: this.getPickupInfo(order),
+          dropoff: this.getDropoffInfo(order),
+          flags: this.getFlags(order),
+          vehicleChoice: meta?.vehicle_type || meta?.vehicle || meta?.carChoice || meta?.car_choice || order.payload?.meta?.vehicle_type || order.payload?.meta?.vehicle || order.payload?.meta?.carChoice || order.payload?.meta?.car_choice || order.payload?.entities?.[0]?.meta?.vehicle_type || order.payload?.entities?.[0]?.meta?.vehicle || order.payload?.entities?.[0]?.meta?.carChoice || order.payload?.entities?.[0]?.meta?.car_choice || '-',
+          paxCount: meta?.passengers || meta?.passenger_count || meta?.pax || order.payload?.meta?.passengers || order.payload?.meta?.passenger_count || order.payload?.meta?.pax || order.payload?.entities?.[0]?.meta?.passengers || order.payload?.entities?.[0]?.meta?.passenger_count || order.payload?.entities?.[0]?.meta?.pax || '-',
+          childSeatsCount: meta?.child_seats || meta?.child_seats_count || meta?.seats || order.payload?.meta?.child_seats || order.payload?.meta?.child_seats_count || order.payload?.meta?.seats || order.payload?.entities?.[0]?.meta?.child_seats || order.payload?.entities?.[0]?.meta?.child_seats_count || order.payload?.entities?.[0]?.meta?.seats || '-'
+        };
+      });
     }
+
+    setDateMode = (mode) => {
+      this.dateFilterMode = mode;
+    };
+
+    onCustomDateChange = (event) => {
+      const val = event?.target?.value || event;
+      if (val) {
+        this.customSelectedDate = val;
+        this.dateFilterMode = 'custom';
+      }
+    };
 
     setStatusFilter = (filter) => {
       this.statusFilter = filter;
@@ -716,12 +915,16 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
       this.searchQuery = '';
     };
 
-    onClickRow = (order) => {
+    openOrderDetails = (order) => {
       if (typeof this.args.onOrderClick === 'function') {
         this.args.onOrderClick(order);
       } else if (this.orderActions?.transition?.view) {
         this.orderActions.transition.view(order);
       }
+    };
+
+    onClickRow = (order) => {
+      this.openOrderDetails(order);
     };
 
     stopEventPropagation = (e) => {
@@ -746,6 +949,20 @@ const dispatchGridComponentJs = `define("@fleetbase/fleetops-engine/components/d
     enumerable: true,
     writable: true,
     initializer: null
+  }), _descriptor4 = _applyDecoratedDescriptor(_class.prototype, "dateFilterMode", [_tracking.tracked], {
+    configurable: true,
+    enumerable: true,
+    writable: true,
+    initializer: function () {
+      return 'today';
+    }
+  }), _descriptor5 = _applyDecoratedDescriptor(_class.prototype, "customSelectedDate", [_tracking.tracked], {
+    configurable: true,
+    enumerable: true,
+    writable: true,
+    initializer: function () {
+      return getTodayDateString();
+    }
   }), _class);
 
   (0, _component.setComponentTemplate)(__COLOCATED_TEMPLATE__, DispatchGridComponent);
@@ -1035,6 +1252,11 @@ function updateCartoUrls(content) {
 engineJs = updateCartoUrls(engineJs);
 console.log('✓ Configured CARTO Basemaps API key in engine.js');
 
+if (engineJs.includes('unable to acceot')) {
+    engineJs = engineJs.replace(/unable to acceot/g, 'unable to accept');
+    console.log('✓ Corrected spelling "unable to acceot" -> "unable to accept" in engine.js');
+}
+
 fs.writeFileSync(engineJsPath, engineJs, 'utf-8');
 console.log('✓ engine.js saved successfully');
 
@@ -1059,6 +1281,12 @@ if (!vendorJs.includes("this.route('dispatch-grid'")) {
 
 vendorJs = updateCartoUrls(vendorJs);
 console.log('✓ Configured CARTO Basemaps API key in vendor.js');
+
+if (vendorJs.includes('unable to acceot')) {
+    vendorJs = vendorJs.replace(/unable to acceot/g, 'unable to accept');
+    console.log('✓ Corrected spelling "unable to acceot" -> "unable to accept" in vendor.js');
+}
+
 fs.writeFileSync(vendorJsPath, vendorJs, 'utf-8');
 
 // 8. Update console/dist/assets/@fleetbase/console.js
@@ -1157,6 +1385,55 @@ const consoleReExports = `
 if (!consoleJs.includes('@fleetbase/console/routes/operations/dispatch-grid')) {
     consoleJs += '\n' + consoleReExports + '\n';
     console.log('✓ Injected re-exports into console.js');
+}
+
+const badJsonStringifyModule = `;define("@fleetbase/console/helpers/json-stringify", ["exports", "@fleetbase/dev-engine/helpers/json-stringify"], function (_exports, _jsonStringify) {
+  "use strict";
+
+  Object.defineProperty(_exports, "__esModule", {
+    value: true
+  });
+  Object.defineProperty(_exports, "default", {
+    enumerable: true,
+    get: function () {
+      return _jsonStringify.default;
+    }
+  });
+  0; //eaimeta@70e063a35619d71f0,"@fleetbase/dev-engine/helpers/json-stringify"eaimeta@70e063a35619d71f
+});`;
+
+const goodJsonStringifyModule = `;define("@fleetbase/console/helpers/json-stringify", ["exports", "@ember/component/helper"], function (_exports, _helper) {
+  "use strict";
+  Object.defineProperty(_exports, "__esModule", { value: true });
+  _exports.default = _exports.jsonStringify = void 0;
+  function jsonStringify(positional) {
+    var value = positional[0];
+    var replacer = positional[1];
+    var space = positional[2];
+    try {
+      return JSON.stringify(value, replacer, space || 2);
+    } catch (e) {
+      return String(value);
+    }
+  }
+  _exports.jsonStringify = jsonStringify;
+  var _default = _exports.default = (0, _helper.helper)(jsonStringify);
+});`;
+
+if (consoleJs.includes(badJsonStringifyModule)) {
+    consoleJs = consoleJs.replace(badJsonStringifyModule, goodJsonStringifyModule);
+    console.log('✓ Successfully replaced @fleetbase/console/helpers/json-stringify with self-contained fallback in console.js');
+} else {
+    const shortBadPattern = 'define("@fleetbase/console/helpers/json-stringify", ["exports", "@fleetbase/dev-engine/helpers/json-stringify"]';
+    if (consoleJs.includes(shortBadPattern)) {
+        consoleJs = consoleJs.replace(/;define\("@fleetbase\/console\/helpers\/json-stringify"[\s\S]*?\}\);/, goodJsonStringifyModule);
+        console.log('✓ Regex replaced @fleetbase/console/helpers/json-stringify with self-contained fallback in console.js');
+    }
+}
+
+if (consoleJs.includes('unable to acceot')) {
+    consoleJs = consoleJs.replace(/unable to acceot/g, 'unable to accept');
+    console.log('✓ Corrected spelling "unable to acceot" -> "unable to accept" in console.js');
 }
 
 fs.writeFileSync(consoleJsPath, consoleJs, 'utf-8');
@@ -1484,6 +1761,86 @@ const dispatchGridCss = `
 .kanban-board .kanban-column[data-column-id="cancelled"] {
     border-top: 4px solid #ef4444 !important; /* red */
 }
+
+/* ==========================================================================
+   Dispatch Grid High-Contrast & Explicit Readability Styles
+   ========================================================================== */
+.dispatch-grid-thead th,
+.dispatch-grid-th,
+.dispatch-grid-table-container table thead th {
+    background-color: #f3f4f6 !important;
+    color: #111827 !important; /* Very dark charcoal */
+    font-weight: 800 !important;
+    font-size: 0.75rem !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+}
+
+.dispatch-grid-row td {
+    color: #111827 !important; /* Force high contrast dark charcoal for cell texts */
+    font-weight: 600 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.dispatch-grid-row td div,
+.dispatch-grid-row td span:not([class*="bg-"]):not([class*="text-"]) {
+    color: #111827 !important;
+    font-weight: 600 !important;
+}
+
+.dispatch-grid-row td a {
+    color: #111827 !important;
+    font-weight: 700 !important;
+}
+
+/* Deep navy blue for high contrast phone link underneath row background tints */
+.dispatch-grid-row td a.text-blue-900 {
+    color: #1e3a8a !important; 
+    text-decoration: underline !important;
+}
+
+.dispatch-grid-row td a.text-blue-900:hover {
+    color: #172554 !important;
+}
+
+/* Specific styling for route text to stand out nicely */
+.dispatch-grid-row td span.text-blue-900 {
+    color: #1e3a8a !important;
+    font-weight: 800 !important;
+}
+
+.dispatch-grid-row td span.text-gray-950,
+.dispatch-grid-row td span.truncate {
+    color: #111827 !important;
+    font-weight: 600 !important;
+}
+
+.dispatch-grid-toolbar {
+    background-color: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    color: #111827 !important;
+}
+
+.dispatch-grid-toolbar h2 {
+    color: #111827 !important;
+}
+
+.dispatch-grid-toolbar p {
+    color: #4b5563 !important;
+}
+
+/* Ensure empty/no-orders state is high contrast too */
+.dispatch-grid-table-container tbody tr td.text-center {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+}
+
+.dispatch-grid-table-container tbody tr td.text-center .text-gray-900 {
+    color: #111827 !important;
+}
+
+.dispatch-grid-table-container tbody tr td.text-center .text-gray-500 {
+    color: #4b5563 !important;
+}
 `;
 
 const cssMarker = '/* ==========================================================================\\n   Dispatch Grid Table & Row Color Coding Styles';
@@ -1511,17 +1868,17 @@ fs.writeFileSync(consoleCssPath, consoleCss, 'utf-8');
 console.log('✓ Updated Dispatch Grid CSS in console.css');
 
 
-// 12. Sync updated bundles to fleetbase-console-1 container
+// 12. Sync updated bundles to future-limo-dispatch-console-1 container
 try {
     const { execSync } = require('child_process');
-    console.log('--- Syncing updated bundles to fleetbase-console-1 ---');
-    execSync('docker cp /home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js fleetbase-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.js', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css fleetbase-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.css', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/dist/assets/vendor.js fleetbase-console-1:/usr/share/nginx/html/assets/vendor.js', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.js fleetbase-console-1:/usr/share/nginx/html/assets/@fleetbase/console.js', { stdio: 'inherit' });
-    execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.css fleetbase-console-1:/usr/share/nginx/html/assets/@fleetbase/console.css', { stdio: 'inherit' });
+    console.log('--- Syncing updated bundles to future-limo-dispatch-console-1 ---');
+    execSync('docker cp /home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.js future-limo-dispatch-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.js', { stdio: 'inherit' });
+    execSync('docker cp /home/wert/fleetbase/console/dist/engines-dist/@fleetbase/fleetops-engine/assets/engine.css future-limo-dispatch-console-1:/usr/share/nginx/html/engines-dist/@fleetbase/fleetops-engine/assets/engine.css', { stdio: 'inherit' });
+    execSync('docker cp /home/wert/fleetbase/console/dist/assets/vendor.js future-limo-dispatch-console-1:/usr/share/nginx/html/assets/vendor.js', { stdio: 'inherit' });
+    execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.js future-limo-dispatch-console-1:/usr/share/nginx/html/assets/@fleetbase/console.js', { stdio: 'inherit' });
+    execSync('docker cp /home/wert/fleetbase/console/dist/assets/@fleetbase/console.css future-limo-dispatch-console-1:/usr/share/nginx/html/assets/@fleetbase/console.css', { stdio: 'inherit' });
     try {
-        execSync('cat /home/wert/fleetbase/console/dist/fleetbase.config.json | docker exec -i fleetbase-console-1 sh -c "cat > /usr/share/nginx/html/fleetbase.config.json"', { stdio: 'inherit' });
+        execSync('cat /home/wert/fleetbase/console/dist/fleetbase.config.json | docker exec -i future-limo-dispatch-console-1 sh -c "cat > /usr/share/nginx/html/fleetbase.config.json"', { stdio: 'inherit' });
     } catch (cfgErr) {
         console.warn('Note: Could not overwrite container fleetbase.config.json:', cfgErr.message);
     }

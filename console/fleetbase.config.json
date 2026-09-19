@@ -1,7 +1,6 @@
 {
   "API_HOST": "https://api.futurelimo.website",
-  "SOCKETCLUSTER_HOST": "localhost",
-  "SOCKETCLUSTER_PORT": 38000,
-  "SOCKETCLUSTER_SECURE": false,
-  "CARTO_API_KEY": "cb1_32li_1_aa9e6424da513b1200464fad"
+  "SOCKETCLUSTER_HOST": "socket.futurelimo.website",
+  "SOCKETCLUSTER_PORT": "443",
+  "SOCKETCLUSTER_SECURE": true
 }
