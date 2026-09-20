@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\WebBookingNoteFormatter;
 use Fleetbase\FleetOps\Http\Controllers\Api\v1\OrderController as BaseOrderController;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,8 @@ class OverriddenOrderController extends BaseOrderController
      */
     protected function orderCreateInputFromRequest(Request $request): array
     {
+        WebBookingNoteFormatter::setRequestData($request->all());
+
         $input = parent::orderCreateInputFromRequest($request);
 
         if (empty($input['notes'])) {
@@ -36,6 +39,8 @@ class OverriddenOrderController extends BaseOrderController
      */
     protected function orderUpdateInputFromRequest(Request $request): array
     {
+        WebBookingNoteFormatter::setRequestData($request->all());
+
         $input = parent::orderUpdateInputFromRequest($request);
 
         if (empty($input['notes'])) {

@@ -17,6 +17,34 @@ use Illuminate\Support\Str;
 class WebBookingNoteFormatter
 {
     /**
+     * Cache of the current request data.
+     *
+     * @var array|null
+     */
+    private static ?array $requestData = null;
+
+    /**
+     * Set the current request data cache.
+     *
+     * @param array|null $data
+     * @return void
+     */
+    public static function setRequestData(?array $data): void
+    {
+        self::$requestData = $data;
+    }
+
+    /**
+     * Get the cached request data.
+     *
+     * @return array|null
+     */
+    public static function getRequestData(): ?array
+    {
+        return self::$requestData;
+    }
+
+    /**
      * Format and persist notes for a web booking order.
      *
      * @param Order $order
@@ -67,7 +95,20 @@ class WebBookingNoteFormatter
         };
 
         $getVal = function ($keys) use ($meta, $payloadMeta, $order, $isValidVal) {
+            $reqData = self::getRequestData();
             foreach ((array)$keys as $k) {
+                if ($reqData) {
+                    $v = data_get($reqData, $k)
+                        ?? data_get($reqData, "metadata.{$k}")
+                        ?? data_get($reqData, "meta.{$k}")
+                        ?? data_get($reqData, "payload.meta.{$k}")
+                        ?? data_get($reqData, "payload.customer.{$k}")
+                        ?? data_get($reqData, "payload.pickup.{$k}")
+                        ?? data_get($reqData, "payload.dropoff.{$k}");
+                    if ($isValidVal($v)) {
+                        return $v;
+                    }
+                }
                 if (request()) {
                     $v = request()->input($k) 
                         ?? request()->input("metadata.{$k}") 
@@ -83,6 +124,7 @@ class WebBookingNoteFormatter
                 $v = data_get($meta, $k) 
                     ?? data_get($meta, "metadata.{$k}") 
                     ?? data_get($meta, "meta.{$k}")
+                    ?? data_get($meta, "payload.meta.{$k}")
                     ?? data_get($payloadMeta, $k)
                     ?? data_get($payloadMeta, "metadata.{$k}")
                     ?? data_get($payloadMeta, "meta.{$k}")
@@ -115,6 +157,10 @@ class WebBookingNoteFormatter
                 $vehicleType = trim($matches[1]);
             }
         }
+        if (empty($vehicleType) || $vehicleType === 'N/A') {
+            $vehicleType = 'Sedan';
+        }
+
         if ($passengers === null || $passengers === '' || $passengers === 'N/A') {
             if ($origNotes && preg_match('/(?:Pax|Passengers?|Passenger Count):\s*(\d+)/i', $origNotes, $matches)) {
                 $passengers = (int)$matches[1];
@@ -122,12 +168,19 @@ class WebBookingNoteFormatter
                 $passengers = (int)$matches[1];
             }
         }
+        if ($passengers === null || $passengers === '' || $passengers === 'N/A') {
+            $passengers = 1;
+        }
+
         if ($childSeats === null || $childSeats === '' || $childSeats === 'N/A') {
             if ($origNotes && preg_match('/(?:Child\s*Seats?|Car\s*Seats?|Seats?):\s*(\d+)/i', $origNotes, $matches)) {
                 $childSeats = (int)$matches[1];
             } elseif ($origDescription && preg_match('/(?:Child\s*Seats?|Car\s*Seats?|Seats?):\s*(\d+)/i', $origDescription, $matches)) {
                 $childSeats = (int)$matches[1];
             }
+        }
+        if ($childSeats === null || $childSeats === '' || $childSeats === 'N/A') {
+            $childSeats = 0;
         }
 
         // Fallbacks if not provided in request or metadata
@@ -288,19 +341,23 @@ class WebBookingNoteFormatter
         }
 
         $reqMeta = [];
-        if (request()) {
+        $reqData = self::getRequestData();
+        if ($reqData) {
+            $reqMeta = data_get($reqData, 'metadata') ?? data_get($reqData, 'meta') ?? [];
+        }
+        if (empty($reqMeta) && request()) {
             $reqMeta = request()->input('metadata') ?? request()->input('meta') ?? [];
-            if (!is_array($reqMeta)) {
-                $reqMeta = [];
-            }
+        }
+        if (!is_array($reqMeta)) {
+            $reqMeta = [];
         }
 
-        // Check explicit flag
+        // 1. Explicit flag
         if (!empty($meta['is_web_booking']) || !empty($reqMeta['is_web_booking'])) {
             return true;
         }
 
-        // Check source attribute in meta or request
+        // 2. Booking source attributes
         $source = data_get($meta, 'source')
             ?? data_get($reqMeta, 'source')
             ?? data_get($meta, 'source_form')
@@ -312,7 +369,32 @@ class WebBookingNoteFormatter
             return true;
         }
 
-        // Check initial order notes for keywords
+        // 3. Transport check
+        if ($order->type === 'transport' || (request() && request()->input('type') === 'transport') || ($reqData && data_get($reqData, 'type') === 'transport')) {
+            return true;
+        }
+
+        // 4. Metadata indicator check
+        $indicators = [
+            'vehicle_type', 'vehicle', 'carChoice', 'car_choice', 'vehicle_name', 'car_type', 'fleet',
+            'passengers', 'passenger_count', 'pax', 'passengers_count', 'num_passengers',
+            'child_seats', 'child_seats_count', 'car_seats', 'seats', 'childSeats',
+            'passenger_name', 'customer_name', 'passenger_phone', 'customer_phone', 'passenger_email', 'customer_email'
+        ];
+
+        foreach ($indicators as $ind) {
+            if (data_get($meta, $ind) !== null || data_get($reqMeta, $ind) !== null) {
+                return true;
+            }
+            if ($reqData && (data_get($reqData, $ind) !== null || data_get($reqData, "meta.{$ind}") !== null || data_get($reqData, "payload.meta.{$ind}") !== null)) {
+                return true;
+            }
+            if (request() && (request()->input($ind) !== null || request()->input("meta.{$ind}") !== null || request()->input("payload.meta.{$ind}") !== null)) {
+                return true;
+            }
+        }
+
+        // 5. Keyword in notes fallback
         $notes = $order->getOriginal('notes') ?: $order->notes;
         if ($notes && preg_match('/web\s*booking|website\s*form|online\s*booking|homepage\s*form/i', $notes)) {
             return true;
@@ -428,11 +510,15 @@ class WebBookingNoteFormatter
         $customer = $order->customer;
 
         $reqCustomer = [];
-        if (request()) {
+        $reqData = self::getRequestData();
+        if ($reqData) {
+            $reqCustomer = data_get($reqData, 'customer') ?? [];
+        }
+        if (empty($reqCustomer) && request()) {
             $reqCustomer = request()->input('customer') ?? [];
-            if (!is_array($reqCustomer)) {
-                $reqCustomer = [];
-            }
+        }
+        if (!is_array($reqCustomer)) {
+            $reqCustomer = [];
         }
 
         $meta = $order->meta ?? [];
@@ -518,6 +604,7 @@ class WebBookingNoteFormatter
     protected static function extractTimingInfo(Order $order, ?string $customerTz = null): array
     {
         $scheduledAt = $order->scheduled_at
+            ?? (self::getRequestData() ? data_get(self::getRequestData(), 'scheduled_at') : null)
             ?? (request() ? request()->input('scheduled_at') : null)
             ?? data_get($order->meta, 'scheduled_at');
 
@@ -588,13 +675,22 @@ class WebBookingNoteFormatter
         }
 
         // 4. Request input timezone
+        $reqData = self::getRequestData();
+        if ($reqData) {
+            $candidates[] = data_get($reqData, 'payload.pickup.timezone');
+            $candidates[] = data_get($reqData, 'timezone');
+        }
         if (request()) {
             $candidates[] = request()->input('payload.pickup.timezone');
             $candidates[] = request()->input('timezone');
         }
 
         // 5. Place province / state heuristic (US states)
-        $province = strtoupper(trim((string) ($pickup?->province ?? data_get(request()?->input('payload'), 'pickup.province', ''))));
+        $reqProvince = $reqData ? data_get($reqData, 'payload.pickup.province') : null;
+        if (empty($reqProvince) && request()) {
+            $reqProvince = data_get(request()->input('payload'), 'pickup.province');
+        }
+        $province = strtoupper(trim((string) ($pickup?->province ?? $reqProvince ?? '')));
         $stateTzMap = [
             'NY' => 'America/New_York',
             'FL' => 'America/New_York',
@@ -690,11 +786,20 @@ class WebBookingNoteFormatter
     {
         $address = $place?->address ?? $place?->name ?? $place?->street1;
 
-        if (empty($address) && request()) {
-            $reqPayload = request()->input('payload');
-            $address = data_get($reqPayload, "{$type}.address")
-                ?? data_get($reqPayload, "{$type}.street1")
-                ?? data_get($reqPayload, "{$type}.name");
+        if (empty($address)) {
+            $reqData = self::getRequestData();
+            if ($reqData) {
+                $reqPayload = data_get($reqData, 'payload');
+                $address = data_get($reqPayload, "{$type}.address")
+                    ?? data_get($reqPayload, "{$type}.street1")
+                    ?? data_get($reqPayload, "{$type}.name");
+            }
+            if (empty($address) && request()) {
+                $reqPayload = request()->input('payload');
+                $address = data_get($reqPayload, "{$type}.address")
+                    ?? data_get($reqPayload, "{$type}.street1")
+                    ?? data_get($reqPayload, "{$type}.name");
+            }
         }
 
         // Coordinates
@@ -708,8 +813,15 @@ class WebBookingNoteFormatter
             $coords = $place->location['coordinates'];
             $lng = $coords[0] ?? null;
             $lat = $coords[1] ?? null;
-        } elseif (request()) {
-            $reqCoords = data_get(request()->input('payload'), "{$type}.location.coordinates");
+        } else {
+            $reqData = self::getRequestData();
+            $reqCoords = null;
+            if ($reqData) {
+                $reqCoords = data_get($reqData, "payload.{$type}.location.coordinates");
+            }
+            if (empty($reqCoords) && request()) {
+                $reqCoords = data_get(request()->input('payload'), "{$type}.location.coordinates");
+            }
             if (is_array($reqCoords) && count($reqCoords) >= 2) {
                 $lng = $reqCoords[0] ?? null;
                 $lat = $reqCoords[1] ?? null;
@@ -752,6 +864,7 @@ class WebBookingNoteFormatter
 
         $driverName = $order->driver?->name
             ?? $order->driverAssigned?->name
+            ?? (self::getRequestData() ? data_get(self::getRequestData(), 'driver_name') : null)
             ?? (request() ? request()->input('driver_name') : null);
 
         if (empty($driverName) || trim((string) $driverName) === '' || trim((string) $driverName) === 'None Assigned') {
@@ -764,6 +877,7 @@ class WebBookingNoteFormatter
             ?? $order->vehicle?->name
             ?? $order->vehicleAssigned?->display_name
             ?? $order->vehicleAssigned?->name
+            ?? (self::getRequestData() ? data_get(self::getRequestData(), 'vehicle_name') : null)
             ?? (request() ? request()->input('vehicle_name') : null);
 
         if (empty($vehicleName) || trim((string) $vehicleName) === '' || trim((string) $vehicleName) === 'None Assigned') {
@@ -792,11 +906,15 @@ class WebBookingNoteFormatter
         }
 
         $reqMeta = [];
-        if (request()) {
+        $reqData = self::getRequestData();
+        if ($reqData) {
+            $reqMeta = data_get($reqData, 'metadata') ?? data_get($reqData, 'meta') ?? [];
+        }
+        if (empty($reqMeta) && request()) {
             $reqMeta = request()->input('metadata') ?? request()->input('meta') ?? [];
-            if (!is_array($reqMeta)) {
-                $reqMeta = [];
-            }
+        }
+        if (!is_array($reqMeta)) {
+            $reqMeta = [];
         }
 
         // Source
