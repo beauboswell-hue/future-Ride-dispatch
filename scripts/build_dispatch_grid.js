@@ -1841,6 +1841,165 @@ const dispatchGridCss = `
 .dispatch-grid-table-container tbody tr td.text-center .text-gray-500 {
     color: #4b5563 !important;
 }
+
+/* ==========================================================================
+   High-Contrast Kanban Column, Gradient Backgrounds & Badge Color Coding Styles
+   ========================================================================== */
+
+/* Created */
+.kanban-board .kanban-column[data-column-id="created"],
+.kanban-board .kanban-column[data-column-id="pending"],
+.kanban-board .kanban-column[data-column-id="unassigned"] {
+    border-top: 4px solid #2563eb !important;
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.12) 0%, rgba(26, 29, 36, 0.4) 100%) !important;
+}
+.kanban-board .kanban-column[data-column-id="created"] .kanban-column-count,
+.kanban-board .kanban-column[data-column-id="pending"] .kanban-column-count,
+.kanban-board .kanban-column[data-column-id="unassigned"] .kanban-column-count {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+/* Dispatched */
+.kanban-board .kanban-column[data-column-id="dispatched"] {
+    border-top: 4px solid #f59e0b !important;
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.12) 0%, rgba(26, 29, 36, 0.4) 100%) !important;
+}
+.kanban-board .kanban-column[data-column-id="dispatched"] .kanban-column-count {
+    background-color: #f59e0b !important;
+    color: #111827 !important;
+    font-weight: 700 !important;
+}
+
+/* Started / En Route */
+.kanban-board .kanban-column[data-column-id="started"],
+.kanban-board .kanban-column[data-column-id="enroute"],
+.kanban-board .kanban-column[data-column-id="enroute_pickup"],
+.kanban-board .kanban-column[data-column-id="driver_enroute"] {
+    border-top: 4px solid #8b5cf6 !important;
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.12) 0%, rgba(26, 29, 36, 0.4) 100%) !important;
+}
+.kanban-board .kanban-column[data-column-id="started"] .kanban-column-count,
+.kanban-board .kanban-column[data-column-id="enroute"] .kanban-column-count,
+.kanban-board .kanban-column[data-column-id="enroute_pickup"] .kanban-column-count,
+.kanban-board .kanban-column[data-column-id="driver_enroute"] .kanban-column-count {
+    background-color: #8b5cf6 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+/* On Location */
+.kanban-board .kanban-column[data-column-id="on_location"],
+.kanban-board .kanban-column[data-column-id="arrived"] {
+    border-top: 4px solid #06b6d4 !important;
+    background: linear-gradient(180deg, rgba(6, 182, 212, 0.12) 0%, rgba(26, 29, 36, 0.4) 100%) !important;
+}
+.kanban-board .kanban-column[data-column-id="on_location"] .kanban-column-count,
+.kanban-board .kanban-column[data-column-id="arrived"] .kanban-column-count {
+    background-color: #06b6d4 !important;
+    color: #111827 !important;
+    font-weight: 700 !important;
+}
+
+/* POB (Passenger On Board) */
+.kanban-board .kanban-column[data-column-id="pob"],
+.kanban-board .kanban-column[data-column-id="in_progress"],
+.kanban-board .kanban-column[data-column-id="in-progress"] {
+    border-top: 4px solid #10b981 !important;
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(26, 29, 36, 0.4) 100%) !important;
+}
+.kanban-board .kanban-column[data-column-id="pob"] .kanban-column-count,
+.kanban-board .kanban-column[data-column-id="in_progress"] .kanban-column-count,
+.kanban-board .kanban-column[data-column-id="in-progress"] .kanban-column-count {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+/* Completed */
+.kanban-board .kanban-column[data-column-id="completed"] {
+    border-top: 4px solid #475569 !important;
+    background: linear-gradient(180deg, rgba(71, 85, 105, 0.12) 0%, rgba(26, 29, 36, 0.4) 100%) !important;
+}
+.kanban-board .kanban-column[data-column-id="completed"] .kanban-column-count {
+    background-color: #475569 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+/* Canceled */
+.kanban-board .kanban-column[data-column-id="canceled"],
+.kanban-board .kanban-column[data-column-id="cancelled"] {
+    border-top: 4px solid #ef4444 !important;
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.12) 0%, rgba(26, 29, 36, 0.4) 100%) !important;
+}
+.kanban-board .kanban-column[data-column-id="canceled"] .kanban-column-count,
+.kanban-board .kanban-column[data-column-id="cancelled"] .kanban-column-count {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+/* Kanban card container top accent trim overrides */
+.kanban-board .kanban-card {
+    overflow: hidden !important;
+    border-top: none !important;
+}
+
+.kanban-board .kanban-card .kanban-card-content {
+    border-top-width: 4px;
+    border-top-style: solid;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* Card top border status colors */
+.kanban-board .kanban-card-content.border-t-slate-500,
+.kanban-board .kanban-column[data-column-id="created"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="pending"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="unassigned"] .kanban-card-content {
+    border-top-color: #2563eb !important;
+}
+
+.kanban-board .kanban-card-content.border-t-blue-500,
+.kanban-board .kanban-column[data-column-id="dispatched"] .kanban-card-content {
+    border-top-color: #f59e0b !important;
+}
+
+.kanban-board .kanban-card-content.border-t-amber-500,
+.kanban-board .kanban-column[data-column-id="started"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="enroute"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="enroute_pickup"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="driver_enroute"] .kanban-card-content {
+    border-top-color: #8b5cf6 !important;
+}
+
+.kanban-board .kanban-card-content.border-t-purple-500,
+.kanban-board .kanban-column[data-column-id="on_location"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="arrived"] .kanban-card-content {
+    border-top-color: #06b6d4 !important;
+}
+
+.kanban-board .kanban-card-content.border-t-orange-500,
+.kanban-board .kanban-column[data-column-id="pob"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="in_progress"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="in-progress"] .kanban-card-content {
+    border-top-color: #10b981 !important;
+}
+
+.kanban-board .kanban-card-content.border-t-emerald-500,
+.kanban-board .kanban-column[data-column-id="completed"] .kanban-card-content {
+    border-top-color: #475569 !important;
+}
+
+.kanban-board .kanban-card-content.border-t-rose-500,
+.kanban-board .kanban-card-content.border-t-red-500,
+.kanban-board .kanban-column[data-column-id="canceled"] .kanban-card-content,
+.kanban-board .kanban-column[data-column-id="cancelled"] .kanban-card-content {
+    border-top-color: #ef4444 !important;
+}
 `;
 
 const cssMarker = '/* ==========================================================================\\n   Dispatch Grid Table & Row Color Coding Styles';

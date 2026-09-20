@@ -517,7 +517,124 @@ export default class DispatchGridComponent extends Component {
 
     get gridRows() {
         return this.filteredOrders.map((order) => {
-            const meta = typeof order.meta === 'string' ? (function() { try { return JSON.parse(order.meta); } catch(e) { return {}; } })() : (order.meta || {});
+            const resolveObject = (val) => {
+                if (!val) return {};
+                if (typeof val === 'string') {
+                    try {
+                        return JSON.parse(val);
+                    } catch (e) {
+                        return {};
+                    }
+                }
+                if (typeof val.get === 'function') {
+                    try {
+                        const keys = Object.keys(val);
+                        const obj = {};
+                        for (let k of keys) {
+                            obj[k] = val.get(k);
+                        }
+                        return obj;
+                    } catch(e) {}
+                }
+                return val;
+            };
+
+            const safeMeta = resolveObject(order.meta);
+            const safePayloadMeta = resolveObject(order.payload?.meta);
+            const safeFirstEntityMeta = resolveObject(order.payload?.entities?.[0]?.meta);
+
+            const getValFromSources = (keys) => {
+                for (const key of keys) {
+                    if (safeMeta && safeMeta[key] !== undefined && safeMeta[key] !== null) {
+                        return safeMeta[key];
+                    }
+                    if (safePayloadMeta && safePayloadMeta[key] !== undefined && safePayloadMeta[key] !== null) {
+                        return safePayloadMeta[key];
+                    }
+                    if (safeFirstEntityMeta && safeFirstEntityMeta[key] !== undefined && safeFirstEntityMeta[key] !== null) {
+                        return safeFirstEntityMeta[key];
+                    }
+                    try {
+                        const directMetaVal = order.get(`meta.${key}`);
+                        if (directMetaVal !== undefined && directMetaVal !== null) {
+                            return directMetaVal;
+                        }
+                    } catch(e) {}
+                    try {
+                        const directPayloadMetaVal = order.get(`payload.meta.${key}`);
+                        if (directPayloadMetaVal !== undefined && directPayloadMetaVal !== null) {
+                            return directPayloadMetaVal;
+                        }
+                    } catch(e) {}
+
+                    const customFields = order.custom_field_values || order.customFieldValues || [];
+                    if (customFields && typeof customFields.forEach === 'function') {
+                        let cfVal = null;
+                        customFields.forEach(f => {
+                            const fKey = f.key || f.name || f.field_key;
+                            if (fKey === key) {
+                                cfVal = f.value;
+                            }
+                        });
+                        if (cfVal !== undefined && cfVal !== null) {
+                            return cfVal;
+                        }
+                    }
+
+                    const plainCustomFields = order.custom_fields || order.customFields || [];
+                    if (Array.isArray(plainCustomFields)) {
+                        const field = plainCustomFields.find(f => f.key === key || f.name === key || f.field_key === key);
+                        if (field && field.value !== undefined && field.value !== null) {
+                            return field.value;
+                        }
+                    }
+                }
+                return null;
+            };
+
+            const cleanVal = (val) => {
+                if (!val) return null;
+                const clean = String(val).trim().toLowerCase();
+                if (clean === 'n/a' || clean === 'none' || clean === 'null' || clean === 'undefined' || clean === '-') {
+                    return null;
+                }
+                return val;
+            };
+
+            const getValFromNotes = (regexes) => {
+                const notes = order.notes;
+                if (!notes || typeof notes !== 'string') return null;
+                for (const regex of regexes) {
+                    const match = notes.match(regex);
+                    if (match && match[1]) {
+                        return match[1].trim();
+                    }
+                }
+                return null;
+            };
+
+            const vehicleChoice = cleanVal(getValFromSources([
+                'vehicle', 'vehicle_type', 'vehicleChoice', 'vehicle_name', 'carChoice', 'car_choice'
+            ]) || getValFromNotes([
+                /VEHICLE:\s*(.+)/i,
+                /CAR_CHOICE:\s*(.+)/i
+            ])) || '-';
+
+            const paxCount = cleanVal(getValFromSources([
+                'pax', 'pax_count', 'paxCount', 'passengers', 'passenger_count'
+            ]) || getValFromNotes([
+                /PASSENGERS:\s*(.+)/i,
+                /PAX:\s*(.+)/i
+            ])) || '-';
+
+            const childSeatsCount = cleanVal(getValFromSources([
+                'seats', 'child_seats', 'childSeats', 'childSeatsCount', 'booster_seats', 'child_seats_count'
+            ]) || getValFromNotes([
+                /CHILD SEATS:\s*(.+)/i,
+                /CHILD_SEATS:\s*(.+)/i,
+                /SEATS:\s*(.+)/i
+            ])) || '-';
+
             return {
                 order,
                 rowClass: this.getRowClass(order),
@@ -532,9 +649,9 @@ export default class DispatchGridComponent extends Component {
                 pickup: this.getPickupInfo(order),
                 dropoff: this.getDropoffInfo(order),
                 flags: this.getFlags(order),
-                vehicleChoice: meta?.vehicle_type || meta?.vehicle || meta?.carChoice || meta?.car_choice || order.payload?.meta?.vehicle_type || order.payload?.meta?.vehicle || order.payload?.meta?.carChoice || order.payload?.meta?.car_choice || order.payload?.entities?.[0]?.meta?.vehicle_type || order.payload?.entities?.[0]?.meta?.vehicle || order.payload?.entities?.[0]?.meta?.carChoice || order.payload?.entities?.[0]?.meta?.car_choice || '-',
-                paxCount: meta?.passengers || meta?.passenger_count || meta?.pax || order.payload?.meta?.passengers || order.payload?.meta?.passenger_count || order.payload?.meta?.pax || order.payload?.entities?.[0]?.meta?.passengers || order.payload?.entities?.[0]?.meta?.passenger_count || order.payload?.entities?.[0]?.meta?.pax || '-',
-                childSeatsCount: meta?.child_seats || meta?.child_seats_count || meta?.seats || order.payload?.meta?.child_seats || order.payload?.meta?.child_seats_count || order.payload?.meta?.seats || order.payload?.entities?.[0]?.meta?.child_seats || order.payload?.entities?.[0]?.meta?.child_seats_count || order.payload?.entities?.[0]?.meta?.seats || '-',
+                vehicleChoice,
+                paxCount,
+                childSeatsCount,
             };
         });
     }

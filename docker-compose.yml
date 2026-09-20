@@ -44,6 +44,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./api/app:/fleetbase/api/app
+      - ./packages/fleetops/server/src/Http/Resources/v1/Index/Order.php:/fleetbase/api/vendor/fleetbase/fleetops-api/server/src/Http/Resources/v1/Index/Order.php
     environment:
       DATABASE_URL: "mysql://root@database/fleetbase"
       QUEUE_CONNECTION: redis
@@ -61,6 +62,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./api/app:/fleetbase/api/app
+      - ./packages/fleetops/server/src/Http/Resources/v1/Index/Order.php:/fleetbase/api/vendor/fleetbase/fleetops-api/server/src/Http/Resources/v1/Index/Order.php
     healthcheck:
       test: ["CMD", "php", "artisan", "queue:status"]
       interval: 30s
@@ -99,6 +101,7 @@ services:
       - ./api/.env:/fleetbase/api/.env
       - ./api/storage/app:/fleetbase/api/storage/app
       - ./api/app:/fleetbase/api/app
+      - ./packages/fleetops/server/src/Http/Resources/v1/Index/Order.php:/fleetbase/api/vendor/fleetbase/fleetops-api/server/src/Http/Resources/v1/Index/Order.php
     environment:
       ENVIRONMENT: development
       DATABASE_URL: "mysql://root@database/fleetbase"

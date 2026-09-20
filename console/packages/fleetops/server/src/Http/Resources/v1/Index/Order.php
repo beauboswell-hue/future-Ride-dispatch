@@ -111,7 +111,9 @@ class Order extends FleetbaseResource
             'has_driver_assigned'  => $this->when($isInternal, $this->has_driver_assigned),
             'is_scheduled'         => $this->when($isInternal, $this->is_scheduled),
 
-            // Timestamps
+            'notes'                => $this->notes,
+
+// Timestamps
             'scheduled_at'         => $this->scheduled_at,
             'dispatched_at'        => $this->dispatched_at,
             'started_at'           => $this->started_at,
@@ -119,9 +121,12 @@ class Order extends FleetbaseResource
             'updated_at'           => $this->updated_at,
 
             // Meta flag to indicate this is an index resource
-            'meta'                 => [
-                '_index_resource' => true,
-            ],
+            'meta'                 => array_merge(
+                is_array($this->meta) ? $this->meta : (json_decode($this->meta ?? '', true) ?? []),
+                [
+                    '_index_resource' => true,
+                ]
+            ),
         ];
     }
 }

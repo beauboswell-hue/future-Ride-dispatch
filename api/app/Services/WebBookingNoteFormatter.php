@@ -128,10 +128,10 @@ class WebBookingNoteFormatter
                     ?? data_get($payloadMeta, $k)
                     ?? data_get($payloadMeta, "metadata.{$k}")
                     ?? data_get($payloadMeta, "meta.{$k}")
-                    ?? data_get($order->payload, "pickup.{$k}")
-                    ?? data_get($order->payload, "dropoff.{$k}")
                     ?? data_get($order->payload, "customer.{$k}")
-                    ?? data_get($order->customer, $k);
+                    ?? data_get($order->customer, $k)
+                    ?? ($k !== 'name' ? data_get($order->payload, "pickup.{$k}") : null)
+                    ?? ($k !== 'name' ? data_get($order->payload, "dropoff.{$k}") : null);
                 if ($isValidVal($v)) {
                     return $v;
                 }
@@ -157,30 +157,26 @@ class WebBookingNoteFormatter
                 $vehicleType = trim($matches[1]);
             }
         }
-        if (empty($vehicleType) || $vehicleType === 'N/A') {
-            $vehicleType = 'Sedan';
+        if (empty($vehicleType)) {
+            $vehicleType = 'N/A';
         }
 
-        if ($passengers === null || $passengers === '' || $passengers === 'N/A') {
-            if ($origNotes && preg_match('/(?:Pax|Passengers?|Passenger Count):\s*(\d+)/i', $origNotes, $matches)) {
-                $passengers = (int)$matches[1];
-            } elseif ($origDescription && preg_match('/(?:Pax|Passengers?|Passenger Count):\s*(\d+)/i', $origDescription, $matches)) {
-                $passengers = (int)$matches[1];
-            }
-        }
-        if ($passengers === null || $passengers === '' || $passengers === 'N/A') {
-            $passengers = 1;
+        if ($passengers === null || $passengers === '') {
+            $passengers = 'N/A';
         }
 
-        if ($childSeats === null || $childSeats === '' || $childSeats === 'N/A') {
-            if ($origNotes && preg_match('/(?:Child\s*Seats?|Car\s*Seats?|Seats?):\s*(\d+)/i', $origNotes, $matches)) {
-                $childSeats = (int)$matches[1];
-            } elseif ($origDescription && preg_match('/(?:Child\s*Seats?|Car\s*Seats?|Seats?):\s*(\d+)/i', $origDescription, $matches)) {
-                $childSeats = (int)$matches[1];
-            }
+        if ($childSeats === null || $childSeats === '') {
+            $childSeats = 'N/A';
         }
-        if ($childSeats === null || $childSeats === '' || $childSeats === 'N/A') {
-            $childSeats = 0;
+
+        if (!$order->relationLoaded('customer') && $order->customer_uuid) {
+            $order->load('customer');
+        }
+        $customer = $order->customer;
+        if ($customer) {
+            $passengerName = $passengerName ?: $customer->name;
+            $passengerPhone = $passengerPhone ?: $customer->phone;
+            $passengerEmail = $passengerEmail ?: $customer->email;
         }
 
         // Fallbacks if not provided in request or metadata
@@ -201,16 +197,6 @@ class WebBookingNoteFormatter
             if ($pickup && $pickup->phone) {
                 $passengerPhone = $pickup->phone;
             }
-        }
-
-        if (!$order->relationLoaded('customer') && $order->customer_uuid) {
-            $order->load('customer');
-        }
-        $customer = $order->customer;
-        if ($customer) {
-            $passengerName = $passengerName ?: $customer->name;
-            $passengerPhone = $passengerPhone ?: $customer->phone;
-            $passengerEmail = $passengerEmail ?: $customer->email;
         }
 
         // Normalize / Fallbacks
@@ -276,12 +262,27 @@ class WebBookingNoteFormatter
             }
         }
 
-        // 3. Pickup Place Binding
-        $order->loadMissing('payload.pickup');
+        // 3. Pickup & Dropoff Place Binding and Sanitization
+        $order->loadMissing(['payload.pickup', 'payload.dropoff']);
         $pickupPlace = $order->payload?->pickup;
         if ($pickupPlace) {
             if ($phone) {
                 $pickupPlace->phone = $phone;
+            }
+            
+            $pName = trim($pickupPlace->name ?? '');
+            $isCorrupted = false;
+            if ($pName !== '') {
+                if (stripos($pName, '(PICKUP)') !== false || stripos($pName, '(DROPOFF)') !== false) {
+                    $isCorrupted = true;
+                }
+                if ($name && $name !== 'N/A' && stripos($pName, $name) !== false) {
+                    $isCorrupted = true;
+                }
+            }
+            if ($isCorrupted) {
+                $pStreet1 = trim($pickupPlace->street1 ?? '');
+                $pickupPlace->name = $pStreet1 !== '' ? $pStreet1 : 'Pickup Location';
             }
             
             $placeMeta = $pickupPlace->meta ?? [];
@@ -294,6 +295,25 @@ class WebBookingNoteFormatter
             $pickupPlace->meta = $placeMeta;
 
             $pickupPlace->saveQuietly();
+        }
+
+        $dropoffPlace = $order->payload?->dropoff;
+        if ($dropoffPlace) {
+            $dName = trim($dropoffPlace->name ?? '');
+            $isCorrupted = false;
+            if ($dName !== '') {
+                if (stripos($dName, '(PICKUP)') !== false || stripos($dName, '(DROPOFF)') !== false) {
+                    $isCorrupted = true;
+                }
+                if ($name && $name !== 'N/A' && stripos($dName, $name) !== false) {
+                    $isCorrupted = true;
+                }
+            }
+            if ($isCorrupted) {
+                $dStreet1 = trim($dropoffPlace->street1 ?? '');
+                $dropoffPlace->name = $dStreet1 !== '' ? $dStreet1 : 'Dropoff Location';
+                $dropoffPlace->saveQuietly();
+            }
         }
 
         // 4. Generate & Save notes / description
@@ -432,17 +452,29 @@ class WebBookingNoteFormatter
         $cleanPickupAddress = static::sanitizeAddress($locationInfo['pickup']);
         $cleanDropoffAddress = static::sanitizeAddress($locationInfo['dropoff']);
 
-        $lines = [
-            "PASSENGER: {$passengerName}" . ($passengerPhone && $passengerPhone !== 'N/A' ? " ({$passengerPhone})" : " (N/A)"),
-            "EMAIL: {$passengerEmail}",
-            "VEHICLE: {$vehicleType}",
-            "PASSENGERS: {$passengers}",
-            "CHILD SEATS: {$childSeats}",
-            "PICKUP: {$cleanPickupAddress}",
-            "DROPOFF: {$cleanDropoffAddress}",
-        ];
+        // Remove raw GPS coordinates from notes text to keep it neat
+        $cleanPickupAddress = preg_replace('/\s*\(coordinates:\s*[^)]+\)/i', '', $cleanPickupAddress);
+        $cleanDropoffAddress = preg_replace('/\s*\(coordinates:\s*[^)]+\)/i', '', $cleanDropoffAddress);
 
-        return implode("\n", $lines);
+        // Extract match warning so it can be appended on its own separate line
+        $warning = '';
+        if (stripos($cleanDropoffAddress, '⚠️') !== false) {
+            $pos = stripos($cleanDropoffAddress, '⚠️');
+            $warning = "\n" . trim(substr($cleanDropoffAddress, $pos));
+            $cleanDropoffAddress = trim(substr($cleanDropoffAddress, 0, $pos));
+        }
+
+        $note = "PASSENGER: {$passengerName}\n" .
+                "PHONE: {$passengerPhone}\n" .
+                "EMAIL: {$passengerEmail}\n\n" .
+                "VEHICLE: {$vehicleType}\n" .
+                "PASSENGERS: {$passengers}\n" .
+                "CHILD SEATS: {$childSeats}\n\n" .
+                "PICKUP: {$cleanPickupAddress}\n" .
+                "DROPOFF: {$cleanDropoffAddress}" .
+                $warning;
+
+        return $note;
     }
 
     /**

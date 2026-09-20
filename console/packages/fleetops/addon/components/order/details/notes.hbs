@@ -14,9 +14,9 @@
             <Button @type="default" @icon="times" @size="xs" @text={{t "common.cancel"}} @onClick={{this.stopEditing}} />
         </div>
     {{else}}
-        {{#if @resource.notes}}
+        {{#if this.displayNotes}}
             <div>
-                <p class="text-xs font-mono">{{@resource.notes}}</p>
+                <p class="text-xs font-mono" style="white-space: pre-wrap;">{{this.displayNotes}}</p>
             </div>
         {{else}}
             <div class="min-h-24 p-4">

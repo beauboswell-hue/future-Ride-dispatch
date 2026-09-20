@@ -9,6 +9,24 @@ export default class OrderDetailsNotesComponent extends Component {
     @service notifications;
     @tracked isEditing = false;
 
+    get displayNotes() {
+        const order = this.args.resource;
+        if (order?.notes) {
+            return order.notes;
+        }
+
+        let meta = order?.meta;
+        if (typeof meta === 'string') {
+            try {
+                meta = JSON.parse(meta);
+            } catch (e) {
+                meta = {};
+            }
+        }
+
+        return meta?.description || meta?.notes || '';
+    }
+
     /* eslint-disable ember/no-side-effects */
     get actionButtons() {
         return [
