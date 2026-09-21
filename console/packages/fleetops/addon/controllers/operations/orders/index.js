@@ -67,6 +67,7 @@ export default class OperationsOrdersIndexController extends Controller {
     @tracked bulkSearchValue = '';
     @tracked bulk_query = '';
     @tracked layout = 'map';
+    @tracked isFutureLimoDrawerOpen = false;
 
     /** action buttons */
     get actionButtons() {
@@ -420,5 +421,45 @@ export default class OperationsOrdersIndexController extends Controller {
         if (mode === 'table') {
             this.isSearchVisible = false;
         }
+    }
+
+    @action
+    toggleFutureLimoDrawer() {
+        this.isFutureLimoDrawerOpen = !this.isFutureLimoDrawerOpen;
+        if (this.isFutureLimoDrawerOpen) {
+            this.setupDrawerEscListener();
+        } else {
+            this.teardownDrawerEscListener();
+        }
+    }
+
+    @action
+    closeFutureLimoDrawer() {
+        this.isFutureLimoDrawerOpen = false;
+        this.teardownDrawerEscListener();
+    }
+
+    @action
+    handleDrawerKeyDown(event) {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+            this.closeFutureLimoDrawer();
+        }
+    }
+
+    setupDrawerEscListener() {
+        if (typeof window !== 'undefined') {
+            window.addEventListener('keydown', this.handleDrawerKeyDown);
+        }
+    }
+
+    teardownDrawerEscListener() {
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('keydown', this.handleDrawerKeyDown);
+        }
+    }
+
+    willDestroy() {
+        super.willDestroy(...arguments);
+        this.teardownDrawerEscListener();
     }
 }
