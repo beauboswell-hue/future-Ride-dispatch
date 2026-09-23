@@ -304,10 +304,16 @@ class OrderConfig extends Model
 
         $activity = $this->activities()->firstWhere('code', $context->status);
         if (!$activity && $context->status === 'enroute_pickup') {
-            return $this->activities()->firstWhere('code', 'enroute');
+            return $this->activities()->firstWhere('code', 'enroute') ?? $this->activities()->firstWhere('code', 'started');
         }
         if (!$activity && $context->status === 'enroute') {
-            return $this->activities()->firstWhere('code', 'enroute_pickup');
+            return $this->activities()->firstWhere('code', 'enroute_pickup') ?? $this->activities()->firstWhere('code', 'started');
+        }
+        if (!$activity && $context->status === 'driver_enroute') {
+            return $this->activities()->firstWhere('code', 'enroute') ?? $this->activities()->firstWhere('code', 'enroute_pickup') ?? $this->activities()->firstWhere('code', 'started');
+        }
+        if (!$activity && ($context->status === 'in_progress' || $context->status === 'passenger_on_board')) {
+            return $this->activities()->firstWhere('code', 'pob');
         }
 
         return $activity;

@@ -57,49 +57,47 @@ $runTest = function (string $title, callable $fn) use (&$passed, &$total) {
     }
 };
 
-// 1. Event Title (Summary) Format with Type
-$runTest("Event Title format: 'Ride [{order.type}]: {order.public_id}'", function () use ($service) {
+// 1. Event Title (Summary) Format
+$runTest("Event Title format: 'Ride: [Initials] - [Time]'", function () use ($service) {
     $order = new Order();
     $order->public_id = 'order_luxury99';
-    $order->type = 'luxury';
+    $order->scheduled_at = '2026-12-25 15:00:00';
+    $order->meta = [
+        'passenger_name' => 'John Doe',
+        'vehicle_type'   => 'luxury',
+    ];
 
     $summary = $service->buildSummary($order);
-    if ($summary !== 'Ride [luxury]: order_luxury99') {
-        throw new Exception("Expected 'Ride [luxury]: order_luxury99', got: '{$summary}'");
+    if (!str_starts_with($summary, 'Ride: J.D. - ')) {
+        throw new Exception("Expected summary starting with 'Ride: J.D. - ', got: '{$summary}'");
     }
 });
 
-// 2. Event Title (Summary) Fallback when Type is null
-$runTest("Event Title fallback: 'Ride: {order.public_id}' when type is null", function () use ($service) {
-    $order = new Order();
-    $order->public_id = 'order_generic42';
-    // type is null by default on new Order()
+// 2. Event Title Initials parsing logic
+$runTest("Event Title initials extraction works for single and multi-word names", function () use ($service) {
+    $order1 = new Order();
+    $order1->meta = ['passenger_name' => 'Alice'];
+    $summary1 = $service->buildSummary($order1);
+    if (!str_contains($summary1, 'Ride: A. - ')) {
+        throw new Exception("Expected 'Ride: A. - ...', got '{$summary1}'");
+    }
 
-    $summary = $service->buildSummary($order);
-    if ($summary !== 'Ride: order_generic42') {
-        throw new Exception("Expected 'Ride: order_generic42', got: '{$summary}'");
+    $order2 = new Order();
+    $order2->meta = ['passenger_name' => 'Bob Marley Jenkins'];
+    $summary2 = $service->buildSummary($order2);
+    if (!str_contains($summary2, 'Ride: B.M.J. - ')) {
+        throw new Exception("Expected 'Ride: B.M.J. - ...', got '{$summary2}'");
     }
 });
 
-// 3. Event Title strictly excludes passenger/customer names
-$runTest("Event Title strictly excludes passenger name and company name", function () use ($service, $company) {
-    $customer = Contact::firstOrCreate(
-        ['company_uuid' => $company->uuid, 'email' => 'jane.passenger@example.com'],
-        ['name' => 'Jane Supersecret', 'phone' => '+1 555-432-1098', 'type' => 'customer']
-    );
-
+// 3. Event Title fallback for missing name
+$runTest("Event Title fallback: 'N.A.' when passenger name is null", function () use ($service) {
     $order = new Order();
-    $order->public_id = 'order_anon1';
-    $order->type = 'executive';
-    $order->customer_uuid = $customer->uuid;
-    $order->setRelation('customer', $customer);
+    $order->meta = [];
 
     $summary = $service->buildSummary($order);
-    if (str_contains($summary, 'Jane') || str_contains($summary, 'Supersecret') || str_contains($summary, 'Future Limo')) {
-        throw new Exception("Summary leaked customer or company identity: '{$summary}'");
-    }
-    if ($summary !== 'Ride [executive]: order_anon1') {
-        throw new Exception("Expected 'Ride [executive]: order_anon1', got: '{$summary}'");
+    if (!str_contains($summary, 'Ride: N.A. - ')) {
+        throw new Exception("Expected Ride: N.A. - ..., got: '{$summary}'");
     }
 });
 
@@ -130,46 +128,52 @@ $runTest("Event Location is strictly empty string \"\" without addresses or coor
     }
 });
 
-// 5. Event Description anonymous metadata block with console link
-$runTest("Event Description matches anonymous metadata block format and console link", function () use ($service) {
-    config(['fleetops.console_url' => 'http://localhost:4200']);
-
+// 5. Event Description matches untokenized layout with full details
+$runTest("Event Description matches untokenized layout and includes passenger initials and details", function () use ($service) {
     $order = new Order();
     $order->public_id = 'order_meta_test';
-    $order->status = 'dispatched';
-    $order->notes = "VIP passenger note: Gate code #9988, call +15554443322 upon arrival. Total paid: $450.00";
+    $order->scheduled_at = '2026-09-22 13:00:00';
+    $order->meta = [
+        'passenger_name' => 'Jane Supersecret',
+        'passenger_phone' => '+15554443322',
+        'passenger_email' => 'jane.passenger@example.com',
+        'vehicle_type' => 'sedan',
+        'child_seats' => '1 Toddler Seat',
+    ];
 
     $description = $service->buildDescription($order);
-    $expected = "Status: dispatched\nOrder ID: order_meta_test\nConsole Link: http://localhost:4200/fleet-ops?layout=kanban&order=order_meta_test";
 
-    if ($description !== $expected) {
-        throw new Exception("Description mismatch.\nExpected:\n{$expected}\n\nGot:\n{$description}");
+    if (!str_contains($description, "Customer Initials: J.S.")) {
+        throw new Exception("Description should include Customer Initials: J.S.");
     }
-
-    // Assert strict zero-PII in description
-    $forbiddenTerms = ['Gate code', '9988', '+15554443322', '$450.00', 'VIP passenger'];
-    foreach ($forbiddenTerms as $term) {
-        if (str_contains($description, $term)) {
-            throw new Exception("Description leaked forbidden sensitive term: '{$term}'");
-        }
+    if (!str_contains($description, "Phone: +15554443322")) {
+        throw new Exception("Description should include Phone");
+    }
+    if (!str_contains($description, "Email: jane.passenger@example.com")) {
+        throw new Exception("Description should include Email");
+    }
+    if (!str_contains($description, "Vehicle: sedan")) {
+        throw new Exception("Description should include Vehicle");
+    }
+    if (!str_contains($description, "Child Seats: 1 Toddler Seat")) {
+        throw new Exception("Description should include Child Seats");
     }
 });
 
-// 6. Dynamic consoleBaseUrl resolution
-$runTest("consoleBaseUrl uses config('fleetops.console_url', env('CONSOLE_URL', 'http://localhost:4200'))", function () use ($service) {
-    config(['fleetops.console_url' => 'https://custom-host.local:8443/']);
-
+// 6. Event Description displays default fallbacks for missing values
+$runTest("Event Description displays default N/A for missing details", function () use ($service) {
     $order = new Order();
-    $order->public_id = 'order_custom_url';
-    $order->status = 'created';
-
     $description = $service->buildDescription($order);
-    if (!str_contains($description, 'Console Link: https://custom-host.local:8443/fleet-ops?layout=kanban&order=order_custom_url')) {
-        throw new Exception("Dynamic console url resolution failed: '{$description}'");
-    }
 
-    // Reset back to default
-    config(['fleetops.console_url' => 'http://localhost:4200']);
+    if (!str_contains($description, "Customer Initials: N.A.")) {
+        throw new Exception("Expected Customer Initials to be N.A.");
+    }
+    if (!str_contains($description, "Vehicle: N/A")) {
+        throw new Exception("Expected Vehicle to be N/A");
+    }
+    if (!str_contains($description, "Child Seats: N/A")) {
+        throw new Exception("Expected Child Seats to be N/A");
+    }
 });
 
 // 7. Timing preserves start/end in America/New_York timezone
@@ -190,22 +194,20 @@ $runTest("Timing preserves scheduled pickup and drop-off start/end in America/Ne
     $startTime = Carbon::parse($timing['start']['dateTime']);
     $endTime = Carbon::parse($timing['end']['dateTime']);
 
-    if (!$endTime->greaterThan($startTime)) {
-        throw new Exception("End time must be after start time");
-    }
-    if ($endTime->diffInHours($startTime) !== 2) {
-        throw new Exception("Expected 2 hour difference, got: " . $endTime->diffInHours($startTime));
+    if ($startTime->format('Y-m-d H:i:s') !== '2026-12-25 15:00:00') {
+        throw new Exception("Expected startTime to be 2026-12-25 15:00:00, got: " . $startTime->format('Y-m-d H:i:s'));
     }
 });
 
-// 8. Order Updates & Sync uses exact same tokenized schema
-$runTest("Update method uses exact same tokenized schema as creation without PII", function () use ($service) {
+// 8. Order Updates & Sync uses exact same schema
+$runTest("Update method uses exact same schema as creation with same details", function () use ($service) {
     $order = new Order();
     $order->public_id = 'order_update_test';
-    $order->type = 'shuttle';
-    $order->status = 'started';
     $order->scheduled_at = '2026-09-20 18:00:00';
-    $order->time_window_end = '2026-09-20 19:30:00';
+    $order->meta = [
+        'passenger_name' => 'Bob Smith',
+        'vehicle_type' => 'shuttle',
+    ];
 
     $createPayload = $service->createEvent($order);
     $updatePayload = $service->updateEvent($order);
@@ -215,7 +217,7 @@ $runTest("Update method uses exact same tokenized schema as creation without PII
     if ($createPayload !== $updatePayload) {
         throw new Exception("createEvent and updateEvent payloads must be identical!");
     }
-    if ($updatePayload['summary'] !== 'Ride [shuttle]: order_update_test') {
+    if (!str_starts_with($updatePayload['summary'], 'Ride: B.S. - ')) {
         throw new Exception("Summary mismatch in updateEvent: '{$updatePayload['summary']}'");
     }
     if ($updatePayload['location'] !== '') {

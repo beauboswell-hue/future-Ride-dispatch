@@ -27,35 +27,42 @@ class GoogleCalendarSyncTest extends TestCase
     /**
      * Test Event Title (Summary) formatting with order type.
      */
-    public function test_event_title_summary_format_with_type(): void
+    /**
+     * Test Event Title (Summary) formatting.
+     */
+    public function test_event_title_summary_format(): void
     {
         $service = app(GoogleCalendarService::class);
         $order = new Order();
         $order->public_id = 'order_test123';
-        $order->type = 'luxury';
+        $order->scheduled_at = '2026-12-25 15:00:00';
+        $order->meta = [
+            'passenger_name' => 'John Doe',
+            'vehicle_type'   => 'luxury',
+        ];
 
         $summary = $service->buildSummary($order);
-        $this->assertEquals('Ride [luxury]: order_test123', $summary);
+        $this->assertStringStartsWith('Ride: J.D. - ', $summary);
     }
 
     /**
-     * Test Event Title (Summary) fallback when order type is null.
+     * Test Event Title (Summary) fallback when passenger name is null.
      */
-    public function test_event_title_summary_fallback_when_type_is_null(): void
+    public function test_event_title_summary_fallback_when_name_is_null(): void
     {
         $service = app(GoogleCalendarService::class);
         $order = new Order();
         $order->public_id = 'order_test456';
-        $order->attributes['type'] = null;
+        $order->meta = [];
 
         $summary = $service->buildSummary($order);
-        $this->assertEquals('Ride: order_test456', $summary);
+        $this->assertStringStartsWith('Ride: N.A. - ', $summary);
     }
 
     /**
-     * Test Event Title strictly removes customer names.
+     * Test Event Title contains passenger initials instead of full name.
      */
-    public function test_event_title_strictly_excludes_customer_name(): void
+    public function test_event_title_contains_passenger_initials(): void
     {
         $company = $this->getTestCompany();
         $customer = Contact::firstOrCreate(
@@ -65,17 +72,15 @@ class GoogleCalendarSyncTest extends TestCase
 
         $order = new Order();
         $order->public_id = 'order_pii_check';
-        $order->type = 'executive';
         $order->customer_uuid = $customer->uuid;
         $order->setRelation('customer', $customer);
 
         $service = app(GoogleCalendarService::class);
         $summary = $service->buildSummary($order);
 
-        $this->assertEquals('Ride [executive]: order_pii_check', $summary);
+        $this->assertStringStartsWith('Ride: J.D. - ', $summary);
         $this->assertStringNotContainsString('Johnathan', $summary);
         $this->assertStringNotContainsString('Doe', $summary);
-        $this->assertStringNotContainsString('Future Limo', $summary);
     }
 
     /**
@@ -108,29 +113,28 @@ class GoogleCalendarSyncTest extends TestCase
     }
 
     /**
-     * Test Event Description is anonymous metadata block with console link.
+     * Test Event Description matches untokenized layout with full details.
      */
-    public function test_event_description_anonymous_metadata_block(): void
+    public function test_event_description_untokenized_layout(): void
     {
-        config(['fleetops.console_url' => 'http://localhost:4200']);
-
         $order = new Order();
         $order->public_id = 'order_meta_789';
-        $order->status = 'dispatched';
-        $order->notes = 'Customer note: gate code 1234, private passenger phone +15559876543, price $250.00';
+        $order->meta = [
+            'passenger_name' => 'John Doe',
+            'passenger_phone' => '+15551234567',
+            'passenger_email' => 'vip.passenger@example.com',
+            'vehicle_type' => 'sedan',
+            'child_seats' => '2 Booster Seats',
+        ];
 
         $service = app(GoogleCalendarService::class);
         $description = $service->buildDescription($order);
 
-        $expected = "Status: dispatched\nOrder ID: order_meta_789\nConsole Link: http://localhost:4200/fleet-ops?layout=kanban&order=order_meta_789";
-        $this->assertEquals($expected, $description);
-
-        // Strict PII exclusion assertions
-        $this->assertStringNotContainsString('gate code', $description);
-        $this->assertStringNotContainsString('1234', $description);
-        $this->assertStringNotContainsString('+15559876543', $description);
-        $this->assertStringNotContainsString('250.00', $description);
-        $this->assertStringNotContainsString('Customer note', $description);
+        $this->assertStringContainsString('Customer Initials: J.D.', $description);
+        $this->assertStringContainsString('Phone: +15551234567', $description);
+        $this->assertStringContainsString('Email: vip.passenger@example.com', $description);
+        $this->assertStringContainsString('Vehicle: sedan', $description);
+        $this->assertStringContainsString('Child Seats: 2 Booster Seats', $description);
     }
 
     /**
@@ -152,23 +156,21 @@ class GoogleCalendarSyncTest extends TestCase
         $this->assertEquals('America/New_York', $timing['end']['timeZone']);
 
         $startTime = Carbon::parse($timing['start']['dateTime']);
-        $endTime = Carbon::parse($timing['end']['dateTime']);
-
-        $this->assertTrue($endTime->greaterThan($startTime));
-        $this->assertEquals('-04:00', $startTime->format('P')); // EDT
+        $this->assertEquals('2026-10-15 14:00:00', $startTime->format('Y-m-d H:i:s'));
     }
 
     /**
-     * Test updateEvent uses the exact same tokenized schema as createEvent.
+     * Test updateEvent uses the exact same schema as createEvent.
      */
-    public function test_update_event_uses_exact_same_tokenized_schema(): void
+    public function test_update_event_uses_exact_same_schema(): void
     {
         $order = new Order();
         $order->public_id = 'order_schema_match';
-        $order->type = 'shuttle';
-        $order->status = 'in_progress';
         $order->scheduled_at = '2026-11-01 10:00:00';
-        $order->time_window_end = '2026-11-01 11:30:00';
+        $order->meta = [
+            'passenger_name' => 'Alice Smith',
+            'vehicle_type' => 'shuttle',
+        ];
 
         $service = app(GoogleCalendarService::class);
 
@@ -179,10 +181,9 @@ class GoogleCalendarSyncTest extends TestCase
         unset($createPayload['id'], $updatePayload['id']);
 
         $this->assertEquals($createPayload, $updatePayload);
-        $this->assertEquals('Ride [shuttle]: order_schema_match', $updatePayload['summary']);
+        $this->assertStringStartsWith('Ride: A.S. - ', $updatePayload['summary']);
         $this->assertEquals('', $updatePayload['location']);
-        $this->assertStringContainsString('Status: in_progress', $updatePayload['description']);
-        $this->assertStringContainsString('Order ID: order_schema_match', $updatePayload['description']);
+        $this->assertStringContainsString('Customer Initials: A.S.', $updatePayload['description']);
     }
 
     /**

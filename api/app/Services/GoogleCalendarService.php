@@ -8,6 +8,8 @@ use Google\Service\Calendar as GoogleCalendar;
 use Google\Service\Calendar\Event as GoogleCalendarEvent;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Twilio\Rest\Client as TwilioClient;
 
 class GoogleCalendarService
 {
@@ -51,27 +53,132 @@ class GoogleCalendarService
     }
 
     /**
-     * Build tokenized event title (Summary).
-     * Format: "#{internal_id} ({fleetbase_order_id})"
+     * Convert passenger name to initials.
+     *
+     * @param string|null $name
+     * @return string
+     */
+    public function getInitials(?string $name): string
+    {
+        if (empty($name) || strtolower($name) === 'n/a' || strtolower($name) === 'none') {
+            return 'N.A.';
+        }
+        $name = trim(preg_replace('/\s+/', ' ', $name));
+        $parts = explode(' ', $name);
+        $initials = '';
+        foreach ($parts as $part) {
+            $char = substr($part, 0, 1);
+            if ($char !== '') {
+                $initials .= strtoupper($char) . '.';
+            }
+        }
+        return $initials ?: 'N.A.';
+    }
+
+    /**
+     * Parse and untokenize booking data from order.
+     *
+     * @param Order $order
+     * @return array
+     */
+    public function getBookingData(Order $order): array
+    {
+        $meta = $order->meta ?? [];
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true) ?? [];
+        }
+
+        $name = data_get($meta, 'passenger_name') ?? data_get($meta, 'name');
+        $phone = data_get($meta, 'passenger_phone') ?? data_get($meta, 'phone');
+        $email = data_get($meta, 'passenger_email') ?? data_get($meta, 'email');
+
+        if ($order->relationLoaded('customer') && $order->customer) {
+            $name = $name ?: $order->customer->name;
+            $phone = $phone ?: $order->customer->phone;
+            $email = $email ?: $order->customer->email;
+        } elseif ($order->customer_uuid) {
+            $customer = \Fleetbase\FleetOps\Models\Contact::find($order->customer_uuid);
+            if ($customer) {
+                $name = $name ?: $customer->name;
+                $phone = $phone ?: $customer->phone;
+                $email = $email ?: $customer->email;
+            }
+        }
+
+        $name = $name ?: 'N/A';
+        $phone = $phone ?: 'N/A';
+        $email = $email ?: 'N/A';
+
+        $vehicleType = data_get($meta, 'vehicle_type') ?? 'N/A';
+        $childSeats = data_get($meta, 'child_seats') ?? 'N/A';
+
+        $order->loadMissing(['payload.pickup', 'payload.dropoff']);
+        $pickupPlace = $order->payload?->pickup;
+        $dropoffPlace = $order->payload?->dropoff;
+
+        $pickupAddress = $pickupPlace ? ($pickupPlace->address ?? $pickupPlace->name ?? $pickupPlace->street1 ?? 'N/A') : 'N/A';
+        $dropoffAddress = $dropoffPlace ? ($dropoffPlace->address ?? $dropoffPlace->name ?? $dropoffPlace->street1 ?? 'N/A') : 'N/A';
+
+        if (class_exists(\App\Services\WebBookingNoteFormatter::class)) {
+            $pickupAddress = \App\Services\WebBookingNoteFormatter::sanitizeAddress($pickupAddress);
+            $dropoffAddress = \App\Services\WebBookingNoteFormatter::sanitizeAddress($dropoffAddress);
+        } else {
+            $pickupAddress = preg_replace('/,\s*united states\s*$/i', '', $pickupAddress);
+            $dropoffAddress = preg_replace('/,\s*united states\s*$/i', '', $dropoffAddress);
+        }
+
+        $startRaw = $order->scheduled_at
+            ?? $order->time_window_start
+            ?? $order->started_at
+            ?? $order->created_at
+            ?? now();
+
+        $pickupTimeFormatted = 'N/A';
+        try {
+            $start = Carbon::parse($startRaw)->shiftTimezone('America/New_York');
+            $pickupTimeFormatted = $start->format('Y-m-d H:i:s T');
+        } catch (\Throwable $e) {
+            // fallback
+        }
+
+        return [
+            'name'            => $name,
+            'initials'        => $this->getInitials($name),
+            'phone'           => $phone,
+            'email'           => $email,
+            'vehicle_type'    => $vehicleType,
+            'child_seats'     => $childSeats,
+            'pickup_address'  => $pickupAddress,
+            'pickup_time'     => $pickupTimeFormatted,
+            'dropoff_address' => $dropoffAddress,
+        ];
+    }
+
+    /**
+     * Build event title (Summary).
+     * Format: "Ride: [Initials] - [Time]"
      *
      * @param Order $order
      * @return string
      */
     public function buildSummary(Order $order): string
     {
-        $internalId = $order->id ?? 'N/A';
-        $fleetbaseOrderId = $order->public_id ?? $order->uuid ?? 'N/A';
-
-        $meta = $order->meta ?? [];
-        if (is_string($meta)) {
-            $meta = json_decode($meta, true) ?? [];
+        $data = $this->getBookingData($order);
+        
+        $startRaw = $order->scheduled_at
+            ?? $order->time_window_start
+            ?? $order->started_at
+            ?? $order->created_at
+            ?? now();
+            
+        try {
+            $start = Carbon::parse($startRaw)->shiftTimezone('America/New_York');
+            $timeFormatted = $start->format('g:i A');
+        } catch (\Throwable $e) {
+            $timeFormatted = 'N/A';
         }
 
-        $carChoice = data_get($meta, 'vehicle_type') ?? 'N/A';
-        $pax = data_get($meta, 'passengers') ?? 'N/A';
-        $childSeats = data_get($meta, 'child_seats') ?? 'N/A';
-
-        return "#{$internalId} ({$fleetbaseOrderId}) - Vehicle: {$carChoice}, Pax: {$pax}, Child Seats: {$childSeats}";
+        return "Ride: {$data['initials']} - {$timeFormatted}";
     }
 
     /**
@@ -87,50 +194,133 @@ class GoogleCalendarService
     }
 
     /**
-     * Build anonymous event description.
-     * Strictly tokenized with zero names, phone numbers, emails, addresses, or coordinates.
+     * Build full event description with full readable details.
      *
      * @param Order $order
      * @return string
      */
     public function buildDescription(Order $order): string
     {
-        $internalId = $order->id ?? 'N/A';
-        $fleetbaseOrderId = $order->public_id ?? $order->uuid ?? 'N/A';
-
-        // Pickup / start time resolution
-        $startRaw = $order->scheduled_at
-            ?? $order->time_window_start
-            ?? $order->started_at
-            ?? $order->created_at
-            ?? now();
-
-        try {
-            $start = Carbon::parse($startRaw)->setTimezone(self::TIMEZONE);
-            $pickupTime = $start->format('Y-m-d H:i:s T');
-        } catch (\Throwable $e) {
-            $pickupTime = 'N/A';
-        }
-
-        $meta = $order->meta ?? [];
-        if (is_string($meta)) {
-            $meta = json_decode($meta, true) ?? [];
-        }
-
-        $carChoice = data_get($meta, 'vehicle_type') ?? 'N/A';
-        $pax = data_get($meta, 'passengers') ?? 'N/A';
-        $childSeats = data_get($meta, 'child_seats') ?? 'N/A';
+        $data = $this->getBookingData($order);
+        
+        $consoleHost = env('CONSOLE_HOST') ?: env('CONSOLE_URL') ?: 'https://console.futurelimo.website';
+        $consoleHost = rtrim($consoleHost, '/');
+        $directLink = "{$consoleHost}/fleet-ops/{$order->public_id}";
 
         return implode("\n", [
-            "Order: #{$internalId}",
-            "Time: {$pickupTime}",
-            "Fleetbase ID: {$fleetbaseOrderId}",
-            "Vehicle: {$carChoice}",
-            "Pax: {$pax}",
-            "Child Seats: {$childSeats}",
+            "Customer Initials: {$data['initials']}",
+            "Phone: {$data['phone']}",
+            "Email: {$data['email']}",
+            "Vehicle: {$data['vehicle_type']}",
+            "Child Seats: {$data['child_seats']}",
+            "Pickup: {$data['pickup_address']} @ {$data['pickup_time']}",
+            "Dropoff: {$data['dropoff_address']}",
             "",
-            "https://console.futurelimo.website/fleet-ops/orders?id={$fleetbaseOrderId}",
+            "Direct Order Link: {$directLink}",
         ]);
+    }
+
+    /**
+     * Send Twilio SMS alert notification.
+     *
+     * @param Order $order
+     * @return void
+     */
+    public function sendSMSNotification(Order $order): void
+    {
+        try {
+            $data = $this->getBookingData($order);
+
+            $smsBody = implode("\n", [
+                "New Booking Alert",
+                "Pax: {$data['initials']}",
+                "Phone: {$data['phone']}",
+                "Email: {$data['email']}",
+                "Vehicle: {$data['vehicle_type']}",
+                "Child Seats: {$data['child_seats']}",
+                "From: {$data['pickup_address']} @ {$data['pickup_time']}",
+                "To: {$data['dropoff_address']}",
+            ]);
+
+            $sid = env('TWILIO_SID') ?: config('twilio.twilio.connections.twilio.sid');
+            $token = env('TWILIO_TOKEN') ?: config('twilio.twilio.connections.twilio.token');
+            $from = env('TWILIO_FROM') ?: config('twilio.twilio.connections.twilio.from');
+
+            if (empty($sid) || empty($token)) {
+                Log::warning('GoogleCalendarService: Twilio credentials are not fully configured in environment.');
+                return;
+            }
+
+            $client = new TwilioClient($sid, $token);
+            $client->messages->create(
+                '+12127965858',
+                [
+                    'from' => $from,
+                    'body' => $smsBody,
+                ]
+            );
+
+            Log::info('GoogleCalendarService: Twilio SMS alert sent successfully to Tom.');
+        } catch (\Throwable $e) {
+            Log::error('GoogleCalendarService: Failed to send Twilio SMS notification: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+        }
+    }
+
+    /**
+     * Send Email notification to Reservations.
+     *
+     * @param Order $order
+     * @return void
+     */
+    public function sendEmailNotification(Order $order): void
+    {
+        try {
+            $data = $this->getBookingData($order);
+            $subject = "New Booking Received: {$data['initials']} - {$data['pickup_time']}";
+
+            $mailHost = env('MAIL_HOST');
+            $mailPort = env('MAIL_PORT');
+            $mailUsername = env('MAIL_USERNAME');
+            $mailPassword = env('MAIL_PASSWORD');
+
+            if (empty($mailHost) || empty($mailPort) || empty($mailUsername) || empty($mailPassword) ||
+                $mailHost === 'null' || $mailPort === 'null' || $mailUsername === 'null' || $mailPassword === 'null') {
+                Log::warning('GoogleCalendarService: SMTP variables in .env are missing or empty. Skipping email notification.');
+                return;
+            }
+
+            $emailBody = implode("\n", [
+                "A new booking has been received. Below are the details:",
+                "",
+                "Passenger Name: {$data['name']}",
+                "Passenger Initials: {$data['initials']}",
+                "Phone Number: {$data['phone']}",
+                "Email Address: {$data['email']}",
+                "Vehicle Type: {$data['vehicle_type']}",
+                "Child Seats: {$data['child_seats']}",
+                "From (Pickup Address): {$data['pickup_address']}",
+                "Pickup Time: {$data['pickup_time']}",
+                "To (Dropoff Address): {$data['dropoff_address']}",
+            ]);
+
+            Mail::raw($emailBody, function ($message) use ($subject) {
+                $message->to('reservations@future.limo')
+                        ->subject($subject);
+
+                $fromAddress = env('MAIL_FROM_ADDRESS') ?: config('mail.from.address');
+                if ($fromAddress) {
+                    $message->from($fromAddress, env('MAIL_FROM_NAME') ?: config('mail.from.name'));
+                }
+            });
+
+            Log::info('GoogleCalendarService: Reservation email notification sent successfully.');
+        } catch (\Throwable $e) {
+            Log::error('GoogleCalendarService: Failed to send Email notification to Reservations: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+        }
     }
 
     /**
@@ -152,7 +342,7 @@ class GoogleCalendarService
             ?? now();
 
         try {
-            $start = Carbon::parse($startRaw)->setTimezone($tz);
+            $start = Carbon::parse($startRaw)->shiftTimezone($tz);
         } catch (\Throwable $e) {
             $start = Carbon::now($tz);
         }
@@ -191,6 +381,10 @@ class GoogleCalendarService
             'calendar_id' => $calendarId,
             'payload'     => $payload,
         ]);
+
+        // Send Twilio SMS and Email notifications as part of the three-way pipeline
+        $this->sendSMSNotification($order);
+        $this->sendEmailNotification($order);
 
         $calendarService = $this->getCalendarService();
         if ($calendarService) {

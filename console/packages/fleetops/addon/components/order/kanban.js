@@ -29,7 +29,7 @@ export default class OrderKanbanComponent extends Component {
         on_location: 'On Location',
         arrived: 'On Location',
         pob: 'POB (Passenger on Board)',
-        in_progress: 'POB (Passenger on Board)',
+        passenger_on_board: 'POB (Passenger on Board)',
         completed: 'Completed',
         canceled: 'Canceled',
         cancelled: 'Canceled',
@@ -40,10 +40,17 @@ export default class OrderKanbanComponent extends Component {
 
         // Normalize loaded statuses:
         // Collapse 'enroute', 'enroute_pickup', and 'driver_enroute' to 'started' to prevent duplicate 'En Route' columns
+        // Collapse 'in_progress' and 'passenger_on_board' to 'pob' to prevent duplicate 'POB' columns
         const normalized = loaded
             .map((s) => {
                 if (s === 'enroute' || s === 'enroute_pickup' || s === 'driver_enroute') {
                     return 'started';
+                }
+                if (s === 'in_progress' || s === 'passenger_on_board') {
+                    return 'pob';
+                }
+                if (s === 'cancelled') {
+                    return 'canceled';
                 }
                 return s;
             })
@@ -117,7 +124,8 @@ export default class OrderKanbanComponent extends Component {
                         activity.code === targetColumnId ||
                         (targetColumnId === 'started' && (activity.code === 'enroute' || activity.code === 'enroute_pickup' || activity.code === 'started')) ||
                         (targetColumnId === 'enroute_pickup' && activity.code === 'enroute') ||
-                        (targetColumnId === 'enroute' && activity.code === 'enroute_pickup')
+                        (targetColumnId === 'enroute' && activity.code === 'enroute_pickup') ||
+                        (targetColumnId === 'pob' && (activity.code === 'pob' || activity.code === 'in_progress' || activity.code === 'passenger_on_board'))
                 );
                 if (activity) {
                     try {
@@ -168,7 +176,7 @@ export default class OrderKanbanComponent extends Component {
                 return st === 'on_location' || st === 'arrived';
             }
             if (status === 'pob') {
-                return st === 'pob' || st === 'in_progress';
+                return st === 'pob' || st === 'in_progress' || st === 'passenger_on_board';
             }
             if (status === 'completed') {
                 return st === 'completed';

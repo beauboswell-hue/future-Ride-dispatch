@@ -737,7 +737,7 @@ class OrderController extends FleetOpsController
 
         // also update for each order entities if not multiple drop order
         // all entities will share the same activity status as is one drop order
-        if (!$order->payload->isMultipleDropOrder) {
+        if ($order->payload && !$order->payload->isMultipleDropOrder && $order->payload->entities) {
             foreach ($order->payload->entities as $entity) {
                 $entity->insertActivity($activity, $location);
             }
@@ -763,9 +763,8 @@ class OrderController extends FleetOpsController
      */
     public function nextActivity(string $id, Request $request)
     {
-        try {
-            $order = Order::findByIdOrFail($id);
-        } catch (ModelNotFoundException $e) {
+        $order = Order::findById($id);
+        if (!$order) {
             return response()->error('No order found.');
         }
 
@@ -953,6 +952,7 @@ class OrderController extends FleetOpsController
         $canonicalOrder = [
             'created',
             'dispatched',
+            'started',
             'enroute_pickup',
             'on_location',
             'pob',
@@ -964,19 +964,35 @@ class OrderController extends FleetOpsController
             ? $activityCodes->merge($orderStatuses)
             : $orderStatuses;
 
-        // Deduplicate and normalize: collapse 'enroute' to 'enroute_pickup' if 'enroute_pickup' exists
+        // Deduplicate and normalize:
+        // Collapse 'enroute' and 'driver_enroute' to 'started'
+        // Collapse 'in_progress' and 'passenger_on_board' to 'pob'
+        // Collapse 'cancelled' to 'canceled'
+        $merged = $merged->map(function ($s) {
+            if ($s === 'enroute' || $s === 'driver_enroute') {
+                return 'started';
+            }
+            if ($s === 'in_progress' || $s === 'passenger_on_board') {
+                return 'pob';
+            }
+            if ($s === 'cancelled') {
+                return 'canceled';
+            }
+            return $s;
+        });
+
+        // Deduplicate and normalize: collapse 'enroute_pickup' to 'started' if 'started' exists
+        $hasStarted = $merged->contains('started');
         $hasEnroutePickup = $merged->contains('enroute_pickup');
-        $hasEnroute       = $merged->contains('enroute');
-        if ($hasEnroutePickup && $hasEnroute) {
-            $merged = $merged->reject(fn ($s) => $s === 'enroute');
+        if ($hasStarted && $hasEnroutePickup) {
+            $merged = $merged->reject(fn ($s) => $s === 'enroute_pickup');
         }
 
         $uniqueStatuses = $merged->unique()->values();
 
         $canonicalMap = array_flip($canonicalOrder);
         $result = $uniqueStatuses->sortBy(function ($status) use ($canonicalMap) {
-            $normalized = $status === 'enroute' ? 'enroute_pickup' : $status;
-            return $canonicalMap[$normalized] ?? 999;
+            return $canonicalMap[$status] ?? 999;
         })->values();
 
         return response()->json($result);

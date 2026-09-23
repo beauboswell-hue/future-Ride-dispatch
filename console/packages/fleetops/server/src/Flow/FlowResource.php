@@ -44,7 +44,11 @@ class FlowResource implements \JsonSerializable
             return $this->attributes[$name];
         }
 
-        return $this->{$name};
+        if (property_exists($this, $name)) {
+            return $this->{$name};
+        }
+
+        return null;
     }
 
     /**
