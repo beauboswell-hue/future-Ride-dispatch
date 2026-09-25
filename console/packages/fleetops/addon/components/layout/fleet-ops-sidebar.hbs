@@ -74,7 +74,7 @@
                     menuItem=menuItem
                     title=(if menuItem.intl (t menuItem.intl) menuItem.title)
                     onClick=menuItem.onClick
-                    route=(concat this.routePrefix menuItem.route)
+                    route=(if menuItem.route (if menuItem.isAbsolute menuItem.route (concat this.routePrefix menuItem.route)) null)
                     icon=menuItem.icon
                     iconComponent=menuItem.iconComponent
                     iconComponentOptions=menuItem.iconComponentOptions
@@ -106,7 +106,7 @@
                 <Layout::Sidebar::Item
                     @onClick={{if menuItem._virtual (fn this.universe.transitionMenuItem (concat this.routePrefix "virtual") menuItem) menuItem.onClick}}
                     @menuItem={{menuItem}}
-                    @route={{if menuItem._virtual null (concat this.routePrefix menuItem.route)}}
+                    @route={{if menuItem._virtual null (if menuItem.route (if menuItem.isAbsolute menuItem.route (concat this.routePrefix menuItem.route)) null)}}
                     @icon={{menuItem.icon}}
                     @iconComponent={{menuItem.iconComponent}}
                     @iconComponentOptions={{menuItem.iconComponentOptions}}
@@ -233,3 +233,57 @@
 {{/each}}
 {{yield}}
 <Spacer @height="10px" />
+
+{{#if this.isBookingDrawerOpen}}
+    {{! Backdrop }}
+    <div
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 transition-opacity future-limo-drawer-backdrop"
+        style="position: fixed; inset: 0; background-color: rgba(17, 24, 39, 0.5); z-index: 9999;"
+        {{on "click" this.closeBookingDrawer}}
+    >
+        {{! Slide-out Panel }}
+        <div
+            class="fixed inset-y-0 right-0 max-w-full flex pl-10 z-50"
+            style="position: fixed; top: 0; bottom: 0; right: 0; z-index: 10000; display: flex;"
+            role="region"
+            aria-label="Booking Drawer"
+        >
+            <div
+                class="w-[50vw] min-w-[600px] max-w-[850px] max-w-[90vw] h-full bg-gray-900 shadow-2xl border-l border-gray-800 flex flex-col future-limo-drawer-panel"
+                style="width: 50vw; min-width: 600px; max-width: 850px; height: 100%;"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Booking"
+            >
+                {{! Header }}
+                <div class="px-4 py-3 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <FaIcon @icon="calendar-plus" class="text-blue-500 mr-2" />
+                        <span class="font-semibold text-white text-sm">Booking</span>
+                        <span class="text-xs text-gray-400">({{this.bookingUrl}})</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="text-gray-400 hover:text-white p-1 rounded-md transition-colors"
+                        aria-label="Close Booking"
+                        {{on "click" this.closeBookingDrawer}}
+                    >
+                        <FaIcon @icon="times" />
+                    </button>
+                </div>
+
+                {{! Iframe Body }}
+                <div class="flex-1 w-full h-full relative overflow-hidden bg-gray-950">
+                    <iframe 
+                        src={{this.bookingUrl}}
+                        title={{this.bookingTitle}}
+                        class="w-full h-full border-0"
+                        style="width: 100%; height: 100%; min-height: 100%;"
+                        allow="geolocation; camera; microphone"
+                        sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-modals"
+                    ></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+{{/if}}

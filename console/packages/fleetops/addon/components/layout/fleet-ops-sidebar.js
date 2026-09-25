@@ -12,7 +12,9 @@ export default class LayoutFleetOpsSidebarComponent extends Component {
     @service intl;
     @service abilities;
     @service appCache;
+    @service currentUser;
     @tracked routePrefix = 'console.fleet-ops.';
+    @tracked isBookingDrawerOpen = false;
     @tracked menuPanels = [];
     @tracked universeMenuItems = [];
     @tracked universeOperationsMenuItems = [];
@@ -81,6 +83,14 @@ export default class LayoutFleetOpsSidebarComponent extends Component {
             },
             {
                 priority: 4,
+                title: 'Booking',
+                icon: 'calendar-plus',
+                onClick: this.onClickBooking,
+                permission: 'fleet-ops list order',
+                visible: this.abilities.can('fleet-ops see order'),
+            },
+            {
+                priority: 5,
                 intl: 'menu.order-config',
                 title: this.intl.t('menu.order-config'),
                 icon: 'diagram-project',
@@ -89,7 +99,7 @@ export default class LayoutFleetOpsSidebarComponent extends Component {
                 visible: this.abilities.can('fleet-ops see order-config'),
             },
             {
-                priority: 5,
+                priority: 6,
                 intl: 'menu.service-rates',
                 title: this.intl.t('menu.service-rates'),
                 icon: 'file-invoice-dollar',
@@ -412,6 +422,83 @@ export default class LayoutFleetOpsSidebarComponent extends Component {
         if (typeof onClickCreateOrder === 'function') {
             onClickCreateOrder();
         }
+    }
+
+    /**
+     * Get booking URL dynamically based on tenant company name.
+     */
+    get bookingUrl() {
+        const companyName = this.currentUser?.company?.name || this.currentUser?.companyName || '';
+        if (companyName.includes('Future Ride')) {
+            return 'https://futureride.website';
+        }
+        return 'https://future.limo';
+    }
+
+    /**
+     * Get booking title dynamically based on tenant company name.
+     */
+    get bookingTitle() {
+        const companyName = this.currentUser?.company?.name || this.currentUser?.companyName || '';
+        if (companyName.includes('Future Ride')) {
+            return 'Future Ride Portal';
+        }
+        return 'Future Limo Portal';
+    }
+
+    /**
+     * Action handler for opening the Booking portal or drawer.
+     */
+    @action onClickBooking() {
+        const topbarBookingBtn = document.getElementById('ops-booking-button') || Array.from(document.querySelectorAll('button')).find(
+            (b) => b.innerText && (b.innerText.trim() === 'Booking' || b.innerText.includes('Future Limo')) && !b.closest('.next-sidebar')
+        );
+        if (topbarBookingBtn) {
+            topbarBookingBtn.click();
+            return;
+        }
+
+        this.toggleBookingDrawer();
+    }
+
+    @action
+    toggleBookingDrawer() {
+        this.isBookingDrawerOpen = !this.isBookingDrawerOpen;
+        if (this.isBookingDrawerOpen) {
+            this.setupDrawerEscListener();
+        } else {
+            this.teardownDrawerEscListener();
+        }
+    }
+
+    @action
+    closeBookingDrawer() {
+        this.isBookingDrawerOpen = false;
+        this.teardownDrawerEscListener();
+    }
+
+    @action
+    handleDrawerKeyDown(event) {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+            this.closeBookingDrawer();
+        }
+    }
+
+    setupDrawerEscListener() {
+        if (typeof window !== 'undefined') {
+            window.addEventListener('keydown', this.handleDrawerKeyDown);
+        }
+    }
+
+    teardownDrawerEscListener() {
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('keydown', this.handleDrawerKeyDown);
+        }
+    }
+
+    willDestroy() {
+        super.willDestroy(...arguments);
+        this.teardownDrawerEscListener();
     }
 
     /**
