@@ -11,6 +11,29 @@ export default class OperationsOrdersIndexController extends Controller {
     @service orderListOverlay;
     @service fetch;
     @service intl;
+    @service currentUser;
+
+    /**
+     * Get booking URL dynamically based on tenant company name.
+     */
+    get bookingUrl() {
+        const companyName = this.currentUser?.company?.name || this.currentUser?.companyName || '';
+        if (companyName.includes('Future Ride')) {
+            return 'https://futureride.website';
+        }
+        return 'https://future.limo';
+    }
+
+    /**
+     * Get booking title dynamically based on tenant company name.
+     */
+    get bookingTitle() {
+        const companyName = this.currentUser?.company?.name || this.currentUser?.companyName || '';
+        if (companyName.includes('Future Ride')) {
+            return 'Future Ride Booking';
+        }
+        return 'Future Limo Booking';
+    }
 
     /** query params */
     @tracked queryParams = [

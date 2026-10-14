@@ -4,10 +4,30 @@ namespace App\Observers;
 
 use App\Services\WebBookingNoteFormatter;
 use Fleetbase\FleetOps\Models\Order;
+use Fleetbase\FleetOps\Models\Place;
+use Fleetbase\Services\SmsService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderObserver
 {
+    /**
+     * Internal dispatch alert recipients.
+     *
+     * @var array<string, string>
+     */
+    public const DISPATCH_RECIPIENTS = [
+        '+12394652364' => 'Beau Boswell',
+        '+18088407370' => 'Tom Brennan',
+    ];
+
+    /**
+     * Outbound SMS sender phone number.
+     *
+     * @var string
+     */
+    public const FROM_PHONE_NUMBER = '+18888669741';
+
     /**
      * Handle the Order "created" event.
      *
@@ -37,6 +57,245 @@ class OrderObserver
         }
 
         $this->invalidateLiveCache();
+
+        // 1. Dispatch Team Alert
+        $this->sendDispatchAlerts($order);
+
+        // 2. Customer Booking Confirmation
+        $this->sendCustomerConfirmation($order);
+    }
+
+    /**
+     * Send internal dispatch alert SMS to dispatch team members.
+     * Each transmission is isolated in its own try/catch block.
+     *
+     * @param Order $order
+     * @return void
+     */
+    public function sendDispatchAlerts(Order $order): void
+    {
+        $orderId = $order->public_id ?? $order->internal_id ?? $order->uuid;
+        $message = "Future Limo Alert: A new booking request has been received. Please check the dispatch console.";
+
+        foreach (self::DISPATCH_RECIPIENTS as $phone => $name) {
+            try {
+                $sms = app(SmsService::class);
+                $sms->send($phone, $message, [
+                    'from' => self::FROM_PHONE_NUMBER,
+                ]);
+                Log::info("Order SMS dispatch alert sent to {$name} ({$phone})", [
+                    'order_id' => $orderId,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error("Order SMS dispatch alert failed to {$name} ({$phone}): " . $e->getMessage(), [
+                    'order_id'  => $orderId,
+                    'exception' => $e,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Send customer booking confirmation acknowledgment SMS.
+     * Wrapped in its own try/catch block so delivery errors do not block order creation.
+     *
+     * @param Order $order
+     * @return void
+     */
+    public function sendCustomerConfirmation(Order $order): void
+    {
+        $orderId = $order->public_id ?? $order->internal_id ?? $order->uuid;
+
+        try {
+            $rawPhone = $this->resolveCustomerPhone($order);
+            $customerPhone = $this->sanitizePhoneNumber($rawPhone);
+
+            if (!$customerPhone) {
+                Log::info('No valid customer phone number resolved; skipping customer booking confirmation SMS', [
+                    'order_id'  => $orderId,
+                    'raw_phone' => $rawPhone,
+                ]);
+                return;
+            }
+
+            $firstName = $this->resolveCustomerFirstName($order);
+            $message = "Hello {$firstName}, thank you for choosing Future Limo! We have received your booking request (Order #{$orderId}). Our dispatch team will call you shortly to confirm your details. Reply HELP for help or STOP to unsubscribe.";
+
+            $sms = app(SmsService::class);
+            $sms->send($customerPhone, $message, [
+                'from' => self::FROM_PHONE_NUMBER,
+            ]);
+
+            Log::info("Customer booking confirmation SMS sent to {$customerPhone}", [
+                'order_id'   => $orderId,
+                'first_name' => $firstName,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Customer booking confirmation SMS failed: ' . $e->getMessage(), [
+                'order_id'  => $orderId,
+                'exception' => $e,
+            ]);
+        }
+    }
+
+    /**
+     * Resolve the client/customer phone number from the order.
+     * Checks $order->customer->phone, pickup place phone, and order metadata.
+     *
+     * @param Order $order
+     * @return string|null
+     */
+    public function resolveCustomerPhone(Order $order): ?string
+    {
+        // 1. Check $order->customer->phone
+        if ($order->customer_uuid && (!$order->relationLoaded('customer') || $order->customer === null)) {
+            try {
+                $order->load('customer');
+            } catch (\Throwable $e) {
+                // Ignore relation load failure
+            }
+        }
+
+        $phone = $order->customer?->phone ?? $order->customer_phone;
+        if (!empty($phone) && !in_array(strtolower(trim($phone)), ['n/a', 'none', 'null', 'undefined'], true)) {
+            return trim($phone);
+        }
+
+        // 2. Check pickup place phone
+        if (!$order->relationLoaded('payload')) {
+            try {
+                $order->loadMissing('payload.pickup');
+            } catch (\Throwable $e) {
+                // Ignore relation load failure
+            }
+        }
+
+        $pickupPhone = $order->payload?->pickup?->phone;
+        if (!empty($pickupPhone) && !in_array(strtolower(trim($pickupPhone)), ['n/a', 'none', 'null', 'undefined'], true)) {
+            return trim($pickupPhone);
+        }
+
+        if (!empty($order->pickup_uuid)) {
+            try {
+                $pickupPlace = Place::where('uuid', $order->pickup_uuid)->first();
+                if ($pickupPlace && !empty($pickupPlace->phone) && !in_array(strtolower(trim($pickupPlace->phone)), ['n/a', 'none', 'null', 'undefined'], true)) {
+                    return trim($pickupPlace->phone);
+                }
+            } catch (\Throwable $e) {
+                // Ignore place query failure
+            }
+        }
+
+        // 3. Fallback to order metadata
+        $meta = $order->meta ?? [];
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true) ?? [];
+        }
+
+        $metaPhone = data_get($meta, 'passenger_phone') 
+            ?? data_get($meta, 'customer_phone') 
+            ?? data_get($meta, 'customer.phone') 
+            ?? data_get($meta, 'phone');
+
+        if (!empty($metaPhone) && !in_array(strtolower(trim($metaPhone)), ['n/a', 'none', 'null', 'undefined'], true)) {
+            return trim($metaPhone);
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve customer first name for greeting personalization.
+     *
+     * @param Order $order
+     * @return string
+     */
+    public function resolveCustomerFirstName(Order $order): string
+    {
+        $fullName = null;
+
+        // 1. From customer relation or accessor
+        if ($order->customer_uuid && (!$order->relationLoaded('customer') || $order->customer === null)) {
+            try {
+                $order->load('customer');
+            } catch (\Throwable $e) {
+                // Ignore relation load failure
+            }
+        }
+
+        if ($order->customer && !empty($order->customer->name)) {
+            $fullName = $order->customer->name;
+        } elseif (!empty($order->customer_name)) {
+            $fullName = $order->customer_name;
+        }
+
+        // 2. From metadata
+        if (empty($fullName) || in_array(strtolower(trim($fullName)), ['n/a', 'none', 'null', 'undefined'], true)) {
+            $meta = $order->meta ?? [];
+            if (is_string($meta)) {
+                $meta = json_decode($meta, true) ?? [];
+            }
+            $fullName = data_get($meta, 'passenger_name') 
+                ?? data_get($meta, 'customer_name') 
+                ?? data_get($meta, 'customer.name') 
+                ?? data_get($meta, 'name');
+        }
+
+        // 3. From pickup place name (if not a generic label)
+        if (empty($fullName) || in_array(strtolower(trim($fullName)), ['n/a', 'none', 'null', 'undefined'], true)) {
+            $pickup = $order->payload?->pickup;
+            if ($pickup && !empty($pickup->name)) {
+                $extracted = trim(explode(' (', $pickup->name)[0]);
+                if (!preg_match('/^(pickup|dropoff)/i', $extracted)) {
+                    $fullName = $extracted;
+                }
+            }
+        }
+
+        if (!empty($fullName) && !in_array(strtolower(trim($fullName)), ['n/a', 'none', 'null', 'undefined'], true)) {
+            $parts = preg_split('/\s+/', trim($fullName));
+            if (!empty($parts[0])) {
+                $honorifics = ['mr', 'mr.', 'mrs', 'mrs.', 'ms', 'ms.', 'miss', 'dr', 'dr.', 'prof', 'prof.'];
+                if (in_array(strtolower($parts[0]), $honorifics, true) && !empty($parts[1])) {
+                    return $parts[1];
+                }
+                return $parts[0];
+            }
+        }
+
+        return 'there';
+    }
+
+    /**
+     * Sanitize phone numbers to standard E.164 format (+1XXXXXXXXXX).
+     *
+     * @param string|null $phone
+     * @return string|null
+     */
+    public function sanitizePhoneNumber(?string $phone): ?string
+    {
+        if (empty($phone) || in_array(strtolower(trim($phone)), ['n/a', 'none', 'null', 'undefined'], true)) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        // 10-digit US number (e.g. 2394652364)
+        if (strlen($digits) === 10) {
+            return '+1' . $digits;
+        }
+
+        // 11-digit US number starting with 1 (e.g. 12394652364)
+        if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+            return '+' . $digits;
+        }
+
+        // If explicitly formatted as international E.164 (+ followed by 10-15 digits)
+        if (str_starts_with(trim($phone), '+') && strlen($digits) >= 10 && strlen($digits) <= 15) {
+            return '+' . $digits;
+        }
+
+        return null;
     }
 
     /**
