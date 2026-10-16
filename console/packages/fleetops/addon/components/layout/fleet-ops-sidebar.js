@@ -425,13 +425,9 @@ export default class LayoutFleetOpsSidebarComponent extends Component {
     }
 
     /**
-     * Get booking URL dynamically based on tenant company name.
+     * Get booking URL. Points exclusively to https://future.limo.
      */
     get bookingUrl() {
-        const companyName = this.currentUser?.company?.name || this.currentUser?.companyName || '';
-        if (companyName.includes('Future Ride')) {
-            return 'https://futureride.website';
-        }
         return 'https://future.limo';
     }
 

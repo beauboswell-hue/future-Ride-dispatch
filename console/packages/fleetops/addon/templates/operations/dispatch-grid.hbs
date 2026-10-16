@@ -5,6 +5,6 @@
     </div>
 </Layout::Section::Header>
 <Layout::Section::Body class="no-padding overflow-hidden h-full">
-    <DispatchGrid @orders={{@model}} @onOrderClick={{fn this.orderActions.transition.view}} />
+    <DispatchGrid @orders={{@model}} @onOrderClick={{this.orderActions.transition.view}} />
 </Layout::Section::Body>
 {{outlet}}

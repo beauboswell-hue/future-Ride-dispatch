@@ -92,30 +92,31 @@
 
 {{#if (eq this.layout "grid")}}
     <div class="dispatch-grid-container flex-1 overflow-hidden h-full pt-10">
-        <DispatchGrid @orders={{@model}} @onOrderClick={{fn this.orderActions.transition.view}} />
+        <DispatchGrid @orders={{@model}} @onOrderClick={{this.orderActions.transition.view}} />
     </div>
 {{/if}}
 
 {{#if this.isFutureLimoDrawerOpen}}
     {{! Backdrop }}
     <div 
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 z-40 transition-opacity future-limo-drawer-backdrop"
-        style="z-index: 9998;"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 transition-opacity future-limo-drawer-backdrop"
+        style="position: fixed; inset: 0; background-color: rgba(17, 24, 39, 0.5); z-index: 9998;"
         {{on "click" this.closeFutureLimoDrawer}}
     ></div>
 
     {{! Slide-out Drawer Panel }}
-    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10 z-50 pointer-events-auto" style="z-index: 9999;">
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10 z-50 pointer-events-auto" style="position: fixed; top: 0; bottom: 0; right: 0; z-index: 9999; display: flex;" role="region" aria-label="Booking Drawer">
         <div class="w-[50vw] min-w-[600px] max-w-[850px] max-w-[90vw] h-full bg-gray-900 shadow-2xl border-l border-gray-800 flex flex-col future-limo-drawer-panel" style="width: 50vw; min-width: 600px; max-width: 850px; height: 100%;" role="dialog" aria-modal="true" aria-label="Booking">
             {{! Header }}
-            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-gray-950">
+            <div class="px-4 py-3 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
+                    <FaIcon @icon="calendar-plus" class="text-blue-500 mr-2" />
                     <span class="font-semibold text-white text-sm">Booking</span>
                     <span class="text-xs text-gray-400">({{this.bookingUrl}})</span>
                 </div>
                 <button 
                     type="button" 
-                    class="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-800 transition-colors focus:outline-none" 
+                    class="text-gray-400 hover:text-white p-1 rounded-md transition-colors focus:outline-none" 
                     aria-label="Close Booking"
                     {{on "click" this.closeFutureLimoDrawer}}
                 >

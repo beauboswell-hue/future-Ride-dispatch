@@ -190,8 +190,15 @@
 
                             {{!-- Passenger: High-contrast dark bold (text-gray-950, font-semibold) --}}
                             <td class="py-1 px-3.5 align-middle whitespace-nowrap">
-                                <div class="truncate max-w-[180px] font-semibold text-gray-950 text-xs" title={{item.passenger.name}}>
-                                    {{item.passenger.name}}
+                                <div class="flex items-center space-x-1.5 truncate max-w-[180px]">
+                                    <span class="truncate font-semibold text-gray-950 text-xs" title={{item.passenger.name}}>
+                                        {{item.passenger.name}}
+                                    </span>
+                                    {{#if item.notes}}
+                                        <span class="text-amber-600 shrink-0 cursor-help" title={{item.notes}}>
+                                            <FaIcon @icon="sticky-note" class="text-[11px]" />
+                                        </span>
+                                    {{/if}}
                                 </div>
                             </td>
 

@@ -29,6 +29,84 @@ class OrderObserver
     public const FROM_PHONE_NUMBER = '+18888669741';
 
     /**
+     * Handle the Order "saving" event.
+     * Prevents console updates or partial payloads from blowing away existing booking notes and metadata.
+     * Normalizes passenger_count, vehicle_selection, and notes in order meta.
+     *
+     * @param Order $order
+     * @return void
+     */
+    public function saving(Order $order): void
+    {
+        // 1. Prevent wiping out existing notes
+        $origNotes = $order->getOriginal('notes');
+        if (!empty($origNotes) && (empty($order->notes) || trim((string)$order->notes) === '')) {
+            $reqNotes = request() ? request()->input('notes') : null;
+            if ($reqNotes === null || $reqNotes === '') {
+                $order->notes = $origNotes;
+            }
+        }
+
+        // 2. Prevent wiping out metadata (e.g. when console sends meta: {"_index_resource": true})
+        $origMeta = $order->getOriginal('meta');
+        if (is_string($origMeta)) {
+            $origMeta = json_decode($origMeta, true) ?? [];
+        }
+        $currentMeta = $order->meta ?? [];
+        if (is_string($currentMeta)) {
+            $currentMeta = json_decode($currentMeta, true) ?? [];
+        }
+
+        if (is_array($origMeta) && !empty($origMeta)) {
+            $preserveKeys = [
+                'vehicle_type', 'vehicle_selection', 'vehicle',
+                'passengers', 'passenger_count', 'pax',
+                'child_seats', 'seats',
+                'passenger_name', 'passenger_phone', 'passenger_email',
+                'source', 'source_form', 'notes', 'special_instructions', 'comments',
+                'description', 'flight_number', 'sms_consent'
+            ];
+            foreach ($preserveKeys as $k) {
+                if (isset($origMeta[$k]) && (!isset($currentMeta[$k]) || $currentMeta[$k] === null || $currentMeta[$k] === '' || $currentMeta[$k] === 'N/A')) {
+                    $currentMeta[$k] = $origMeta[$k];
+                }
+            }
+        }
+
+        // 3. Normalize aliases in metadata
+        $vehicle = $currentMeta['vehicle_selection'] ?? $currentMeta['vehicle_type'] ?? $currentMeta['vehicle'] ?? null;
+        if (!empty($vehicle) && $vehicle !== 'N/A') {
+            $currentMeta['vehicle_selection'] = $vehicle;
+            $currentMeta['vehicle_type'] = $vehicle;
+            $currentMeta['vehicle'] = $vehicle;
+        }
+
+        $pax = $currentMeta['passenger_count'] ?? $currentMeta['passengers'] ?? $currentMeta['pax'] ?? null;
+        if ($pax !== null && $pax !== '' && $pax !== 'N/A') {
+            $currentMeta['passenger_count'] = $pax;
+            $currentMeta['passengers'] = $pax;
+            $currentMeta['pax'] = $pax;
+        }
+
+        $seats = $currentMeta['child_seats'] ?? $currentMeta['seats'] ?? null;
+        if ($seats !== null && $seats !== '' && $seats !== 'N/A') {
+            $currentMeta['child_seats'] = $seats;
+            $currentMeta['seats'] = $seats;
+        }
+
+        $notesVal = $currentMeta['notes'] ?? $currentMeta['special_instructions'] ?? $currentMeta['comments'] ?? null;
+        if (empty($notesVal) && !empty($order->notes) && !str_contains($order->notes, 'PASSENGER:') && !str_contains($order->notes, 'Future Limo Dispatch')) {
+            $notesVal = $order->notes;
+        }
+        if (!empty($notesVal)) {
+            $currentMeta['notes'] = $notesVal;
+            $currentMeta['special_instructions'] = $notesVal;
+        }
+
+        $order->meta = $currentMeta;
+    }
+
+    /**
      * Handle the Order "created" event.
      *
      * @param Order $order

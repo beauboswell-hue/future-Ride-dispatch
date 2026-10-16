@@ -84,8 +84,18 @@ class OverriddenOrderController extends BaseOrderController
         $input = parent::orderCreateInputFromRequest($request);
 
         if (empty($input['notes'])) {
-            $input['notes'] = $request->input('meta.notes') 
+            $input['notes'] = $request->input('notes')
+                ?? $request->input('comments')
+                ?? $request->input('user_comments')
+                ?? $request->input('booking_notes')
+                ?? $request->input('special_instructions')
+                ?? $request->input('meta.notes')
+                ?? $request->input('meta.comments')
                 ?? $request->input('meta.special_instructions') 
+                ?? $request->input('payload.meta.notes')
+                ?? $request->input('payload.notes')
+                ?? $request->input('metadata.notes')
+                ?? $request->input('metadata.comments')
                 ?? $request->input('special_instructions');
         }
 
@@ -114,14 +124,24 @@ class OverriddenOrderController extends BaseOrderController
         $input = parent::orderUpdateInputFromRequest($request);
 
         if (empty($input['notes'])) {
-            $input['notes'] = $request->input('meta.notes') 
+            $input['notes'] = $request->input('notes')
+                ?? $request->input('comments')
+                ?? $request->input('user_comments')
+                ?? $request->input('booking_notes')
+                ?? $request->input('special_instructions')
+                ?? $request->input('meta.notes')
+                ?? $request->input('meta.comments')
                 ?? $request->input('meta.special_instructions') 
+                ?? $request->input('payload.meta.notes')
+                ?? $request->input('payload.notes')
+                ?? $request->input('metadata.notes')
+                ?? $request->input('metadata.comments')
                 ?? $request->input('special_instructions');
         }
 
         // If notes is empty/null, but notes were not explicitly sent in the request, preserve existing notes!
         if (empty($input['notes']) && $order) {
-            if (!$request->has('notes') && !$request->has('meta.notes') && !$request->has('meta.special_instructions') && !$request->has('special_instructions')) {
+            if (!$request->has('notes') || empty($request->input('notes'))) {
                 $input['notes'] = $order->notes;
             }
         }
@@ -189,18 +209,28 @@ class OverriddenOrderController extends BaseOrderController
             return null;
         };
 
-        $vehicleType = $getVal(['vehicle_type', 'vehicle', 'carChoice', 'car_choice', 'vehicle_name', 'car_type', 'fleet', 'vehicleChoice']);
-        $passengers = $getVal(['passengers', 'passenger_count', 'pax', 'passengers_count', 'num_passengers', 'pax_count', 'paxCount']);
+        $vehicleType = $getVal(['vehicle_selection', 'selected_vehicle', 'vehicle_type', 'vehicle', 'carChoice', 'car_choice', 'vehicle_name', 'car_type', 'fleet', 'vehicleChoice', 'vehicleSelection', 'selectedVehicle']);
+        $passengers = $getVal(['passenger_count', 'passengers', 'pax', 'passengerCount', 'passengers_count', 'num_passengers', 'pax_count', 'paxCount', 'passenger']);
         $childSeats = $getVal(['child_seats', 'child_seats_count', 'car_seats', 'seats', 'childSeats', 'childSeatsCount', 'booster_seats', 'booster_seats_count']);
+        $notes = $getVal(['notes', 'special_instructions', 'comments', 'user_comments', 'booking_notes', 'passenger_notes', 'flight_notes']);
 
         if ($vehicleType) {
             $meta['vehicle_type'] = $vehicleType;
+            $meta['vehicle_selection'] = $vehicleType;
+            $meta['vehicle'] = $vehicleType;
         }
         if ($passengers !== null && $passengers !== '') {
             $meta['passengers'] = $passengers;
+            $meta['passenger_count'] = $passengers;
+            $meta['pax'] = $passengers;
         }
         if ($childSeats !== null && $childSeats !== '') {
             $meta['child_seats'] = $childSeats;
+            $meta['seats'] = $childSeats;
+        }
+        if ($notes) {
+            $meta['notes'] = $notes;
+            $meta['special_instructions'] = $notes;
         }
 
         // Also merge passenger details if present in payload

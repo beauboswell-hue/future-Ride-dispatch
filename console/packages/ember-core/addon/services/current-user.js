@@ -196,11 +196,17 @@ export default class CurrentUserService extends Service.extend(Evented) {
     }
 
     getCompany() {
+        if (!this.user || !this.user.company_uuid) {
+            return null;
+        }
         this.company = this.store.peekRecord('company', this.user.company_uuid);
         return this.company;
     }
 
     async loadCompany() {
+        if (!this.user || !this.user.company_uuid) {
+            return null;
+        }
         const company = this.store.peekRecord('company', this.user.company_uuid);
         if (company) {
             return company;
@@ -305,14 +311,19 @@ export default class CurrentUserService extends Service.extend(Evented) {
             id: snapshot.uuid,
             company_name: user.get('company_name'),
             role_name: user.get('role_name'),
-            role: {
-                ...role.serialize({ includeId: true }),
-                id: role.get('id'),
-            },
+            role: role
+                ? {
+                      ...role.serialize({ includeId: true }),
+                      id: role.get('id'),
+                  }
+                : null,
         };
     }
 
     getCompanyOption(key, defaultValue = null) {
+        if (!this.companyId) {
+            return defaultValue;
+        }
         const company = this.store.peekRecord('company', this.companyId);
         if (company) {
             const value = get(company, `options.${key}`);

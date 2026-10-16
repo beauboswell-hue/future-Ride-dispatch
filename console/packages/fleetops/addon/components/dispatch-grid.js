@@ -515,8 +515,17 @@ export default class DispatchGridComponent extends Component {
         return flags;
     }
 
+    _cachedRows = null;
+    _cacheKey = null;
+
     get gridRows() {
-        return this.filteredOrders.map((order) => {
+        const orders = this.filteredOrders;
+        const key = `${orders.length}_${this.statusFilter}_${this.dateFilterMode}_${this.customSelectedDate}_${this.searchQuery}`;
+        if (this._cacheKey === key && this._cachedRows !== null) {
+            return this._cachedRows;
+        }
+
+        const rows = orders.map((order) => {
             const resolveObject = (val) => {
                 if (!val) return {};
                 if (typeof val === 'string') {
@@ -541,7 +550,15 @@ export default class DispatchGridComponent extends Component {
 
             const safeMeta = resolveObject(order.meta);
             const safePayloadMeta = resolveObject(order.payload?.meta);
-            const safeFirstEntityMeta = resolveObject(order.payload?.entities?.[0]?.meta);
+            let firstEntityMeta = {};
+            try {
+                const ents = order.payload?.hasMany ? order.payload.hasMany('entities').value() : order.payload?.entities;
+                if (ents && ents.length > 0) {
+                    const firstEnt = ents.objectAt ? ents.objectAt(0) : ents[0];
+                    firstEntityMeta = resolveObject(firstEnt?.meta);
+                }
+            } catch (e) {}
+            const safeFirstEntityMeta = firstEntityMeta || {};
 
             const getValFromSources = (keys) => {
                 for (const key of keys) {
@@ -593,12 +610,12 @@ export default class DispatchGridComponent extends Component {
             };
 
             const cleanVal = (val) => {
-                if (!val) return null;
+                if (val === undefined || val === null) return null;
                 const clean = String(val).trim().toLowerCase();
-                if (clean === 'n/a' || clean === 'none' || clean === 'null' || clean === 'undefined' || clean === '-') {
+                if (clean === '' || clean === 'n/a' || clean === 'none' || clean === 'null' || clean === 'undefined' || clean === '-') {
                     return null;
                 }
-                return val;
+                return String(val).trim();
             };
 
             const getValFromNotes = (regexes) => {
@@ -613,27 +630,32 @@ export default class DispatchGridComponent extends Component {
                 return null;
             };
 
-            const vehicleChoice = cleanVal(getValFromSources([
-                'vehicle', 'vehicle_type', 'vehicleChoice', 'vehicle_name', 'carChoice', 'car_choice'
+            const vehicleChoice = cleanVal(order.vehicleChoice !== '-' ? order.vehicleChoice : null) || cleanVal(getValFromSources([
+                'vehicle_selection', 'vehicle_type', 'vehicle', 'selected_vehicle', 'vehicleChoice', 'vehicle_name', 'carChoice', 'car_choice', 'car'
             ]) || getValFromNotes([
-                /VEHICLE:\s*(.+)/i,
-                /CAR_CHOICE:\s*(.+)/i
+                /VEHICLE:\s*([^|\r\n]+)/i,
+                /Car:\s*([^|\r\n]+)/i,
+                /CAR_CHOICE:\s*([^|\r\n]+)/i,
+                /Vehicle\s*Choice:\s*([^|\r\n]+)/i
             ])) || '-';
 
-            const paxCount = cleanVal(getValFromSources([
-                'pax', 'pax_count', 'paxCount', 'passengers', 'passenger_count'
+            const paxCount = cleanVal(order.paxCount !== '-' ? order.paxCount : null) || cleanVal(getValFromSources([
+                'passenger_count', 'passengers', 'pax', 'pax_count', 'paxCount', 'num_passengers'
             ]) || getValFromNotes([
-                /PASSENGERS:\s*(.+)/i,
-                /PAX:\s*(.+)/i
+                /PASSENGERS:\s*([^|\r\n]+)/i,
+                /PAX:\s*([^|\r\n]+)/i,
+                /Passenger\s*Count:\s*([^|\r\n]+)/i
             ])) || '-';
 
-            const childSeatsCount = cleanVal(getValFromSources([
-                'seats', 'child_seats', 'childSeats', 'childSeatsCount', 'booster_seats', 'child_seats_count'
+            const childSeatsCount = cleanVal(order.childSeatsCount !== '-' ? order.childSeatsCount : null) || cleanVal(getValFromSources([
+                'child_seats', 'seats', 'childSeats', 'childSeatsCount', 'child_seat_count', 'booster_seats', 'child_seats_count', 'car_seats'
             ]) || getValFromNotes([
-                /CHILD SEATS:\s*(.+)/i,
-                /CHILD_SEATS:\s*(.+)/i,
-                /SEATS:\s*(.+)/i
+                /CHILD\s*SEATS?:\s*([^|\r\n]+)/i,
+                /CHILD_SEATS:\s*([^|\r\n]+)/i,
+                /SEATS:\s*([^|\r\n]+)/i
             ])) || '-';
+
+            const notes = order.notes || (order.meta && (order.meta.notes || order.meta.special_instructions)) || null;
 
             return {
                 order,
@@ -652,8 +674,13 @@ export default class DispatchGridComponent extends Component {
                 vehicleChoice,
                 paxCount,
                 childSeatsCount,
+                notes,
             };
         });
+
+        this._cacheKey = key;
+        this._cachedRows = rows;
+        return rows;
     }
 
     @action

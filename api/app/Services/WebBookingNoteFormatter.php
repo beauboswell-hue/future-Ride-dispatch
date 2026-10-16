@@ -55,6 +55,29 @@ class WebBookingNoteFormatter
     {
         // Guard against infinite recursive update loops & repeated formatting
         if (!$force && (str_contains($order->notes ?? '', 'PASSENGER:') || str_contains($order->notes ?? '', 'Future Limo Dispatch'))) {
+            $meta = $order->meta ?? [];
+            if (is_string($meta)) {
+                $meta = json_decode($meta, true) ?? [];
+            }
+            $needsMetaUpdate = false;
+            $v = $meta['vehicle_selection'] ?? $meta['vehicle_type'] ?? $meta['vehicle'] ?? null;
+            if ($v && (!isset($meta['vehicle_selection']) || !isset($meta['vehicle_type']) || !isset($meta['vehicle']))) {
+                $meta['vehicle_selection'] = $v;
+                $meta['vehicle_type'] = $v;
+                $meta['vehicle'] = $v;
+                $needsMetaUpdate = true;
+            }
+            $p = $meta['passenger_count'] ?? $meta['passengers'] ?? $meta['pax'] ?? null;
+            if ($p !== null && (!isset($meta['passenger_count']) || !isset($meta['passengers']) || !isset($meta['pax']))) {
+                $meta['passenger_count'] = $p;
+                $meta['passengers'] = $p;
+                $meta['pax'] = $p;
+                $needsMetaUpdate = true;
+            }
+            if ($needsMetaUpdate) {
+                $order->meta = $meta;
+                $order->saveQuietly();
+            }
             if ($order->customer_uuid) {
                 return false;
             }
@@ -139,21 +162,22 @@ class WebBookingNoteFormatter
             return null;
         };
 
-        $vehicleType = $getVal(['vehicle_type', 'vehicle', 'carChoice', 'car_choice', 'vehicle_name', 'car_type', 'fleet']);
-        $passengers = $getVal(['passengers', 'passenger_count', 'pax', 'passengers_count', 'num_passengers']);
-        $childSeats = $getVal(['child_seats', 'child_seats_count', 'car_seats', 'seats', 'childSeats']);
+        $vehicleType = $getVal(['vehicle_selection', 'selected_vehicle', 'vehicle_type', 'vehicle', 'carChoice', 'car_choice', 'vehicle_name', 'car_type', 'fleet', 'vehicleChoice', 'vehicleSelection', 'selectedVehicle']);
+        $passengers = $getVal(['passenger_count', 'passengers', 'pax', 'passengerCount', 'passengers_count', 'num_passengers', 'pax_count', 'paxCount', 'passenger']);
+        $childSeats = $getVal(['child_seats', 'child_seats_count', 'car_seats', 'seats', 'childSeats', 'childSeatsCount', 'booster_seats', 'booster_seats_count']);
         $passengerName = $getVal(['passenger_name', 'customer.name', 'customer_name', 'name']);
         $passengerPhone = $getVal(['passenger_phone', 'customer.phone', 'customer_phone', 'phone']);
         $passengerEmail = $getVal(['email', 'passenger_email', 'customer_email', 'billing_email', 'user_email', 'contact_email', 'customer.email']);
+        $userNotes = $getVal(['notes', 'special_instructions', 'comments', 'user_comments', 'booking_notes', 'passenger_notes', 'flight_notes']);
 
         // Fallbacks from original notes or description text patterns
         $origNotes = $order->getOriginal('notes') ?: $order->notes;
         $origDescription = data_get($meta, 'description') ?: '';
 
         if (empty($vehicleType) || $vehicleType === 'N/A') {
-            if ($origNotes && preg_match('/(?:Car|Vehicle):\s*([^|\n\r]+)/i', $origNotes, $matches)) {
+            if ($origNotes && preg_match('/(?:Car|Vehicle|Vehicle\s*Selection):\s*([^|\n\r]+)/i', $origNotes, $matches)) {
                 $vehicleType = trim($matches[1]);
-            } elseif ($origDescription && preg_match('/(?:Car|Vehicle):\s*([^|\n\r]+)/i', $origDescription, $matches)) {
+            } elseif ($origDescription && preg_match('/(?:Car|Vehicle|Vehicle\s*Selection):\s*([^|\n\r]+)/i', $origDescription, $matches)) {
                 $vehicleType = trim($matches[1]);
             }
         }
@@ -161,12 +185,43 @@ class WebBookingNoteFormatter
             $vehicleType = 'N/A';
         }
 
+        if ($passengers === null || $passengers === '' || $passengers === 'N/A') {
+            if ($origNotes && preg_match('/(?:Passengers?|Passenger\s*Count|Pax):\s*([^|\n\r]+)/i', $origNotes, $matches)) {
+                $passengers = trim($matches[1]);
+            } elseif ($origDescription && preg_match('/(?:Passengers?|Passenger\s*Count|Pax):\s*([^|\n\r]+)/i', $origDescription, $matches)) {
+                $passengers = trim($matches[1]);
+            }
+        }
         if ($passengers === null || $passengers === '') {
             $passengers = 'N/A';
         }
 
+        if ($childSeats === null || $childSeats === '' || $childSeats === 'N/A') {
+            if ($origNotes && preg_match('/(?:Child\s*Seats?|Child\s*Seats?\s*Count|Car\s*Seats?|Seats):\s*([^|\n\r]+)/i', $origNotes, $matches)) {
+                $childSeats = trim($matches[1]);
+            } elseif ($origDescription && preg_match('/(?:Child\s*Seats?|Child\s*Seats?\s*Count|Car\s*Seats?|Seats):\s*([^|\n\r]+)/i', $origDescription, $matches)) {
+                $childSeats = trim($matches[1]);
+            }
+        }
         if ($childSeats === null || $childSeats === '') {
             $childSeats = 'N/A';
+        }
+
+        if (empty($userNotes) || $userNotes === 'N/A') {
+            if ($origNotes && preg_match('/(?:Notes?|Special\s*Instructions?|Comments?):\s*([^|\n\r]+)/i', $origNotes, $matches)) {
+                $userNotes = trim($matches[1]);
+            } elseif ($origDescription && preg_match('/(?:Notes?|Special\s*Instructions?|Comments?):\s*([^|\n\r]+)/i', $origDescription, $matches)) {
+                $userNotes = trim($matches[1]);
+            } elseif ($origNotes && !str_contains($origNotes, 'PASSENGER:') && !str_contains($origNotes, 'Future Limo Dispatch')) {
+                if (preg_match('/Flight:\s*([^|\n\r]+)/i', $origNotes, $matches)) {
+                    $flight = trim($matches[1]);
+                    if (!in_array(strtolower($flight), ['none', 'n/a', 'null'])) {
+                        $userNotes = "Flight: {$flight}";
+                    }
+                } else {
+                    $userNotes = trim($origNotes);
+                }
+            }
         }
 
         if (!$order->relationLoaded('customer') && $order->customer_uuid) {
@@ -201,11 +256,20 @@ class WebBookingNoteFormatter
 
         // Normalize / Fallbacks
         $meta['vehicle_type'] = $vehicleType ?: (data_get($meta, 'vehicle_type') ?: 'N/A');
+        $meta['vehicle_selection'] = $meta['vehicle_type'];
+        $meta['vehicle'] = $meta['vehicle_type'];
         $meta['passengers'] = $passengers !== null ? $passengers : (data_get($meta, 'passengers') ?: 'N/A');
+        $meta['passenger_count'] = $meta['passengers'];
+        $meta['pax'] = $meta['passengers'];
         $meta['child_seats'] = $childSeats !== null ? $childSeats : (data_get($meta, 'child_seats') ?: 'N/A');
+        $meta['seats'] = $meta['child_seats'];
         $meta['passenger_name'] = $passengerName ?: (data_get($meta, 'passenger_name') ?: 'N/A');
         $meta['passenger_phone'] = $passengerPhone ?: (data_get($meta, 'passenger_phone') ?: 'N/A');
         $meta['passenger_email'] = $passengerEmail ?: (data_get($meta, 'passenger_email') ?: 'N/A');
+        if (!empty($userNotes) && $userNotes !== 'N/A') {
+            $meta['notes'] = $userNotes;
+            $meta['special_instructions'] = $userNotes;
+        }
 
         // Make sure source is present
         if (empty($meta['source'])) {
@@ -258,7 +322,11 @@ class WebBookingNoteFormatter
                 $contactUpdated = true;
             }
             if ($contactUpdated) {
-                $customer->save();
+                try {
+                    $customer->saveQuietly();
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Could not update customer contact in WebBookingNoteFormatter: ' . $e->getMessage());
+                }
             }
         }
 
@@ -396,9 +464,10 @@ class WebBookingNoteFormatter
 
         // 4. Metadata indicator check
         $indicators = [
-            'vehicle_type', 'vehicle', 'carChoice', 'car_choice', 'vehicle_name', 'car_type', 'fleet',
-            'passengers', 'passenger_count', 'pax', 'passengers_count', 'num_passengers',
-            'child_seats', 'child_seats_count', 'car_seats', 'seats', 'childSeats',
+            'vehicle_selection', 'selected_vehicle', 'vehicle_type', 'vehicle', 'carChoice', 'car_choice', 'vehicle_name', 'car_type', 'fleet', 'vehicleChoice', 'vehicleSelection', 'selectedVehicle',
+            'passenger_count', 'passengerCount', 'passengers', 'pax', 'passengers_count', 'num_passengers', 'pax_count', 'paxCount', 'passenger',
+            'child_seats', 'child_seats_count', 'car_seats', 'seats', 'childSeats', 'childSeatsCount', 'booster_seats', 'booster_seats_count',
+            'notes', 'special_instructions', 'comments', 'user_comments', 'booking_notes', 'passenger_notes',
             'passenger_name', 'customer_name', 'passenger_phone', 'customer_phone', 'passenger_email', 'customer_email'
         ];
 
@@ -464,6 +533,12 @@ class WebBookingNoteFormatter
             $cleanDropoffAddress = trim(substr($cleanDropoffAddress, 0, $pos));
         }
 
+        $extraNotes = data_get($meta, 'notes') ?? data_get($meta, 'special_instructions') ?? data_get($meta, 'comments');
+        $notesBlock = '';
+        if (!empty($extraNotes) && $extraNotes !== 'N/A' && !str_contains($extraNotes, 'PASSENGER:') && !str_contains($extraNotes, 'Future Limo Dispatch')) {
+            $notesBlock = "\n\nNOTES: {$extraNotes}";
+        }
+
         $note = "PASSENGER: {$passengerName}\n" .
                 "PHONE: {$passengerPhone}\n" .
                 "EMAIL: {$passengerEmail}\n\n" .
@@ -472,6 +547,7 @@ class WebBookingNoteFormatter
                 "CHILD SEATS: {$childSeats}\n\n" .
                 "PICKUP: {$cleanPickupAddress}\n" .
                 "DROPOFF: {$cleanDropoffAddress}" .
+                $notesBlock .
                 $warning;
 
         return $note;
